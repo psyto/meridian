@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meridian - 日本円ステーブルコインインフラ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #1e3a5f;
+      --primary-light: #2d5a8a;
+      --accent: #00a86b;
+      --accent-light: #00cc83;
+      --text:#1a1a2e;
+      --text-light: #4a4a6a;
+      --bg: #ffffff;
+      --bg-alt: #f8fafc;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .slide {
+      min-height: 100vh;
+      padding: 60px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(135deg, transparent 0%, rgba(30, 58, 95, 0.03) 100%);
+      z-index: 0;
+    }
+
+    .slide > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Slide 1: Title */
+    .slide-title {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      text-align: center;
+    }
+
+    .slide-title::before {
+      background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
+    }
+
+    .logo {
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tagline {
+      font-size: 28px;
+      font-weight: 300;
+      opacity: 0.9;
+      margin-bottom: 48px;
+    }
+
+    .partners-line {
+      font-size: 18px;
+      opacity: 0.7;
+      margin-top: 60px;
+    }
+
+    /* Slide headers */
+    .slide-header {
+      margin-bottom: 48px;
+    }
+
+    .slide-header h2 {
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .slide-header .subtitle {
+      font-size: 18px;
+      color: var(--text-light);
+    }
+
+    /* Problem slide */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .problem-card {
+      background: var(--bg-alt);
+      border-radius: 16px;
+      padding: 32px;
+      border-left: 4px solid #dc2626;
+    }
+
+    .problem-card h3 {
+      font-size: 20px;
+      color: #dc2626;
+      margin-bottom: 16px;
+    }
+
+    .problem-card p {
+      color: var(--text-light);
+      font-size: 16px;
+    }
+
+    /* Solution slide */
+    .solution-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .solution-text h3 {
+      font-size: 28px;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+
+    .solution-text p {
+      font-size: 18px;
+      color: var(--text-light);
+      margin-bottom: 32px;
+    }
+
+    .solution-features {
+      list-style: none;
+    }
+
+    .solution-features li {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      font-size: 18px;
+    }
+
+    .solution-features .check {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+
+    .solution-visual {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 24px;
+      padding: 48px;
+      color: white;
+      text-align: center;
+    }
+
+    .solution-visual .big-number {
+      font-size: 72px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .solution-visual .label {
+      font-size: 20px;
+      opacity: 0.9;
+    }
+
+    /* Features slide */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: var(--bg-alt);
+      border-radius: 20px;
+      padding: 36px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .feature-icon.green { background: #dcfce7; }
+    .feature-icon.blue { background: #dbeafe; }
+    .feature-icon.purple { background: #f3e8ff; }
+    .feature-icon.orange { background: #ffedd5; }
+
+    .feature-card h3 {
+      font-size: 22px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      color: var(--text-light);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* Architecture slide */
+    .arch-diagram {
+      background: var(--bg-alt);
+      border-radius: 20px;
+      padding: 48px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-x: auto;
+    }
+
+    .arch-diagram pre {
+      color: var(--primary);
+    }
+
+    /* Market slide */
+    .market-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 32px;
+      background: var(--bg-alt);
+      border-radius: 16px;
+    }
+
+    .stat-card .number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .label {
+      font-size: 16px;
+      color: var(--text-light);
+    }
+
+    /* Compliance slide */
+    .compliance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+    }
+
+    .compliance-card {
+      background: var(--bg-alt);
+      border-radius: 20px;
+      padding: 40px;
+    }
+
+    .compliance-card h3 {
+      font-size: 24px;
+      color: var(--primary);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .compliance-card ul {
+      list-style: none;
+    }
+
+    .compliance-card li {
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+      color: var(--text-light);
+      font-size: 16px;
+    }
+
+    .compliance-card li:last-child {
+      border-bottom: none;
+    }
+
+    /* Partners slide */
+    .partners-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+    }
+
+    .partner-card {
+      background: var(--bg-alt);
+      border-radius: 20px;
+      padding: 36px 24px;
+      text-align: center;
+    }
+
+    .partner-card .partner-icon {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .partner-card h3 {
+      font-size: 18px;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .partner-card p {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    /* Roadmap slide */
+    .roadmap {
+      display: flex;
+      gap: 24px;
+    }
+
+    .roadmap-item {
+      flex: 1;
+      background: var(--bg-alt);
+      border-radius: 20px;
+      padding: 32px;
+      position: relative;
+    }
+
+    .roadmap-item::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -24px;
+      width: 24px;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .roadmap-item:last-child::before {
+      display: none;
+    }
+
+    .roadmap-item .phase {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .roadmap-item h3 {
+      font-size: 18px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .roadmap-item ul {
+      list-style: none;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .roadmap-item li {
+      padding: 6px 0;
+    }
+
+    /* CTA slide */
+    .slide-cta {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      text-align: center;
+    }
+
+    .slide-cta h2 {
+      font-size: 48px;
+      margin-bottom: 24px;
+    }
+
+    .slide-cta p {
+      font-size: 22px;
+      opacity: 0.9;
+      margin-bottom: 48px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+    }
+
+    .cta-btn {
+      padding: 16px 48px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.3s;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .cta-btn.primary {
+      background: white;
+      color: var(--primary);
+    }
+
+    .cta-btn.secondary {
+      background: transparent;
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Footer */
+    .slide-footer {
+      position: absolute;
+      bottom: 24px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .slide-title .slide-footer,
+    .slide-cta .slide-footer {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Page numbers */
+    .page-number {
+      position: absolute;
+      bottom: 24px;
+      right: 80px;
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .slide-title .page-number,
+    .slide-cta .page-number {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Print styles */
+    @media print {
+      .slide {
+        page-break-after: always;
+        min-height: 100vh;
+      }
+    }
+
+    /* Navigation hint */
+    .nav-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      opacity: 0.7;
+      z-index: 1000;
+    }
+
+    @media (max-width: 1024px) {
+      .slide {
+        padding: 40px;
+      }
+
+      .problem-grid,
+      .features-grid,
+      .compliance-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .solution-content {
+        grid-template-columns: 1fr;
+      }
+
+      .market-stats,
+      .partners-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .roadmap {
+        flex-direction: column;
+      }
+
+      .roadmap-item::before {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-hint">スクロールで次のスライドへ</div>
+
+  <!-- Slide 1: Title -->
+  <section class="slide slide-title">
+    <div class="logo">MERIDIAN</div>
+    <div class="tagline">日本円ステーブルコインインフラ</div>
+    <p style="font-size: 20px; opacity: 0.8;">トークン化証券・RWA取引のための次世代金融インフラ</p>
+    <div class="partners-line">Meridian Holdings × Nova Labs</div>
+    <div class="slide-footer">
+      <span>Confidential</span>
+      <span>2026</span>
+    </div>
+  </section>
+
+  <!-- Slide 2: Problem -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>課題</h2>
+      <p class="subtitle">日本の資本市場が抱える構造的問題</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <h3>取引時間の制限</h3>
+        <p>証券取引所は平日9:00-15:00のみ。グローバル市場の24時間取引に対応できない。投資機会の損失と流動性の分断。</p>
+      </div>
+      <div class="problem-card">
+        <h3>決済の遅延</h3>
+        <p>T+2決済により、資金効率が低下。カウンターパーティリスクと運用資金の固定化。</p>
+      </div>
+      <div class="problem-card">
+        <h3>アクセス障壁</h3>
+        <p>証券投資には高額な最低投資額が必要。個人投資家の参入障壁と資産の分散投資機会の欠如。</p>
+      </div>
+    </div>
+    <div class="page-number">02</div>
+  </section>
+
+  <!-- Slide 3: Solution -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>ソリューション</h2>
+      <p class="subtitle">ブロックチェーンによる資本市場のモダナイゼーション</p>
+    </div>
+    <div class="solution-content">
+      <div class="solution-text">
+        <h3>Meridianプラットフォーム</h3>
+        <p>信託型電子決済手段に準拠した日本円ステーブルコインを基盤とする、機関投資家グレードの取引インフラ。</p>
+        <ul class="solution-features">
+          <li><span class="check">✓</span>24時間365日のリアルタイム取引</li>
+          <li><span class="check">✓</span>即時決済（T+0）による資金効率化</li>
+          <li><span class="check">✓</span>分数所有による投資の民主化</li>
+          <li><span class="check">✓</span>組み込みコンプライアンス</li>
+        </ul>
+      </div>
+      <div class="solution-visual">
+        <div class="big-number">100%</div>
+        <div class="label">法定通貨担保</div>
+        <div style="margin-top: 32px; font-size: 16px; opacity: 0.8;">信託型3号電子決済手段準拠<br>国内送金制限なし</div>
+      </div>
+    </div>
+    <div class="page-number">03</div>
+  </section>
+
+  <!-- Slide 4: Features -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>主要機能</h2>
+      <p class="subtitle">統合された4つのコアモジュール</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon green">¥</div>
+        <h3>日本円ステーブルコイン</h3>
+        <p>信託型3号電子決済手段に準拠。100%法定通貨担保。国内送金に100万円制限なし。マルチ発行者対応。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon blue">📈</div>
+        <h3>24/7 証券取引</h3>
+        <p>トークン化株式・ETFのスポット市場。AMMとオーダーブックのハイブリッド。パーペチュアル先物対応。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon purple">🏢</div>
+        <h3>RWAトークン化</h3>
+        <p>不動産・債券・設備の実物資産をトークン化。保管検証・所有権証明。自動配当分配システム。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon orange">🛡️</div>
+        <h3>コンプライアンス</h3>
+        <p>Token-2022トランスファーフックによるKYC/AML。管轄権ベースの制限。リアルタイム監査証跡。</p>
+      </div>
+    </div>
+    <div class="page-number">04</div>
+  </section>
+
+  <!-- Slide 5: Architecture -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>システムアーキテクチャ</h2>
+      <p class="subtitle">Solana上に構築された高性能インフラ</p>
+    </div>
+    <div class="arch-diagram">
+      <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MERIDIAN PLATFORM                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐          │
+│   │   JPY発行        │   │  コンプライアンス  │   │    取引         │          │
+│   │   エンジン        │   │    レイヤー       │   │   エンジン       │          │
+│   │                 │   │                 │   │                 │          │
+│   │  ・発行/償還      │   │  ・KYCホワイトリスト│   │  ・AMMプール     │          │
+│   │  ・担保管理       │   │  ・管轄権チェック   │   │  ・パーペチュアル  │          │
+│   │  ・緊急停止       │   │  ・日次制限       │   │  ・オーダーブック  │          │
+│   └────────┬────────┘   └────────┬────────┘   └────────┬────────┘          │
+│            │                    │                    │                     │
+│   ┌────────┴────────┐   ┌────────┴────────┐   ┌────────┴────────┐          │
+│   │  RWAレジストリ   │   │    オラクル      │   │      SDK        │          │
+│   │                 │   │                 │   │                 │          │
+│   │  ・資産登録      │   │  ・価格フィード   │   │  ・TypeScript   │          │
+│   │  ・配当管理      │   │  ・TWAP         │   │  ・React統合    │          │
+│   └─────────────────┘   └─────────────────┘   └─────────────────┘          │
+│                                                                              │
+│                       ┌─────────────────────┐                               │
+│                       │    APIゲートウェイ    │                               │
+│                       │    Next.js + REST   │                               │
+│                       └─────────────────────┘                               │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+      </pre>
+    </div>
+    <div class="page-number">05</div>
+  </section>
+
+  <!-- Slide 6: Market -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>市場機会</h2>
+      <p class="subtitle">日本のトークン化証券市場</p>
+    </div>
+    <div class="market-stats">
+      <div class="stat-card">
+        <div class="number">¥7.5兆</div>
+        <div class="label">日本の株式市場時価総額</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">¥1.2兆</div>
+        <div class="label">2030年RWA市場予測</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">2,100万</div>
+        <div class="label">NISA口座数</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">24/7</div>
+        <div class="label">取引可能時間</div>
+      </div>
+    </div>
+    <div style="background: var(--bg-alt); border-radius: 16px; padding: 32px;">
+      <h3 style="color: var(--primary); margin-bottom: 16px;">なぜ今なのか</h3>
+      <ul style="list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        <li style="display: flex; align-items: center; gap: 12px;"><span style="color: var(--accent);">●</span> 2024年 資金決済法改正による電子決済手段の法的整備</li>
+        <li style="display: flex; align-items: center; gap: 12px;"><span style="color: var(--accent);">●</span> 金融庁によるセキュリティトークン規制の明確化</li>
+        <li style="display: flex; align-items: center; gap: 12px;"><span style="color: var(--accent);">●</span> 機関投資家のデジタルアセットへの関心増大</li>
+        <li style="display: flex; align-items: center; gap: 12px;"><span style="color: var(--accent);">●</span> 新NISAによる個人投資家の市場参入加速</li>
+      </ul>
+    </div>
+    <div class="page-number">06</div>
+  </section>
+
+  <!-- Slide 7: Compliance -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>規制コンプライアンス</h2>
+      <p class="subtitle">日本の法規制に完全準拠</p>
+    </div>
+    <div class="compliance-grid">
+      <div class="compliance-card">
+        <h3>📋 資金決済法（PSA）</h3>
+        <ul>
+          <li>信託型3号電子決済手段として登録</li>
+          <li>100%法定通貨担保の維持</li>
+          <li>国内送金に100万円制限なし</li>
+          <li>定期的な外部監査</li>
+          <li>利用者資産の分別管理</li>
+        </ul>
+      </div>
+      <div class="compliance-card">
+        <h3>🔐 KYC/AML</h3>
+        <ul>
+          <li>トランスファーフックによる全送金検証</li>
+          <li>多段階KYC認証システム</li>
+          <li>管轄権ベースの自動制限</li>
+          <li>リアルタイム取引モニタリング</li>
+          <li>疑わしい取引の自動検出</li>
+        </ul>
+      </div>
+      <div class="compliance-card">
+        <h3>🏛️ 金融商品取引法</h3>
+        <ul>
+          <li>セキュリティトークン規制対応</li>
+          <li>適格投資家要件の確認</li>
+          <li>開示義務の遵守</li>
+          <li>投資者保護措置</li>
+        </ul>
+      </div>
+      <div class="compliance-card">
+        <h3>🌐 国際基準</h3>
+        <ul>
+          <li>FATF勧告への準拠</li>
+          <li>トラベルルール対応</li>
+          <li>クロスボーダー規制対応</li>
+          <li>制裁スクリーニング</li>
+        </ul>
+      </div>
+    </div>
+    <div class="page-number">07</div>
+  </section>
+
+  <!-- Slide 8: Partners -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>パートナー</h2>
+      <p class="subtitle">各分野の専門家による協業体制</p>
+    </div>
+    <div class="partners-grid">
+      <div class="partner-card">
+        <div class="partner-icon">MH</div>
+        <h3>Meridian Holdings</h3>
+        <p>規制コンプライアンス<br>販売・マーケティング</p>
+      </div>
+      <div class="partner-card">
+        <div class="partner-icon">NL</div>
+        <h3>Nova Labs</h3>
+        <p>スマートコントラクト開発<br>セキュリティシステム</p>
+      </div>
+      <div class="partner-card">
+        <div class="partner-icon">MT</div>
+        <h3>Meridian Trust Bank</h3>
+        <p>ステーブルコイン<br>発行・償還</p>
+      </div>
+      <div class="partner-card">
+        <div class="partner-icon">MT</div>
+        <h3>Meridian Trading</h3>
+        <p>電子決済手段<br>取扱業者</p>
+      </div>
+    </div>
+    <div style="margin-top: 48px; text-align: center;">
+      <p style="color: var(--text-light); font-size: 18px;">金融・技術・規制の専門知識を結集した<br>日本初の本格的トークン化証券プラットフォーム</p>
+    </div>
+    <div class="page-number">08</div>
+  </section>
+
+  <!-- Slide 9: Roadmap -->
+  <section class="slide">
+    <div class="slide-header">
+      <h2>ロードマップ</h2>
+      <p class="subtitle">段階的なプラットフォーム展開</p>
+    </div>
+    <div class="roadmap">
+      <div class="roadmap-item">
+        <span class="phase">Phase 1</span>
+        <h3>2026 Q1-Q2</h3>
+        <ul>
+          <li>✓ JPYステーブルコイン開発</li>
+          <li>✓ コンプライアンス基盤構築</li>
+          <li>✓ テストネットローンチ</li>
+          <li>○ 規制当局との協議</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase">Phase 2</span>
+        <h3>2026 Q3-Q4</h3>
+        <ul>
+          <li>○ メインネットローンチ</li>
+          <li>○ AMM取引機能</li>
+          <li>○ 初期パートナー統合</li>
+          <li>○ モバイルアプリ</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase">Phase 3</span>
+        <h3>2027 Q1-Q2</h3>
+        <ul>
+          <li>○ RWAトークン化</li>
+          <li>○ デリバティブ市場</li>
+          <li>○ 機関投資家API</li>
+          <li>○ クロスチェーン対応</li>
+        </ul>
+      </div>
+      <div class="roadmap-item">
+        <span class="phase">Phase 4</span>
+        <h3>2027 Q3+</h3>
+        <ul>
+          <li>○ アジア展開</li>
+          <li>○ 多通貨対応</li>
+          <li>○ DeFi統合</li>
+          <li>○ ガバナンストークン</li>
+        </ul>
+      </div>
+    </div>
+    <div class="page-number">09</div>
+  </section>
+
+  <!-- Slide 10: CTA -->
+  <section class="slide slide-cta">
+    <h2>日本の資本市場を、次のステージへ</h2>
+    <p>トークン化証券とRWA取引の新時代を、共に切り拓きませんか</p>
+    <div class="cta-buttons">
+      <a href="#" class="cta-btn primary">お問い合わせ</a>
+      <a href="#" class="cta-btn secondary">技術資料をダウンロード</a>
+    </div>
+    <div style="margin-top: 80px; opacity: 0.7;">
+      <p style="font-size: 16px;">contact@meridian.finance</p>
+      <p style="font-size: 14px; margin-top: 8px;">Meridian Holdings × Nova Labs</p>
+    </div>
+    <div class="slide-footer">
+      <span>Confidential - Do not distribute</span>
+      <span>10</span>
+    </div>
+  </section>
+
+  <script>
+    // Hide navigation hint after 5 seconds
+    setTimeout(() => {
+      document.querySelector('.nav-hint').style.opacity = '0';
+      setTimeout(() => {
+        document.querySelector('.nav-hint').style.display = 'none';
+      }, 500);
+    }, 5000);
+  </script>
+</body>
+</html>
