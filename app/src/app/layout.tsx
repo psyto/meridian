@@ -30,9 +30,6 @@ export default function RootLayout({
                   <p className="text-sm text-gray-500">
                     © 2026 Meridian. All rights reserved.
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Meridian Holdings × Nova Labs
-                  </p>
                 </div>
               </div>
             </footer>

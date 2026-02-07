@@ -2,7 +2,7 @@
 
 **JPY Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
 
-A Layer 1 blockchain platform for Asia's onchain capital markets, developed as part of the Meridian Holdings x Nova Labs partnership.
+A Layer 1 blockchain platform for Asia's onchain capital markets.
 
 ## Overview
 
@@ -207,15 +207,8 @@ console.log(`Output: ${quote.outputAmount}, Impact: ${quote.priceImpact}%`);
 
 | Partner | Role |
 |---------|------|
-| **Meridian Holdings** | Regulatory compliance, distribution |
-| **Nova Labs** | Smart contracts, API design, security systems |
 | **Meridian Trust Bank** | Stablecoin issuance & redemption |
 | **Meridian Trading** | Distribution as electronic payment operator |
 
 ## License
 
-Proprietary - Meridian Holdings x Nova Labs
-
----
-
-*Built for Strium Network - Asia's exchange-layer infrastructure for tokenized securities*

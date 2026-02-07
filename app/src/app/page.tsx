@@ -15,8 +15,6 @@ export default function Home() {
             </p>
             <p className="text-lg text-primary-200 mb-8 max-w-2xl mx-auto">
               トークン化証券・RWA取引のための次世代金融インフラ
-              <br />
-              Meridian Holdings × Nova Labs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -134,19 +132,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-center mb-8 text-gray-900 dark:text-white">
             パートナー
           </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <p className="font-semibold text-gray-900 dark:text-white">Meridian Holdings</p>
-                <p className="text-sm text-gray-500 mt-1">規制コンプライアンス・販売</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                <p className="font-semibold text-gray-900 dark:text-white">Nova Labs</p>
-                <p className="text-sm text-gray-500 mt-1">技術開発・セキュリティ</p>
-              </div>
-            </div>
+          <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                 <p className="font-semibold text-gray-900 dark:text-white">Meridian Trust Bank</p>

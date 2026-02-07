@@ -488,7 +488,7 @@ export const en = {
   // Footer
   footer: {
     copyright: '© 2026 Meridian. All rights reserved.',
-    poweredBy: 'Meridian Holdings × Nova Labs',
+    poweredBy: '',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
     contact: 'Contact',
