@@ -2,7 +2,7 @@
 
 **JPY Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
 
-A Layer 1 blockchain platform for Asia's onchain capital markets, developed as part of the SBI Holdings x Startale Group partnership.
+A Layer 1 blockchain platform for Asia's onchain capital markets, developed as part of the Meridian Holdings x Nova Labs partnership.
 
 ## Overview
 
@@ -207,14 +207,14 @@ console.log(`Output: ${quote.outputAmount}, Impact: ${quote.priceImpact}%`);
 
 | Partner | Role |
 |---------|------|
-| **SBI Holdings** | Regulatory compliance, distribution, 80M customer base |
-| **Startale Group** | Smart contracts, API design, security systems |
-| **新生信託銀行** | Stablecoin issuance & redemption |
-| **SBI VC Trade** | Distribution as electronic payment operator |
+| **Meridian Holdings** | Regulatory compliance, distribution |
+| **Nova Labs** | Smart contracts, API design, security systems |
+| **Meridian Trust Bank** | Stablecoin issuance & redemption |
+| **Meridian Trading** | Distribution as electronic payment operator |
 
 ## License
 
-Proprietary - SBI Holdings x Startale Group
+Proprietary - Meridian Holdings x Nova Labs
 
 ---
 
