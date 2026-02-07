@@ -1,0 +1,40 @@
+{
+  "name": "meridian",
+  "version": "0.1.0",
+  "description": "JPY Stablecoin Infrastructure for Tokenized Securities and RWA Trading - SBI Holdings x Startale",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "app"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "anchor:build": "anchor build",
+    "anchor:test": "anchor test",
+    "anchor:deploy": "anchor deploy",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/web3.js": "^1.98.0",
+    "@solana/spl-token": "^0.4.12",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^22.10.0",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "prettier": "^3.2.5",
+    "ts-mocha": "^10.0.0",
+    "turbo": "^2.4.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "yarn@4.0.2"
+}

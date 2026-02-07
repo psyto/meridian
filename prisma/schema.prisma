@@ -1,0 +1,414 @@
+// Meridian Database Schema
+// Cross-bred from: kalshify patterns
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  walletAddress String?   @unique
+  visitorId     String?
+
+  kycStatus     KycStatus @default(PENDING)
+  kycLevel      KycLevel  @default(BASIC)
+  jurisdiction  String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  watchlist     MarketWatchlist[]
+  positions     Position[]
+  transactions  Transaction[]
+  notifications Notification[]
+
+  @@index([walletAddress])
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// KYC/AML
+enum KycStatus {
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum KycLevel {
+  BASIC
+  STANDARD
+  ENHANCED
+  INSTITUTIONAL
+}
+
+model KycSubmission {
+  id            String    @id @default(cuid())
+  walletAddress String
+  level         KycLevel
+  status        KycStatus @default(PENDING)
+
+  documentHash  String
+  reviewerNotes String?
+
+  submittedAt   DateTime  @default(now())
+  reviewedAt    DateTime?
+  expiresAt     DateTime?
+
+  @@index([walletAddress])
+  @@index([status])
+}
+
+// JPY Stablecoin
+model MintRequest {
+  id            String      @id @default(cuid())
+  walletAddress String
+  amount        BigInt
+  reference     String      @unique
+  status        MintStatus  @default(PENDING)
+
+  bankReference String?
+  txSignature   String?
+
+  createdAt     DateTime    @default(now())
+  processedAt   DateTime?
+
+  @@index([walletAddress])
+  @@index([status])
+  @@index([reference])
+}
+
+enum MintStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model BurnRequest {
+  id             String      @id @default(cuid())
+  walletAddress  String
+  amount         BigInt
+  status         MintStatus  @default(PENDING)
+
+  redemptionInfo String?     @db.Text
+  txSignature    String?
+
+  createdAt      DateTime    @default(now())
+  processedAt    DateTime?
+
+  @@index([walletAddress])
+  @@index([status])
+}
+
+// Markets
+model Market {
+  id             String      @id @default(cuid())
+  address        String      @unique
+  securityMint   String
+  quoteMint      String
+  symbol         String      @unique
+  name           String
+  marketType     MarketType
+  isin           String?
+
+  tradingFeeBps  Int
+  isActive       Boolean     @default(true)
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  watchlist      MarketWatchlist[]
+  snapshots      MarketSnapshot[]
+  positions      Position[]
+  trades         Trade[]
+
+  @@index([symbol])
+  @@index([marketType])
+}
+
+enum MarketType {
+  EQUITY
+  RWA
+  PERPETUAL
+  FUNDING_SWAP
+  VARIANCE_SWAP
+}
+
+model MarketWatchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  marketId  String
+  addedAt   DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, marketId])
+}
+
+model MarketSnapshot {
+  id          String   @id @default(cuid())
+  marketId    String
+  price       BigInt
+  volume24h   BigInt
+  high24h     BigInt
+  low24h      BigInt
+  change24h   Float
+  liquidity   BigInt
+  timestamp   DateTime @default(now())
+
+  market      Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId, timestamp])
+}
+
+// Trading
+model Position {
+  id            String        @id @default(cuid())
+  userId        String
+  marketId      String
+  address       String        @unique
+
+  side          PositionSide
+  size          BigInt
+  entryPrice    BigInt
+  leverage      Int           @default(1)
+  collateral    BigInt
+
+  unrealizedPnl BigInt        @default(0)
+  realizedPnl   BigInt        @default(0)
+
+  isOpen        Boolean       @default(true)
+  openedAt      DateTime      @default(now())
+  closedAt      DateTime?
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market        Market        @relation(fields: [marketId], references: [id])
+
+  @@index([userId, isOpen])
+  @@index([marketId])
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+model Trade {
+  id          String    @id @default(cuid())
+  marketId    String
+  maker       String
+  taker       String
+  price       BigInt
+  size        BigInt
+  side        String
+  fee         BigInt
+  signature   String    @unique
+  timestamp   DateTime  @default(now())
+
+  market      Market    @relation(fields: [marketId], references: [id])
+
+  @@index([marketId, timestamp])
+  @@index([maker])
+  @@index([taker])
+}
+
+// Transactions
+model Transaction {
+  id            String          @id @default(cuid())
+  userId        String
+  type          TransactionType
+  amount        BigInt
+  token         String
+  signature     String          @unique
+  status        TxStatus        @default(PENDING)
+
+  fromAddress   String?
+  toAddress     String?
+  memo          String?
+
+  createdAt     DateTime        @default(now())
+  confirmedAt   DateTime?
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([signature])
+}
+
+enum TransactionType {
+  MINT
+  BURN
+  TRANSFER
+  SWAP
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  OPEN_POSITION
+  CLOSE_POSITION
+  DIVIDEND_CLAIM
+}
+
+enum TxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// RWA Assets
+model RwaAsset {
+  id               String      @id @default(cuid())
+  address          String      @unique
+  symbol           String      @unique
+  name             String
+  assetType        RwaType
+  tokenMint        String
+
+  valuation        BigInt
+  valuationCurrency String     @default("JPY")
+  totalSupply      BigInt
+
+  custodian        String
+  isin             String?
+  jurisdiction     String
+
+  status           AssetStatus @default(PENDING)
+  isFrozen         Boolean     @default(false)
+
+  lastAudit        DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  dividends        Dividend[]
+
+  @@index([symbol])
+  @@index([assetType])
+}
+
+enum RwaType {
+  EQUITY
+  BOND
+  REAL_ESTATE
+  COMMODITY
+  EQUIPMENT
+  IP
+  FUND
+}
+
+enum AssetStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DELISTED
+}
+
+model Dividend {
+  id             String         @id @default(cuid())
+  assetId        String
+  amountPerToken BigInt
+  totalAmount    BigInt
+  paymentToken   String
+  recordDate     DateTime
+  paymentDate    DateTime
+  status         DividendStatus @default(ANNOUNCED)
+  claimedAmount  BigInt         @default(0)
+
+  createdAt      DateTime       @default(now())
+
+  asset          RwaAsset       @relation(fields: [assetId], references: [id])
+
+  @@index([assetId, status])
+}
+
+enum DividendStatus {
+  ANNOUNCED
+  PAYABLE
+  COMPLETED
+  CANCELLED
+}
+
+// Notifications
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  KYC_UPDATE
+  MINT_COMPLETE
+  BURN_COMPLETE
+  TRADE_EXECUTED
+  POSITION_LIQUIDATION
+  DIVIDEND_ANNOUNCED
+  SYSTEM
+}
+
+// Analytics
+model DailyStats {
+  id             String   @id @default(cuid())
+  date           DateTime @unique
+  totalSupply    BigInt
+  totalVolume    BigInt
+  uniqueUsers    Int
+  totalTrades    Int
+  totalMinted    BigInt
+  totalBurned    BigInt
+
+  @@index([date])
+}
