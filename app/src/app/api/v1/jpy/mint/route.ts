@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { store } from '@/app/lib/store';
 
 /**
  * JPY Minting API
- *
- * Cross-bred from: kalshify API patterns
  */
 
 const MintRequestSchema = z.object({
@@ -12,6 +11,8 @@ const MintRequestSchema = z.object({
   recipient: z.string().length(44), // Solana address
   reference: z.string().min(1),
   jurisdiction: z.enum(['JP', 'SG', 'HK', 'EU', 'OTHER']),
+  type: z.enum(['mint', 'burn']).optional().default('mint'),
+  bankAccount: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -32,22 +33,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { amount, recipient, reference, jurisdiction } = parsed.data;
+    const { amount, recipient, reference, jurisdiction, type, bankAccount } = parsed.data;
 
-    // Check KYC status
-    // In production: verify wallet is whitelisted via transfer hook
+    // Create request in store
+    const newRequest = store.addRequest({
+      type: type as 'mint' | 'burn',
+      walletAddress: recipient,
+      amount,
+      reference,
+      jurisdiction,
+      bankAccount,
+    });
 
-    // Create mint request in database
-    // In production: use Prisma
-
-    const requestId = crypto.randomUUID();
+    console.log(`[MINT API] New ${type} request created:`, newRequest.id);
 
     return NextResponse.json({
       success: true,
       data: {
-        requestId,
-        status: 'pending',
-        estimatedCompletion: new Date(Date.now() + 3600000).toISOString(), // 1 hour
+        requestId: newRequest.id,
+        status: newRequest.status,
+        estimatedCompletion: new Date(Date.now() + 3600000).toISOString(),
         amount,
         recipient,
         reference,
@@ -87,14 +92,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch mint requests for wallet
-    // In production: use Prisma
+    // Fetch requests for wallet from store
+    const requests = store.getRequests({ wallet });
 
     return NextResponse.json({
       success: true,
       data: {
-        requests: [],
-        total: 0,
+        requests: requests.map(r => ({
+          id: r.id,
+          type: r.type,
+          amount: r.amount,
+          reference: r.reference,
+          status: r.status.toLowerCase(),
+          createdAt: r.createdAt,
+        })),
+        total: requests.length,
       },
       timestamp: Date.now(),
     });

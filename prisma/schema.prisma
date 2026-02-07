@@ -103,30 +103,66 @@ model KycSubmission {
   @@index([status])
 }
 
+// Admin Users
+model Admin {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  walletAddress String?     @unique
+  name          String
+  role          AdminRole   @default(OPERATOR)
+  isActive      Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  mintReviews   MintRequest[]  @relation("MintReviewer")
+  burnReviews   BurnRequest[]  @relation("BurnReviewer")
+
+  @@index([email])
+  @@index([role])
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ISSUER
+  OPERATOR
+  VIEWER
+}
+
 // JPY Stablecoin
 model MintRequest {
   id            String      @id @default(cuid())
   walletAddress String
   amount        BigInt
   reference     String      @unique
+  jurisdiction  String      @default("JP")
   status        MintStatus  @default(PENDING)
 
   bankReference String?
   txSignature   String?
 
+  reviewedById  String?
+  reviewedBy    Admin?      @relation("MintReviewer", fields: [reviewedById], references: [id])
+  reviewerNotes String?
+  rejectionReason String?
+
   createdAt     DateTime    @default(now())
+  reviewedAt    DateTime?
   processedAt   DateTime?
 
   @@index([walletAddress])
   @@index([status])
   @@index([reference])
+  @@index([createdAt])
 }
 
 enum MintStatus {
   PENDING
+  APPROVED
   PROCESSING
   COMPLETED
   FAILED
+  REJECTED
   CANCELLED
 }
 
@@ -136,14 +172,22 @@ model BurnRequest {
   amount         BigInt
   status         MintStatus  @default(PENDING)
 
+  bankAccount    String?     @db.Text
   redemptionInfo String?     @db.Text
   txSignature    String?
 
+  reviewedById   String?
+  reviewedBy     Admin?      @relation("BurnReviewer", fields: [reviewedById], references: [id])
+  reviewerNotes  String?
+  rejectionReason String?
+
   createdAt      DateTime    @default(now())
+  reviewedAt     DateTime?
   processedAt    DateTime?
 
   @@index([walletAddress])
   @@index([status])
+  @@index([createdAt])
 }
 
 // Markets
