@@ -488,7 +488,7 @@ export const ja = {
   // Footer
   footer: {
     copyright: '© 2026 Meridian. All rights reserved.',
-    poweredBy: 'SBIホールディングス × Startale Group',
+    poweredBy: 'Meridian Holdings × Nova Labs',
     terms: '利用規約',
     privacy: 'プライバシーポリシー',
     contact: 'お問い合わせ',

@@ -226,7 +226,7 @@ export default function MintPage() {
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
                 <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">振込先</p>
                 <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <p>新生信託銀行 本店営業部</p>
+                  <p>Meridian Trust Bank 本店営業部</p>
                   <p>普通 1234567</p>
                   <p>メリディアン（カ</p>
                 </div>
@@ -258,12 +258,12 @@ export default function MintPage() {
                   type="text"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
-                  placeholder="例: SBI-2026-001234"
+                  placeholder="例: MTB-2026-001234"
                   className="input"
                   disabled={!connected}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  新生信託銀行への振込時の参照番号
+                  Meridian Trust Bankへの振込時の参照番号
                 </p>
               </div>
 

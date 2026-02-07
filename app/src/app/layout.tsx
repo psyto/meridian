@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Meridian - 日本円ステーブルコイン',
   description: 'トークン化証券・RWA取引のための日本円ステーブルコインインフラ',
-  keywords: ['JPY', 'ステーブルコイン', 'トークン化証券', 'RWA', 'SBI', 'Startale'],
+  keywords: ['JPY', 'ステーブルコイン', 'トークン化証券', 'RWA', 'Meridian'],
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
                     © 2026 Meridian. All rights reserved.
                   </p>
                   <p className="text-sm text-gray-500">
-                    SBIホールディングス × Startale Group
+                    Meridian Holdings × Nova Labs
                   </p>
                 </div>
               </div>
