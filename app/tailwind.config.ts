@@ -7,7 +7,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SBI Group brand colors
+        // Meridian brand colors
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

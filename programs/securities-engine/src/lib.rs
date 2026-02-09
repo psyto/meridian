@@ -3,11 +3,11 @@
 //! 24/7 trading infrastructure for tokenized securities and RWA-linked instruments.
 //! Supports spot markets (AMM), perpetual futures, and exotic derivatives.
 //!
-//! Cross-bred from:
-//! - indie-star-market (AMM mechanics, x*y=k formula)
-//! - simple-dex (pool structure, LP tokens)
-//! - sigma/volswap (variance swaps)
-//! - sigma/funding-swap (funding rate derivatives)
+//! Built with patterns from:
+//! - AMM mechanics (x*y=k formula)
+//! - Pool structure and LP tokens
+//! - Variance swaps
+//! - Funding rate derivatives
 //!
 //! Features:
 //! - Constant product AMM for spot trading

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 /// Authorized issuer/distributor for JPY stablecoin
-/// Based on the project structure: Trust Bank issues, SBI VC Trade distributes
+/// Trust Bank issues, Distributor handles distribution
 #[account]
 #[derive(InitSpace)]
 pub struct Issuer {
@@ -47,9 +47,9 @@ pub struct Issuer {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
 pub enum IssuerType {
-    /// Primary issuer (Trust Bank - 新生信託銀行)
+    /// Primary issuer (Trust Bank)
     TrustBank,
-    /// Distributor (SBI VC Trade)
+    /// Distributor
     Distributor,
     /// Exchange operator
     Exchange,

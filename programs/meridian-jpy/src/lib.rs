@@ -17,10 +17,10 @@
 //! - Multi-issuer support (Trust Bank, Distributors, Exchanges)
 //!   マルチ発行者対応（信託銀行、ディストリビューター、取引所）
 //!
-//! Cross-bred from / 参照元リポジトリ:
-//! - continuum/jpy-stablecoin (Token-2022 patterns)
-//! - lending (collateral management / 担保管理)
-//! - titanus (ownership proofs, audit trails / 所有権証明、監査証跡)
+//! Built with patterns from:
+//! - Token-2022 extensions
+//! - Collateral management
+//! - Ownership proofs and audit trails / 所有権証明、監査証跡
 
 use anchor_lang::prelude::*;
 

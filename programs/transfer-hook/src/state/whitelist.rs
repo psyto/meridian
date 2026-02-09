@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// Whitelist entry for a verified wallet
-/// Cross-bred from: continuum/transfer-hook + titanus/OwnershipProof + sovereign/Identity
 #[account]
 #[derive(InitSpace)]
 pub struct WhitelistEntry {

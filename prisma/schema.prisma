@@ -1,5 +1,4 @@
 // Meridian Database Schema
-// Cross-bred from: kalshify patterns
 
 generator client {
   provider = "prisma-client-js"

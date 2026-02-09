@@ -1,7 +1,7 @@
 //! Oracle Program for Price Feeds, TWAP, Volatility, and Funding Rates
 //!
-//! Cross-bred from: sigma/shared-oracle
 //!
+
 //! Provides unified oracle infrastructure for:
 //! - Real-time price feeds (JPY/USD, security prices)
 //! - Time-Weighted Average Price (TWAP)
@@ -221,7 +221,7 @@ pub struct PriceFeed {
     /// Authority that can update the feed
     pub authority: Pubkey,
 
-    /// Asset symbol (e.g., "JPY", "SBI")
+    /// Asset symbol (e.g., "JPY", "MERI")
     pub asset_symbol: String,
 
     /// Asset type

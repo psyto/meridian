@@ -41,19 +41,19 @@ Meridian provides institutional-grade infrastructure for:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Cross-Breeding Sources
+## Component Sources
 
-This project synthesizes patterns from existing repositories:
+This project synthesizes patterns from internal modules:
 
-| Component | Source Repos | Key Patterns |
-|-----------|--------------|--------------|
-| JPY Stablecoin | `continuum` | Token-2022 mint, transfer hooks, collateral management |
-| Transfer Hook | `continuum`, `sovereign` | KYC whitelist, jurisdiction checks, daily limits |
-| Securities Engine | `indie-star-market`, `simple-dex` | AMM (x*y=k), LP tokens, pool management |
-| Derivatives | `sigma` | Perpetuals, funding rates, variance swaps |
-| Oracle | `sigma` | TWAP, volatility index, funding feeds |
-| RWA Registry | `titanus`, `mon-solana` | Asset registration, ownership proofs, dividends |
-| API Layer | `kalshify` | Next.js patterns, Prisma schema, auth |
+| Component | Key Patterns |
+|-----------|--------------|
+| JPY Stablecoin | Token-2022 mint, transfer hooks, collateral management |
+| Transfer Hook | KYC whitelist, jurisdiction checks, daily limits |
+| Securities Engine | AMM (x*y=k), LP tokens, pool management |
+| Derivatives | Perpetuals, funding rates, variance swaps |
+| Oracle | TWAP, volatility index, funding feeds |
+| RWA Registry | Asset registration, ownership proofs, dividends |
+| API Layer | Next.js patterns, Prisma schema, auth |
 
 ## Programs
 
@@ -105,7 +105,8 @@ Real-world asset tokenization:
 
 ```bash
 # Clone the repository
-cd /Users/hiroyusai/src/meridian
+git clone <repository-url>
+cd meridian
 
 # Install dependencies
 yarn install

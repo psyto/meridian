@@ -1,9 +1,7 @@
 //! RWA Registry for Tokenized Real-World Assets
 //!
-//! Cross-bred from:
-//! - titanus (equipment registration, ownership proofs)
-//! - mon-solana (dual MOA pattern, fungibility levels)
 //!
+
 //! Supports tokenization of:
 //! - Securities (equities, bonds)
 //! - Real estate
@@ -349,7 +347,7 @@ pub enum RwaAssetType {
     RealEstate,
     /// Commodity
     Commodity,
-    /// Equipment (from titanus pattern)
+    /// Equipment
     Equipment,
     /// Intellectual property / royalties
     IntellectualProperty,

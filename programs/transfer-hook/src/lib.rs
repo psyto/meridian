@@ -6,10 +6,10 @@
 //! - Jurisdiction restrictions
 //! - Daily transaction limits (if applicable)
 //!
-//! Cross-bred from:
-//! - continuum/transfer-hook (hook patterns)
-//! - sovereign/identity (multi-dimensional verification)
-//! - titanus/ownership (audit trails)
+//! Built with patterns from:
+//! - Transfer hook interfaces
+//! - Multi-dimensional verification
+//! - Audit trails
 
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::Mint;

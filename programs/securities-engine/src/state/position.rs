@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// Derivatives position for perpetuals and swaps
-/// Cross-bred from: sigma/volswap + sigma/funding-swap
 #[account]
 #[derive(InitSpace)]
 pub struct Position {
@@ -142,7 +141,6 @@ impl Position {
 }
 
 /// Variance swap specific data
-/// Cross-bred from: sigma/volswap
 #[account]
 #[derive(InitSpace)]
 pub struct VarianceSwapData {

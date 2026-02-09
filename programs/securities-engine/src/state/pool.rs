@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// AMM liquidity pool for securities trading
-/// Cross-bred from: simple-dex/Pool + indie-star-market AMM
 #[account]
 #[derive(InitSpace)]
 pub struct Pool {
@@ -71,7 +70,6 @@ impl Pool {
     }
 
     /// Calculate output amount using constant product formula (x * y = k)
-    /// Cross-bred from: indie-star-market AMM
     pub fn calculate_swap_output(
         &self,
         input_amount: u64,

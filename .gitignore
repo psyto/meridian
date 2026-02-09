@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.yarn/cache/
+.yarn/unplugged/
+.pnp.*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Rust / Anchor
+target/
+**/*.rs.bk
+test-ledger/
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Turbo
+.turbo/
+
+# Prisma
+prisma/*.db
+prisma/migrations/**/migration_lock.toml
+
+# Misc
+*.tsbuildinfo

@@ -1,11 +1,10 @@
 use anchor_lang::prelude::*;
 
 /// Configuration for the JPY stablecoin mint
-/// Cross-bred from: continuum/jpy-stablecoin + lending/Bank structure
 #[account]
 #[derive(InitSpace)]
 pub struct MintConfig {
-    /// Authority that can mint/burn (Trust Bank - 新生信託銀行)
+    /// Authority that can mint/burn (Trust Bank)
     pub authority: Pubkey,
 
     /// SPL Token-2022 mint address

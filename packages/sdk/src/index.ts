@@ -4,7 +4,7 @@
  * TypeScript SDK for interacting with the Meridian JPY Stablecoin
  * and Securities Platform on Solana.
  *
- * Cross-bred from: kalshify SDK patterns + cross-dex-aggregator
+ * Built for the Meridian platform
  */
 
 export * from './client';

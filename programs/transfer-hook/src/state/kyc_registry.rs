@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// KYC Registry for managing verified wallets
-/// Cross-bred from: continuum/transfer-hook + sovereign/identity
 #[account]
 #[derive(InitSpace)]
 pub struct KycRegistry {

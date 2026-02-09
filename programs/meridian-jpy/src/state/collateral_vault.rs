@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// Collateral vault tracking fiat reserves
-/// Cross-bred from: lending/Bank + titanus/OwnershipProof
 #[account]
 #[derive(InitSpace)]
 pub struct CollateralVault {

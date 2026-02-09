@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 /// Tokenized securities market configuration
-/// Cross-bred from: indie-star-market + sigma/volswap
 #[account]
 #[derive(InitSpace)]
 pub struct Market {
@@ -47,7 +46,7 @@ pub struct Market {
     /// Last volume reset
     pub volume_24h_reset: i64,
 
-    /// Symbol (e.g., "SBI", "SONY")
+    /// Symbol (e.g., "MERI", "SONY")
     #[max_len(10)]
     pub symbol: String,
 
