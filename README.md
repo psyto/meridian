@@ -15,30 +15,38 @@ Meridian provides institutional-grade infrastructure for:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         MERIDIAN PLATFORM                           │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐        │
-│  │   JPY MINT     │  │   COMPLIANCE   │  │    TRADING     │        │
-│  │   ENGINE       │  │    LAYER       │  │    ENGINE      │        │
-│  │                │  │                │  │                │        │
-│  │  meridian-jpy  │  │  transfer-hook │  │  securities-   │        │
-│  │                │  │                │  │  engine        │        │
-│  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘        │
-│          │                   │                   │                  │
-│  ┌───────┴────────┐  ┌───────┴────────┐  ┌───────┴────────┐        │
-│  │  RWA REGISTRY  │  │     ORACLE     │  │      SDK       │        │
-│  │                │  │                │  │                │        │
-│  │  rwa-registry  │  │     oracle     │  │  @meridian/sdk │        │
-│  └────────────────┘  └────────────────┘  └────────────────┘        │
-│                                                                     │
-│                    ┌─────────────────────┐                         │
-│                    │     API GATEWAY     │                         │
-│                    │    Next.js + API    │                         │
-│                    └─────────────────────┘                         │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           MERIDIAN PLATFORM                              │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐             │
+│  │   JPY MINT     │  │   COMPLIANCE   │  │    TRADING     │             │
+│  │   ENGINE       │  │    LAYER       │  │    ENGINE      │             │
+│  │                │  │                │  │                │             │
+│  │  meridian-jpy  │  │  transfer-hook │  │  securities-   │             │
+│  │                │  │                │  │  engine        │             │
+│  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘             │
+│          │                   │                   │                       │
+│  ┌───────┴────────┐  ┌───────┴────────┐  ┌───────┴────────┐             │
+│  │  RWA REGISTRY  │  │     ORACLE     │  │      SDK       │             │
+│  │                │  │                │  │                │             │
+│  │  rwa-registry  │  │     oracle     │  │  @meridian/sdk │             │
+│  └────────────────┘  └────────────────┘  └────────────────┘             │
+│                                                                          │
+│  ┌───────────────────────────────────────────────────────────────────┐   │
+│  │                    COMPLIANT ROUTING LAYER                        │   │
+│  │                                                                   │   │
+│  │  compliant-registry (on-chain)    @meridian/compliant-router (TS) │   │
+│  │  Pool whitelist, KYC levels,      Jupiter filter, KYC checker,    │   │
+│  │  jurisdiction rules               ZK compliance proofs            │   │
+│  └───────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│                    ┌─────────────────────┐                               │
+│                    │     API GATEWAY     │                               │
+│                    │    Next.js + API    │                               │
+│                    └─────────────────────┘                               │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Component Sources
@@ -91,6 +99,38 @@ Real-world asset tokenization:
 - Ownership proof management
 - Dividend distribution
 - Freeze/unfreeze for compliance
+
+### compliant-registry
+Compliance-aware pool management for institutional DeFi:
+- Pool whitelist registry with KYC level requirements
+- Jurisdiction-based restrictions
+- Pool lifecycle management (active/suspended/revoked)
+- Batch route verification for Jupiter-compatible routing
+- Audit hash and expiry tracking per pool
+
+## Packages
+
+### @meridian/compliant-router
+A Jupiter-compatible router that only routes through KYC-whitelisted pools, enabling institutional DeFi access.
+
+**Key classes:**
+- **ComplianceAwareRouter** — Wraps Jupiter aggregation with compliance filtering. Gets a quote, then rejects routes containing non-whitelisted pool hops.
+- **PoolWhitelistManager** — Syncs the on-chain `compliant-registry` pool entries and provides fast lookup by AMM key.
+- **RouteComplianceFilter** — Checks each `routePlan[].swapInfo.ammKey` against the whitelist. Falls back to direct-only routes if multi-hop fails.
+- **KycComplianceChecker** — Reads the transfer-hook `WhitelistEntry` to validate trader KYC level, jurisdiction, and expiry.
+- **ZkComplianceProver** — Generates Noir ZK proofs that a trader meets KYC requirements without revealing identity.
+
+```typescript
+import { ComplianceAwareRouter } from '@meridian/compliant-router';
+
+const router = new ComplianceAwareRouter(config);
+await router.syncWhitelist();
+
+const result = await router.getCompliantQuote(
+  traderWallet, inputMint, outputMint, amount, slippageBps
+);
+// result contains the Jupiter quote filtered to only compliant pool hops
+```
 
 ## Getting Started
 
