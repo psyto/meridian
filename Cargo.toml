@@ -4,7 +4,8 @@ members = [
     "programs/transfer-hook",
     "programs/securities-engine",
     "programs/rwa-registry",
-    "programs/oracle"
+    "programs/oracle",
+    "programs/compliant-registry"
 ]
 resolver = "2"
 
