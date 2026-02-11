@@ -1,7 +1,7 @@
 {
   "name": "@meridian/aggregator",
   "version": "0.1.0",
-  "description": "DEX aggregation and route optimization for Meridian JPY pairs",
+  "description": "DEX aggregation and route optimization for Meridian stablecoin pairs",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

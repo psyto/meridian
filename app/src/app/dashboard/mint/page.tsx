@@ -27,7 +27,7 @@ export default function MintPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requests, setRequests] = useState<MintRequest[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [jpyBalance, setJpyBalance] = useState<string>('0');
+  const [stablecoinBalance, setStablecoinBalance] = useState<string>('0');
 
   useEffect(() => {
     if (connected && publicKey) {
@@ -39,10 +39,10 @@ export default function MintPage() {
   const fetchBalance = async () => {
     if (!publicKey) return;
     try {
-      const response = await fetch(`/api/v1/jpy/balance?wallet=${publicKey.toBase58()}`);
+      const response = await fetch(`/api/v1/stablecoin/balance?wallet=${publicKey.toBase58()}`);
       const data = await response.json();
       if (data.success) {
-        setJpyBalance(data.data.jpyBalance);
+        setStablecoinBalance(data.data.stablecoinBalance);
       }
     } catch (error) {
       console.error('Failed to fetch balance:', error);
@@ -52,7 +52,7 @@ export default function MintPage() {
   const fetchRequests = async () => {
     if (!publicKey) return;
     try {
-      const response = await fetch(`/api/v1/jpy/mint?wallet=${publicKey.toBase58()}`);
+      const response = await fetch(`/api/v1/stablecoin/mint?wallet=${publicKey.toBase58()}`);
       const data = await response.json();
       if (data.success) {
         setRequests(data.data.requests || []);
@@ -89,7 +89,7 @@ export default function MintPage() {
     setSuccessMessage(null);
 
     try {
-      const response = await fetch('/api/v1/jpy/mint', {
+      const response = await fetch('/api/v1/stablecoin/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,7 +107,7 @@ export default function MintPage() {
       if (data.success) {
         setSuccessMessage(
           activeTab === 'mint'
-            ? `発行リクエストを送信しました。リクエストID: ${data.data.requestId}\n\n管理者による銀行振込確認後、JPYトークンが発行されます。`
+            ? `発行リクエストを送信しました。リクエストID: ${data.data.requestId}\n\n管理者による銀行振込確認後、ステーブルコイントークンが発行されます。`
             : `償還リクエストを送信しました。リクエストID: ${data.data.requestId}\n\n管理者による確認後、銀行口座に振り込まれます。`
         );
         setAmount('');
@@ -148,7 +148,7 @@ export default function MintPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-        JPY 発行 / 償還
+        ステーブルコイン 発行 / 償還
       </h1>
 
       {/* Wallet Connection Warning */}
@@ -163,7 +163,7 @@ export default function MintPage() {
                 ウォレットを接続してください
               </p>
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                JPYの発行・償還にはウォレット接続が必要です
+                ステーブルコインの発行・償還にはウォレット接続が必要です
               </p>
             </div>
             <WalletMultiButton />
@@ -214,10 +214,10 @@ export default function MintPage() {
             <>
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  JPYトークンを発行
+                  ステーブルコイントークンを発行
                 </h2>
                 <p className="text-sm text-gray-500">
-                  法定通貨を預け入れてJPYトークンを発行します。
+                  法定通貨を預け入れてステーブルコイントークンを発行します。
                   銀行振込後、参照番号を入力してください。
                 </p>
               </div>
@@ -282,10 +282,10 @@ export default function MintPage() {
             <>
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  JPYトークンを償還
+                  ステーブルコイントークンを償還
                 </h2>
                 <p className="text-sm text-gray-500">
-                  JPYトークンを焼却して法定通貨を銀行口座に引き出します。
+                  ステーブルコイントークンを焼却して法定通貨を銀行口座に引き出します。
                 </p>
               </div>
 
@@ -293,7 +293,7 @@ export default function MintPage() {
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
                 <p className="text-sm text-gray-500">利用可能残高</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ¥{parseInt(jpyBalance).toLocaleString()}
+                  ¥{parseInt(stablecoinBalance).toLocaleString()}
                 </p>
               </div>
 
@@ -312,7 +312,7 @@ export default function MintPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => setAmount(jpyBalance)}
+                    onClick={() => setAmount(stablecoinBalance)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded"
                   >
                     最大

@@ -6,7 +6,7 @@ use crate::state::*;
 use crate::errors::MeridianError;
 
 #[derive(Accounts)]
-pub struct BurnJpy<'info> {
+pub struct BurnStablecoin<'info> {
     #[account(mut)]
     pub holder: Signer<'info>,
 
@@ -42,7 +42,7 @@ pub struct BurnParams {
     pub redemption_info: [u8; 64],
 }
 
-pub fn handler(ctx: Context<BurnJpy>, params: BurnParams) -> Result<()> {
+pub fn handler(ctx: Context<BurnStablecoin>, params: BurnParams) -> Result<()> {
     let clock = Clock::get()?;
     let mint_config = &mut ctx.accounts.mint_config;
 
@@ -72,7 +72,7 @@ pub fn handler(ctx: Context<BurnJpy>, params: BurnParams) -> Result<()> {
     mint_config.total_supply = mint_config.total_supply.saturating_sub(params.amount);
     mint_config.updated_at = clock.unix_timestamp;
 
-    emit!(JpyBurned {
+    emit!(StablecoinBurned {
         mint: ctx.accounts.mint.key(),
         holder: ctx.accounts.holder.key(),
         amount: params.amount,
@@ -85,7 +85,7 @@ pub fn handler(ctx: Context<BurnJpy>, params: BurnParams) -> Result<()> {
 }
 
 #[event]
-pub struct JpyBurned {
+pub struct StablecoinBurned {
     pub mint: Pubkey,
     pub holder: Pubkey,
     pub amount: u64,

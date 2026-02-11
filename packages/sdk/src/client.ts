@@ -5,7 +5,7 @@ export interface MeridianConfig {
   connection: Connection;
   wallet?: Wallet;
   programIds?: {
-    jpyMint?: PublicKey;
+    stablecoinMint?: PublicKey;
     transferHook?: PublicKey;
     securitiesEngine?: PublicKey;
     rwaRegistry?: PublicKey;
@@ -14,7 +14,7 @@ export interface MeridianConfig {
 }
 
 export const DEFAULT_PROGRAM_IDS = {
-  jpyMint: new PublicKey('JPYm1111111111111111111111111111111111111111'),
+  stablecoinMint: new PublicKey('JPYm1111111111111111111111111111111111111111'),
   transferHook: new PublicKey('THKm1111111111111111111111111111111111111111'),
   securitiesEngine: new PublicKey('SECm1111111111111111111111111111111111111111'),
   rwaRegistry: new PublicKey('RWAm1111111111111111111111111111111111111111'),
@@ -75,7 +75,7 @@ export class MeridianClient {
   deriveMintConfigPda(): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('mint_config')],
-      this.programIds.jpyMint
+      this.programIds.stablecoinMint
     );
   }
 
@@ -85,7 +85,7 @@ export class MeridianClient {
   deriveIssuerPda(authority: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('issuer'), authority.toBuffer()],
-      this.programIds.jpyMint
+      this.programIds.stablecoinMint
     );
   }
 
@@ -95,7 +95,7 @@ export class MeridianClient {
   deriveCollateralVaultPda(mintConfig: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('collateral_vault'), mintConfig.toBuffer()],
-      this.programIds.jpyMint
+      this.programIds.stablecoinMint
     );
   }
 

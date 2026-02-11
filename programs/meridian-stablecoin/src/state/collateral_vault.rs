@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
 pub struct CollateralVault {
-    /// Associated JPY mint config
+    /// Associated stablecoin mint config
     pub mint_config: Pubkey,
 
     /// Total fiat collateral held (in smallest unit)
@@ -37,10 +37,10 @@ pub struct CollateralVault {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
 pub enum CollateralType {
-    /// Japanese Yen fiat held in trust bank
-    FiatJpy,
-    /// Japanese Government Bonds (JGB)
-    Jgb,
+    /// Fiat currency held in trust bank
+    Fiat,
+    /// Government bonds
+    GovernmentBond,
     /// Bank deposits
     BankDeposit,
     /// Other approved collateral

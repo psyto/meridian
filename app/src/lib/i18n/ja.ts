@@ -6,7 +6,7 @@ export const ja = {
   // Common
   common: {
     appName: 'Meridian',
-    tagline: 'トークン化証券・RWA取引のための日本円ステーブルコインインフラ',
+    tagline: 'トークン化証券・RWA取引のためのステーブルコインインフラ',
     loading: '読み込み中...',
     error: 'エラー',
     success: '成功',
@@ -52,18 +52,18 @@ export const ja = {
     docs: 'ドキュメント',
   },
 
-  // JPY Stablecoin
-  jpy: {
-    title: '日本円ステーブルコイン',
-    symbol: 'JPY',
+  // Stablecoin
+  stablecoin: {
+    title: 'ステーブルコイン',
+    symbol: 'ステーブルコイン',
     balance: '残高',
     totalSupply: '総供給量',
     collateralRatio: '担保率',
 
     // Mint
     mint: {
-      title: 'JPY発行',
-      description: '法定通貨を預け入れてJPYトークンを発行',
+      title: 'ステーブルコイン発行',
+      description: '法定通貨を預け入れてステーブルコイントークンを発行',
       amount: '発行金額',
       amountPlaceholder: '金額を入力',
       recipient: '受取アドレス',
@@ -86,8 +86,8 @@ export const ja = {
 
     // Burn
     burn: {
-      title: 'JPY償還',
-      description: 'JPYトークンを焼却して法定通貨を引き出し',
+      title: 'ステーブルコイン償還',
+      description: 'ステーブルコイントークンを焼却して法定通貨を引き出し',
       amount: '償還金額',
       amountPlaceholder: '金額を入力',
       bankAccount: '銀行口座情報',
@@ -100,8 +100,8 @@ export const ja = {
 
     // Transfer
     transfer: {
-      title: 'JPY送金',
-      description: 'KYC認証済みアドレスにJPYを送金',
+      title: 'ステーブルコイン送金',
+      description: 'KYC認証済みアドレスにステーブルコインを送金',
       amount: '送金金額',
       recipient: '送金先アドレス',
       recipientPlaceholder: '送金先のSolanaアドレス',
@@ -119,7 +119,7 @@ export const ja = {
     title: 'コンプライアンス',
     kyc: {
       title: 'KYC認証',
-      description: '本人確認を完了してJPYの送受信を有効化',
+      description: '本人確認を完了してステーブルコインの送受信を有効化',
       status: 'KYCステータス',
       level: 'KYCレベル',
       jurisdiction: '管轄地域',

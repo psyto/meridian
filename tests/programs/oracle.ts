@@ -10,23 +10,23 @@ describe('oracle', () => {
   const program = anchor.workspace.Oracle as Program;
   const authority = provider.wallet;
 
-  let jpyPriceFeedPda: PublicKey;
-  let jpyVolatilityPda: PublicKey;
-  let jpyFundingFeedPda: PublicKey;
+  let testPriceFeedPda: PublicKey;
+  let testVolatilityPda: PublicKey;
+  let testFundingFeedPda: PublicKey;
 
   before(async () => {
-    [jpyPriceFeedPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('price_feed'), Buffer.from('JPYUSD')],
+    [testPriceFeedPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('price_feed'), Buffer.from('TESTUSD')],
       program.programId
     );
 
-    [jpyVolatilityPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('volatility_index'), Buffer.from('JPYUSD')],
+    [testVolatilityPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('volatility_index'), Buffer.from('TESTUSD')],
       program.programId
     );
 
-    [jpyFundingFeedPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('funding_feed'), Buffer.from('JPYUSD')],
+    [testFundingFeedPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('funding_feed'), Buffer.from('TESTUSD')],
       program.programId
     );
   });
@@ -35,20 +35,20 @@ describe('oracle', () => {
     it('should initialize a price feed', async () => {
       const tx = await program.methods
         .initializePriceFeed({
-          assetSymbol: 'JPYUSD',
+          assetSymbol: 'TESTUSD',
           assetType: { fiat: {} },
           sampleIntervalSeconds: 60,
         })
         .accounts({
           authority: authority.publicKey,
-          priceFeed: jpyPriceFeedPda,
+          priceFeed: testPriceFeedPda,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
 
-      const feed = await program.account.priceFeed.fetch(jpyPriceFeedPda);
+      const feed = await program.account.priceFeed.fetch(testPriceFeedPda);
       expect(feed.authority.toString()).to.equal(authority.publicKey.toString());
-      expect(feed.assetSymbol).to.equal('JPYUSD');
+      expect(feed.assetSymbol).to.equal('TESTUSD');
       expect(feed.isActive).to.be.true;
     });
 
@@ -60,11 +60,11 @@ describe('oracle', () => {
         .updatePrice(price, confidence)
         .accounts({
           authority: authority.publicKey,
-          priceFeed: jpyPriceFeedPda,
+          priceFeed: testPriceFeedPda,
         })
         .rpc();
 
-      const feed = await program.account.priceFeed.fetch(jpyPriceFeedPda);
+      const feed = await program.account.priceFeed.fetch(testPriceFeedPda);
       expect(feed.currentPrice.toNumber()).to.equal(670000);
       expect(feed.confidence.toNumber()).to.equal(1000);
       expect(feed.lastUpdateTime.toNumber()).to.be.greaterThan(0);
@@ -78,14 +78,14 @@ describe('oracle', () => {
           .updatePrice(new anchor.BN(p), new anchor.BN(1000))
           .accounts({
             authority: authority.publicKey,
-            priceFeed: jpyPriceFeedPda,
+            priceFeed: testPriceFeedPda,
           })
           .rpc();
 
         await new Promise((r) => setTimeout(r, 100));
       }
 
-      const feed = await program.account.priceFeed.fetch(jpyPriceFeedPda);
+      const feed = await program.account.priceFeed.fetch(testPriceFeedPda);
       expect(feed.twapValue.toNumber()).to.be.greaterThanOrEqual(0);
     });
 
@@ -97,7 +97,7 @@ describe('oracle', () => {
           .updatePrice(new anchor.BN(999999), new anchor.BN(100))
           .accounts({
             authority: fakeAuthority.publicKey,
-            priceFeed: jpyPriceFeedPda,
+            priceFeed: testPriceFeedPda,
           })
           .signers([fakeAuthority])
           .rpc();
@@ -111,17 +111,17 @@ describe('oracle', () => {
   describe('volatility index', () => {
     it('should initialize volatility index', async () => {
       const tx = await program.methods
-        .initializeVolatilityIndex('JPYUSD')
+        .initializeVolatilityIndex('TESTUSD')
         .accounts({
           authority: authority.publicKey,
-          volatilityIndex: jpyVolatilityPda,
-          priceFeed: jpyPriceFeedPda,
+          volatilityIndex: testVolatilityPda,
+          priceFeed: testPriceFeedPda,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
 
-      const vol = await program.account.volatilityIndex.fetch(jpyVolatilityPda);
-      expect(vol.priceFeed.toString()).to.equal(jpyPriceFeedPda.toString());
+      const vol = await program.account.volatilityIndex.fetch(testVolatilityPda);
+      expect(vol.priceFeed.toString()).to.equal(testPriceFeedPda.toString());
     });
 
     it('should update volatility with observation', async () => {
@@ -132,11 +132,11 @@ describe('oracle', () => {
         .updateVolatility(realizedVol, impliedVol)
         .accounts({
           authority: authority.publicKey,
-          volatilityIndex: jpyVolatilityPda,
+          volatilityIndex: testVolatilityPda,
         })
         .rpc();
 
-      const vol = await program.account.volatilityIndex.fetch(jpyVolatilityPda);
+      const vol = await program.account.volatilityIndex.fetch(testVolatilityPda);
       expect(vol.realizedVolatility.toNumber()).to.equal(800);
       expect(vol.impliedVolatility.toNumber()).to.equal(1000);
     });
@@ -149,11 +149,11 @@ describe('oracle', () => {
         .updateVolatility(highRealizedVol, highImpliedVol)
         .accounts({
           authority: authority.publicKey,
-          volatilityIndex: jpyVolatilityPda,
+          volatilityIndex: testVolatilityPda,
         })
         .rpc();
 
-      const vol = await program.account.volatilityIndex.fetch(jpyVolatilityPda);
+      const vol = await program.account.volatilityIndex.fetch(testVolatilityPda);
       expect(vol.regime).to.exist;
     });
   });
@@ -161,15 +161,15 @@ describe('oracle', () => {
   describe('funding feed', () => {
     it('should initialize funding feed', async () => {
       const tx = await program.methods
-        .initializeFundingFeed('JPYUSD')
+        .initializeFundingFeed('TESTUSD')
         .accounts({
           authority: authority.publicKey,
-          fundingFeed: jpyFundingFeedPda,
+          fundingFeed: testFundingFeedPda,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
 
-      const feed = await program.account.fundingFeed.fetch(jpyFundingFeedPda);
+      const feed = await program.account.fundingFeed.fetch(testFundingFeedPda);
       expect(feed.authority.toString()).to.equal(authority.publicKey.toString());
     });
 
@@ -181,11 +181,11 @@ describe('oracle', () => {
         .updateFundingRate(rate, source)
         .accounts({
           authority: authority.publicKey,
-          fundingFeed: jpyFundingFeedPda,
+          fundingFeed: testFundingFeedPda,
         })
         .rpc();
 
-      const feed = await program.account.fundingFeed.fetch(jpyFundingFeedPda);
+      const feed = await program.account.fundingFeed.fetch(testFundingFeedPda);
       expect(feed.currentRate.toNumber()).to.equal(50);
     });
 
@@ -201,12 +201,12 @@ describe('oracle', () => {
           .updateFundingRate(new anchor.BN(rate), source)
           .accounts({
             authority: authority.publicKey,
-            fundingFeed: jpyFundingFeedPda,
+            fundingFeed: testFundingFeedPda,
           })
           .rpc();
       }
 
-      const feed = await program.account.fundingFeed.fetch(jpyFundingFeedPda);
+      const feed = await program.account.fundingFeed.fetch(testFundingFeedPda);
       expect(feed.currentRate.toNumber()).to.be.within(45, 55);
     });
   });

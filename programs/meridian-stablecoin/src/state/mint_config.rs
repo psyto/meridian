@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-/// Configuration for the JPY stablecoin mint
+/// Configuration for the stablecoin mint
 #[account]
 #[derive(InitSpace)]
 pub struct MintConfig {
@@ -13,10 +13,10 @@ pub struct MintConfig {
     /// Transfer hook program for KYC/AML compliance
     pub transfer_hook_program: Pubkey,
 
-    /// Total JPY tokens in circulation
+    /// Total stablecoin tokens in circulation
     pub total_supply: u64,
 
-    /// Total fiat collateral backing (in smallest JPY unit - 1 = ¥0.01)
+    /// Total fiat collateral backing (in smallest unit)
     pub total_collateral: u64,
 
     /// Collateral ratio in basis points (10000 = 100%)
@@ -29,7 +29,7 @@ pub struct MintConfig {
     /// Freeze authority for regulatory compliance
     pub freeze_authority: Option<Pubkey>,
 
-    /// Oracle for JPY/USD price feed
+    /// Oracle for price feed
     pub price_oracle: Option<Pubkey>,
 
     /// Last audit timestamp

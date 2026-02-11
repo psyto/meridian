@@ -1,13 +1,13 @@
 # Meridian
 
-**JPY Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
+**Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
 
 A Layer 1 blockchain platform for Asia's onchain capital markets.
 
 ## Overview
 
 Meridian provides institutional-grade infrastructure for:
-- **JPY Stablecoin**: Trust-type electronic payment method (信託型3号電子決済手段) compliant
+- **Stablecoin**: Trust-type electronic payment method compliant
 - **Securities Trading**: 24/7 spot and derivatives markets for tokenized equities
 - **RWA Tokenization**: Real-world asset registration, custody verification, and dividends
 - **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks
@@ -20,10 +20,10 @@ Meridian provides institutional-grade infrastructure for:
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐             │
-│  │   JPY MINT     │  │   COMPLIANCE   │  │    TRADING     │             │
+│  │  STABLECOIN    │  │   COMPLIANCE   │  │    TRADING     │             │
 │  │   ENGINE       │  │    LAYER       │  │    ENGINE      │             │
 │  │                │  │                │  │                │             │
-│  │  meridian-jpy  │  │  transfer-hook │  │  securities-   │             │
+│  │meridian-stblcn │  │  transfer-hook │  │  securities-   │             │
 │  │                │  │                │  │  engine        │             │
 │  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘             │
 │          │                   │                   │                       │
@@ -55,7 +55,7 @@ This project synthesizes patterns from internal modules:
 
 | Component | Key Patterns |
 |-----------|--------------|
-| JPY Stablecoin | Token-2022 mint, transfer hooks, collateral management |
+| Stablecoin | Token-2022 mint, transfer hooks, collateral management |
 | Transfer Hook | KYC whitelist, jurisdiction checks, daily limits |
 | Securities Engine | AMM (x*y=k), LP tokens, pool management |
 | Derivatives | Perpetuals, funding rates, variance swaps |
@@ -65,8 +65,8 @@ This project synthesizes patterns from internal modules:
 
 ## Programs
 
-### meridian-jpy
-Core JPY stablecoin with Token-2022 extensions:
+### meridian-stablecoin
+Core stablecoin with Token-2022 extensions:
 - Mint/burn with collateral verification
 - Multi-issuer support (Trust Bank, Distributors)
 - Emergency pause mechanism
@@ -176,17 +176,17 @@ yarn dev
 
 ## API Endpoints
 
-### JPY Stablecoin
+### Stablecoin
 ```
-POST /api/v1/jpy/mint/request     # Request JPY minting
-GET  /api/v1/jpy/mint/status/:id  # Check mint status
-POST /api/v1/jpy/burn             # Burn for redemption
+POST /api/v1/stablecoin/mint/request     # Request stablecoin minting
+GET  /api/v1/stablecoin/mint/status/:id  # Check mint status
+POST /api/v1/stablecoin/burn             # Burn for redemption
 ```
 
 ### Compliance
 ```
-POST /api/v1/jpy/compliance/kyc/submit  # Submit KYC
-GET  /api/v1/jpy/compliance?wallet=...  # Check status
+POST /api/v1/stablecoin/compliance/kyc/submit  # Submit KYC
+GET  /api/v1/stablecoin/compliance?wallet=...  # Check status
 ```
 
 ### Trading
@@ -212,17 +212,17 @@ GET  /api/v1/rwa/dividends       # Pending dividends
 ## SDK Usage
 
 ```typescript
-import { createMeridianClient, createJpySdk, createSecuritiesSdk } from '@meridian/sdk';
+import { createMeridianClient, createStablecoinSdk, createSecuritiesSdk } from '@meridian/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // Initialize client
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 const client = createMeridianClient({ connection });
 
-// JPY operations
-const jpySdk = createJpySdk(client);
-const balance = await jpySdk.getBalance(walletPubkey, jpyMint);
-console.log(jpySdk.formatAmount(balance)); // ¥1,234.56
+// Stablecoin operations
+const stablecoinSdk = createStablecoinSdk(client);
+const balance = await stablecoinSdk.getBalance(walletPubkey, stablecoinMint);
+console.log(stablecoinSdk.formatAmount(balance));
 
 // Securities trading
 const secSdk = createSecuritiesSdk(client);
@@ -232,7 +232,7 @@ console.log(`Output: ${quote.outputAmount}, Impact: ${quote.priceImpact}%`);
 
 ## Regulatory Compliance
 
-### Japanese PSA (資金決済法)
+### Regulatory Compliance
 - Trust-type electronic payment method (信託型3号電子決済手段)
 - No ¥1,000,000 limit for domestic transfers
 - 100% fiat collateral backing

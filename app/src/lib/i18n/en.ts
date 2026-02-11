@@ -6,7 +6,7 @@ export const en = {
   // Common
   common: {
     appName: 'Meridian',
-    tagline: 'JPY Stablecoin Infrastructure for Tokenized Securities and RWA Trading',
+    tagline: 'Stablecoin Infrastructure for Tokenized Securities and RWA Trading',
     loading: 'Loading...',
     error: 'Error',
     success: 'Success',
@@ -52,18 +52,18 @@ export const en = {
     docs: 'Docs',
   },
 
-  // JPY Stablecoin
-  jpy: {
-    title: 'JPY Stablecoin',
-    symbol: 'JPY',
+  // Stablecoin
+  stablecoin: {
+    title: 'Stablecoin',
+    symbol: 'STABLECOIN',
     balance: 'Balance',
     totalSupply: 'Total Supply',
     collateralRatio: 'Collateral Ratio',
 
     // Mint
     mint: {
-      title: 'Mint JPY',
-      description: 'Deposit fiat currency to mint JPY tokens',
+      title: 'Mint Stablecoin',
+      description: 'Deposit fiat currency to mint stablecoin tokens',
       amount: 'Mint Amount',
       amountPlaceholder: 'Enter amount',
       recipient: 'Recipient Address',
@@ -86,8 +86,8 @@ export const en = {
 
     // Burn
     burn: {
-      title: 'Burn JPY',
-      description: 'Burn JPY tokens to withdraw fiat currency',
+      title: 'Burn Stablecoin',
+      description: 'Burn stablecoin tokens to withdraw fiat currency',
       amount: 'Burn Amount',
       amountPlaceholder: 'Enter amount',
       bankAccount: 'Bank Account Info',
@@ -100,8 +100,8 @@ export const en = {
 
     // Transfer
     transfer: {
-      title: 'Transfer JPY',
-      description: 'Send JPY to KYC-verified addresses',
+      title: 'Transfer Stablecoin',
+      description: 'Send stablecoin to KYC-verified addresses',
       amount: 'Transfer Amount',
       recipient: 'Recipient Address',
       recipientPlaceholder: 'Recipient Solana address',
@@ -119,7 +119,7 @@ export const en = {
     title: 'Compliance',
     kyc: {
       title: 'KYC Verification',
-      description: 'Complete identity verification to enable JPY transfers',
+      description: 'Complete identity verification to enable stablecoin transfers',
       status: 'KYC Status',
       level: 'KYC Level',
       jurisdiction: 'Jurisdiction',

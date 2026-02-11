@@ -11,7 +11,7 @@ const WalletMultiButton = dynamic(
 );
 
 interface BalanceData {
-  jpyBalance: string;
+  stablecoinBalance: string;
   usdcBalance: string;
   totalSupply: string;
 }
@@ -56,7 +56,7 @@ export default function PortfolioPage() {
     if (!publicKey) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/jpy/balance?wallet=${publicKey.toBase58()}`);
+      const response = await fetch(`/api/v1/stablecoin/balance?wallet=${publicKey.toBase58()}`);
       const data = await response.json();
       if (data.success) {
         setBalance(data.data);
@@ -81,7 +81,7 @@ export default function PortfolioPage() {
     }
   };
 
-  const formatJPY = (amount: string | number) => {
+  const formatStablecoin = (amount: string | number) => {
     return new Intl.NumberFormat('ja-JP', {
       style: 'currency',
       currency: 'JPY',
@@ -89,8 +89,8 @@ export default function PortfolioPage() {
     }).format(typeof amount === 'string' ? BigInt(amount) : amount);
   };
 
-  const formatUSD = (jpyAmount: string | number) => {
-    const usd = (typeof jpyAmount === 'string' ? Number(jpyAmount) : jpyAmount) / 150;
+  const formatUSD = (amount: string | number) => {
+    const usd = (typeof amount === 'string' ? Number(amount) : amount) / 150;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -102,17 +102,17 @@ export default function PortfolioPage() {
   // Build assets from balance
   const assets: Asset[] = [];
   if (balance) {
-    if (BigInt(balance.jpyBalance) > 0) {
+    if (BigInt(balance.stablecoinBalance) > 0) {
       assets.push({
-        symbol: 'JPY',
-        name: '日本円ステーブルコイン',
-        balance: Number(balance.jpyBalance),
-        value: Number(balance.jpyBalance),
+        symbol: 'STABLECOIN',
+        name: 'ステーブルコイン',
+        balance: Number(balance.stablecoinBalance),
+        value: Number(balance.stablecoinBalance),
         change: 0
       });
     }
     if (BigInt(balance.usdcBalance) > 0) {
-      // USDC has 6 decimals, convert to JPY value (1 USDC = 150 JPY)
+      // USDC has 6 decimals, convert to stablecoin value
       const usdcAmount = Number(balance.usdcBalance) / 1000000;
       const usdcValueInJpy = usdcAmount * 150;
       assets.push({
@@ -170,7 +170,7 @@ export default function PortfolioPage() {
         <div className="card">
           <p className="text-sm text-gray-500 mb-1">総資産額</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white number-display">
-            {loading ? '...' : formatJPY(totalValue)}
+            {loading ? '...' : formatStablecoin(totalValue)}
           </p>
           <p className="text-sm text-gray-500 mt-1">≈ {formatUSD(totalValue)}</p>
         </div>
@@ -254,7 +254,7 @@ export default function PortfolioPage() {
                         {asset.balance.toLocaleString()}
                       </td>
                       <td className="py-4 text-right font-medium text-gray-900 dark:text-white">
-                        {formatJPY(asset.value)}
+                        {formatStablecoin(asset.value)}
                       </td>
                       <td className={`py-4 text-right font-medium ${
                         asset.change >= 0 ? 'text-green-500' : 'text-red-500'
@@ -277,9 +277,9 @@ export default function PortfolioPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
               <p>資産がありません</p>
-              <p className="text-sm mt-1">JPYを発行して取引を開始してください</p>
+              <p className="text-sm mt-1">ステーブルコインを発行して取引を開始してください</p>
               <Link href="/dashboard/mint" className="btn-primary mt-4 inline-block">
-                JPYを発行
+                ステーブルコインを発行
               </Link>
             </div>
           )}
@@ -351,7 +351,7 @@ export default function PortfolioPage() {
                       <td className={`py-4 text-right font-medium ${
                         tx.type === 'mint' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {tx.type === 'mint' ? '+' : '-'}{formatJPY(tx.amount)}
+                        {tx.type === 'mint' ? '+' : '-'}{formatStablecoin(tx.amount)}
                       </td>
                       <td className="py-4 text-right">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -393,10 +393,10 @@ export default function PortfolioPage() {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-3 h-3 bg-primary-500 rounded"></div>
-                  <span className="text-gray-900 dark:text-white font-medium">JPY</span>
+                  <span className="text-gray-900 dark:text-white font-medium">STABLECOIN</span>
                   <span className="text-gray-500">100%</span>
                 </div>
-                <p className="text-sm text-gray-500">{formatJPY(totalValue)}</p>
+                <p className="text-sm text-gray-500">{formatStablecoin(totalValue)}</p>
               </div>
             </div>
           </div>

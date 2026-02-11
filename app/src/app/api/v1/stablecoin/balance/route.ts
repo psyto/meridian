@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/app/lib/store';
 
 /**
- * JPY Balance API
+ * Stablecoin Balance API
  *
- * GET /api/v1/jpy/balance?wallet=...
+ * GET /api/v1/stablecoin/balance?wallet=...
  */
 
 export async function GET(request: NextRequest) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         walletAddress: wallet,
-        jpyBalance: balance.jpyBalance.toString(),
+        stablecoinBalance: balance.stablecoinBalance.toString(),
         usdcBalance: balance.usdcBalance.toString(),
         updatedAt: balance.updatedAt,
         totalSupply: totalSupply.toString(),

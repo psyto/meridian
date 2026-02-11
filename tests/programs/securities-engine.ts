@@ -51,7 +51,7 @@ describe('securities-engine', () => {
       securityMintKeypair,
     );
 
-    // Create quote mint (JPY)
+    // Create quote mint
     quoteMintPk = await createMint(
       provider.connection,
       payer,
@@ -260,7 +260,7 @@ describe('securities-engine', () => {
       );
     });
 
-    it('should execute a swap (buy security with JPY)', async () => {
+    it('should execute a swap (buy security with quote token)', async () => {
       const amountIn = new anchor.BN(1_500_000_00);
       const minAmountOut = new anchor.BN(0);
 

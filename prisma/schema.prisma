@@ -128,7 +128,7 @@ enum AdminRole {
   VIEWER
 }
 
-// JPY Stablecoin
+// Stablecoin
 model MintRequest {
   id            String      @id @default(cuid())
   walletAddress String
@@ -353,7 +353,7 @@ model RwaAsset {
   tokenMint        String
 
   valuation        BigInt
-  valuationCurrency String     @default("JPY")
+  valuationCurrency String     @default("USD")
   totalSupply      BigInt
 
   custodian        String

@@ -1,13 +1,13 @@
 # Meridian
 
-**トークン化証券・RWA取引のための日本円ステーブルコインインフラ**
+**トークン化証券・RWA取引のためのステーブルコインインフラ**
 
 アジアのオンチェーン資本市場向けレイヤー1ブロックチェーンプラットフォーム。
 
 ## 概要
 
 Meridianは機関投資家向けのインフラストラクチャを提供します：
-- **日本円ステーブルコイン**: 信託型3号電子決済手段に準拠
+- **ステーブルコイン**: 信託型3号電子決済手段に準拠
 - **証券取引**: トークン化株式の24時間365日スポット・デリバティブ市場
 - **RWAトークン化**: 実物資産の登録、保管検証、配当管理
 - **コンプライアンス**: Token-2022トランスファーフックによるKYC/AML機能内蔵
@@ -20,10 +20,10 @@ Meridianは機関投資家向けのインフラストラクチャを提供しま
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐             │
-│  │   JPY発行      │  │  コンプライアンス │  │    取引        │             │
+│  │ ステーブルコイン │  │  コンプライアンス │  │    取引        │             │
 │  │   エンジン      │  │    レイヤー      │  │   エンジン      │             │
 │  │                │  │                │  │                │             │
-│  │  meridian-jpy  │  │  transfer-hook │  │  securities-   │             │
+│  │meridian-stblcn │  │  transfer-hook │  │  securities-   │             │
 │  │                │  │                │  │  engine        │             │
 │  └───────┬────────┘  └───────┬────────┘  └───────┬────────┘             │
 │          │                   │                   │                       │
@@ -55,7 +55,7 @@ Meridianは機関投資家向けのインフラストラクチャを提供しま
 
 | コンポーネント | 主要パターン |
 |--------------|-------------|
-| 日本円ステーブルコイン | Token-2022発行、トランスファーフック、担保管理 |
+| ステーブルコイン | Token-2022発行、トランスファーフック、担保管理 |
 | トランスファーフック | KYCホワイトリスト、管轄権チェック、日次制限 |
 | 証券エンジン | AMM (x*y=k)、LPトークン、プール管理 |
 | デリバティブ | パーペチュアル、ファンディングレート、バリアンススワップ |
@@ -65,8 +65,8 @@ Meridianは機関投資家向けのインフラストラクチャを提供しま
 
 ## プログラム
 
-### meridian-jpy
-Token-2022拡張機能を備えたコア日本円ステーブルコイン：
+### meridian-stablecoin
+Token-2022拡張機能を備えたコアステーブルコイン：
 - 担保検証付き発行/償還
 - マルチ発行者対応（信託銀行、ディストリビューター）
 - 緊急停止メカニズム
@@ -164,17 +164,17 @@ yarn dev
 
 ## APIエンドポイント
 
-### 日本円ステーブルコイン
+### ステーブルコイン
 ```
-POST /api/v1/jpy/mint/request     # JPY発行リクエスト
-GET  /api/v1/jpy/mint/status/:id  # 発行ステータス確認
-POST /api/v1/jpy/burn             # 償還のための焼却
+POST /api/v1/stablecoin/mint/request     # ステーブルコイン発行リクエスト
+GET  /api/v1/stablecoin/mint/status/:id  # 発行ステータス確認
+POST /api/v1/stablecoin/burn             # 償還のための焼却
 ```
 
 ### コンプライアンス
 ```
-POST /api/v1/jpy/compliance/kyc/submit  # KYC提出
-GET  /api/v1/jpy/compliance?wallet=...  # ステータス確認
+POST /api/v1/stablecoin/compliance/kyc/submit  # KYC提出
+GET  /api/v1/stablecoin/compliance?wallet=...  # ステータス確認
 ```
 
 ### 取引
@@ -200,17 +200,17 @@ GET  /api/v1/rwa/dividends       # 未受領配当
 ## SDK使用方法
 
 ```typescript
-import { createMeridianClient, createJpySdk, createSecuritiesSdk } from '@meridian/sdk';
+import { createMeridianClient, createStablecoinSdk, createSecuritiesSdk } from '@meridian/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // クライアントを初期化
 const connection = new Connection('https://api.mainnet-beta.solana.com');
 const client = createMeridianClient({ connection });
 
-// JPY操作
-const jpySdk = createJpySdk(client);
-const balance = await jpySdk.getBalance(walletPubkey, jpyMint);
-console.log(jpySdk.formatAmount(balance)); // ¥1,234.56
+// ステーブルコイン操作
+const stablecoinSdk = createStablecoinSdk(client);
+const balance = await stablecoinSdk.getBalance(walletPubkey, stablecoinMint);
+console.log(stablecoinSdk.formatAmount(balance)); // ¥1,234.56
 
 // 証券取引
 const secSdk = createSecuritiesSdk(client);

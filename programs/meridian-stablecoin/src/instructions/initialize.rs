@@ -22,7 +22,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = authority,
-        mint::decimals = 2, // JPY uses 2 decimal places (¥100.00)
+        mint::decimals = 2, // Stablecoin uses 2 decimal places
         mint::authority = mint_config,
         mint::freeze_authority = mint_config,
         extensions::transfer_hook::authority = mint_config,

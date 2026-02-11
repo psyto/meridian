@@ -7,9 +7,9 @@ import { Navigation } from './components/Navigation';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Meridian - 日本円ステーブルコイン',
-  description: 'トークン化証券・RWA取引のための日本円ステーブルコインインフラ',
-  keywords: ['JPY', 'ステーブルコイン', 'トークン化証券', 'RWA', 'Meridian'],
+  title: 'Meridian - ステーブルコイン',
+  description: 'トークン化証券・RWA取引のためのステーブルコインインフラ',
+  keywords: ['ステーブルコイン', 'トークン化証券', 'RWA', 'Meridian'],
 };
 
 export default function RootLayout({

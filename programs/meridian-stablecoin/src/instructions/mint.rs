@@ -6,7 +6,7 @@ use crate::state::*;
 use crate::errors::MeridianError;
 
 #[derive(Accounts)]
-pub struct MintJpy<'info> {
+pub struct MintStablecoin<'info> {
     #[account(mut)]
     pub issuer_authority: Signer<'info>,
 
@@ -50,7 +50,7 @@ pub struct MintParams {
     pub reference: [u8; 32],
 }
 
-pub fn handler(ctx: Context<MintJpy>, params: MintParams) -> Result<()> {
+pub fn handler(ctx: Context<MintStablecoin>, params: MintParams) -> Result<()> {
     let clock = Clock::get()?;
     let mint_config = &mut ctx.accounts.mint_config;
     let issuer = &mut ctx.accounts.issuer;
@@ -93,7 +93,7 @@ pub fn handler(ctx: Context<MintJpy>, params: MintParams) -> Result<()> {
     mint_config.updated_at = clock.unix_timestamp;
     issuer.record_mint(params.amount);
 
-    emit!(JpyMinted {
+    emit!(StablecoinMinted {
         mint: ctx.accounts.mint.key(),
         issuer: ctx.accounts.issuer_authority.key(),
         recipient: ctx.accounts.recipient_token_account.key(),
@@ -107,7 +107,7 @@ pub fn handler(ctx: Context<MintJpy>, params: MintParams) -> Result<()> {
 }
 
 #[event]
-pub struct JpyMinted {
+pub struct StablecoinMinted {
     pub mint: Pubkey,
     pub issuer: Pubkey,
     pub recipient: Pubkey,

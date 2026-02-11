@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
-/// Authorized issuer/distributor for JPY stablecoin
-/// Trust Bank issues, Distributor handles distribution
+/// Authorized issuer/distributor for stablecoin
 #[account]
 #[derive(InitSpace)]
 pub struct Issuer {

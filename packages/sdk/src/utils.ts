@@ -197,11 +197,11 @@ export function constantProductOutput(
 }
 
 /**
- * Validate JPY amount (must be positive and reasonable)
+ * Validate stablecoin amount (must be positive and reasonable)
  */
-export function isValidJpyAmount(amount: BN): boolean {
-  // Maximum single transaction: 10 billion JPY
-  const MAX_AMOUNT = new BN('1000000000000'); // 10B with 2 decimals
+export function isValidStablecoinAmount(amount: BN): boolean {
+  // Maximum single transaction: 10 billion with 2 decimals
+  const MAX_AMOUNT = new BN('1000000000000');
 
   return amount.gtn(0) && amount.lte(MAX_AMOUNT);
 }

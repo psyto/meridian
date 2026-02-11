@@ -24,7 +24,7 @@ export interface MintRequest {
 
 export interface WalletBalance {
   walletAddress: string;
-  jpyBalance: bigint;
+  stablecoinBalance: bigint;
   usdcBalance: bigint;
   updatedAt: string;
 }
@@ -151,26 +151,26 @@ export const store = {
     }
     return {
       walletAddress,
-      jpyBalance: BigInt(0),
+      stablecoinBalance: BigInt(0),
       usdcBalance: BigInt(0),
       updatedAt: new Date().toISOString(),
     };
   },
 
-  // Update wallet balance (for mint/burn JPY)
+  // Update wallet balance (for mint/burn stablecoin)
   updateBalance: (walletAddress: string, amount: bigint, type: 'mint' | 'burn'): WalletBalance => {
     const current = globalStore.walletBalances?.get(walletAddress) || {
       walletAddress,
-      jpyBalance: BigInt(0),
+      stablecoinBalance: BigInt(0),
       usdcBalance: BigInt(0),
       updatedAt: new Date().toISOString(),
     };
 
     const newBalance: WalletBalance = {
       walletAddress,
-      jpyBalance: type === 'mint'
-        ? current.jpyBalance + amount
-        : current.jpyBalance - amount,
+      stablecoinBalance: type === 'mint'
+        ? current.stablecoinBalance + amount
+        : current.stablecoinBalance - amount,
       usdcBalance: current.usdcBalance,
       updatedAt: new Date().toISOString(),
     };
@@ -180,19 +180,19 @@ export const store = {
   },
 
   // Update token balance (generic)
-  updateTokenBalance: (walletAddress: string, token: 'JPY' | 'USDC', amount: bigint, type: 'add' | 'subtract'): WalletBalance => {
+  updateTokenBalance: (walletAddress: string, token: 'STABLECOIN' | 'USDC', amount: bigint, type: 'add' | 'subtract'): WalletBalance => {
     const current = globalStore.walletBalances?.get(walletAddress) || {
       walletAddress,
-      jpyBalance: BigInt(0),
+      stablecoinBalance: BigInt(0),
       usdcBalance: BigInt(0),
       updatedAt: new Date().toISOString(),
     };
 
     const newBalance: WalletBalance = {
       walletAddress,
-      jpyBalance: token === 'JPY'
-        ? (type === 'add' ? current.jpyBalance + amount : current.jpyBalance - amount)
-        : current.jpyBalance,
+      stablecoinBalance: token === 'STABLECOIN'
+        ? (type === 'add' ? current.stablecoinBalance + amount : current.stablecoinBalance - amount)
+        : current.stablecoinBalance,
       usdcBalance: token === 'USDC'
         ? (type === 'add' ? current.usdcBalance + amount : current.usdcBalance - amount)
         : current.usdcBalance,
@@ -207,7 +207,7 @@ export const store = {
   getTotalSupply: (): bigint => {
     let total = BigInt(0);
     globalStore.walletBalances?.forEach((balance) => {
-      total += balance.jpyBalance;
+      total += balance.stablecoinBalance;
     });
     return total;
   },

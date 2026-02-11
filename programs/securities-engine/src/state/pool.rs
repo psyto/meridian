@@ -10,7 +10,7 @@ pub struct Pool {
     /// Security token liquidity
     pub security_liquidity: u64,
 
-    /// Quote (JPY) liquidity
+    /// Quote token liquidity
     pub quote_liquidity: u64,
 
     /// LP token mint

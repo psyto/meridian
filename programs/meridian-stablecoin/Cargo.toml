@@ -1,12 +1,12 @@
 [package]
-name = "meridian-jpy"
+name = "meridian-stablecoin"
 version = "0.1.0"
-description = "JPY Stablecoin with Token-2022 Extensions - Trust-type Electronic Payment Method (信託型3号電子決済手段)"
+description = "Stablecoin with Token-2022 Extensions - Compliant Electronic Payment Method"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "meridian_jpy"
+name = "meridian_stablecoin"
 
 [features]
 default = []

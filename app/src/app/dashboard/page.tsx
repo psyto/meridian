@@ -11,7 +11,7 @@ const WalletMultiButton = dynamic(
 );
 
 interface BalanceData {
-  jpyBalance: string;
+  stablecoinBalance: string;
   usdcBalance: string;
   totalSupply: string;
 }
@@ -46,7 +46,7 @@ export default function Dashboard() {
     if (!publicKey) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/jpy/balance?wallet=${publicKey.toBase58()}`);
+      const response = await fetch(`/api/v1/stablecoin/balance?wallet=${publicKey.toBase58()}`);
       const data = await response.json();
       if (data.success) {
         setBalance(data.data);
@@ -75,7 +75,7 @@ export default function Dashboard() {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
-  const formatJPY = (amount: string) => {
+  const formatStablecoin = (amount: string) => {
     return new Intl.NumberFormat('ja-JP', {
       style: 'currency',
       currency: 'JPY',
@@ -94,8 +94,8 @@ export default function Dashboard() {
     }).format(value);
   };
 
-  const formatUSD = (jpyAmount: string) => {
-    const usd = Number(jpyAmount) / 150;
+  const formatUSD = (amount: string) => {
+    const usd = Number(amount) / 150;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -104,19 +104,19 @@ export default function Dashboard() {
     }).format(usd);
   };
 
-  // Calculate total portfolio value in JPY
-  const getTotalPortfolioJPY = () => {
+  // Calculate total portfolio value
+  const getTotalPortfolioValue = () => {
     if (!balance) return BigInt(0);
-    const jpyValue = BigInt(balance.jpyBalance);
-    // Convert USDC to JPY (USDC has 6 decimals, multiply by 150 for JPY)
-    const usdcInJpy = (BigInt(balance.usdcBalance) * BigInt(150)) / BigInt(1000000);
-    return jpyValue + usdcInJpy;
+    const stablecoinValue = BigInt(balance.stablecoinBalance);
+    // Convert USDC to stablecoin value (USDC has 6 decimals, multiply by 150)
+    const usdcInStablecoin = (BigInt(balance.usdcBalance) * BigInt(150)) / BigInt(1000000);
+    return stablecoinValue + usdcInStablecoin;
   };
 
   const getAssetCount = () => {
     if (!balance) return 0;
     let count = 0;
-    if (BigInt(balance.jpyBalance) > 0) count++;
+    if (BigInt(balance.stablecoinBalance) > 0) count++;
     if (BigInt(balance.usdcBalance) > 0) count++;
     return count;
   };
@@ -195,19 +195,19 @@ export default function Dashboard() {
 
       {/* Balance Cards */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        {/* JPY Balance */}
+        {/* Stablecoin Balance */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-gray-500">JPY残高</h3>
+            <h3 className="text-sm font-medium text-gray-500">ステーブルコイン残高</h3>
             <span className="text-xs bg-accent-100 text-accent-700 px-2 py-1 rounded">
               ステーブルコイン
             </span>
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white number-display">
-            {loading ? '...' : balance ? formatJPY(balance.jpyBalance) : '¥0'}
+            {loading ? '...' : balance ? formatStablecoin(balance.stablecoinBalance) : '¥0'}
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            ≈ {balance ? formatUSD(balance.jpyBalance) : '$0.00'}
+            ≈ {balance ? formatUSD(balance.stablecoinBalance) : '$0.00'}
           </p>
         </div>
 
@@ -223,7 +223,7 @@ export default function Dashboard() {
             {loading ? '...' : balance ? formatUSDC(balance.usdcBalance) : '$0.00'}
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            ≈ {balance ? formatJPY(String((BigInt(balance.usdcBalance) * BigInt(150)) / BigInt(1000000))) : '¥0'}
+            ≈ {balance ? formatStablecoin(String((BigInt(balance.usdcBalance) * BigInt(150)) / BigInt(1000000))) : '¥0'}
           </p>
         </div>
 
@@ -233,7 +233,7 @@ export default function Dashboard() {
             <h3 className="text-sm font-medium text-gray-500">ポートフォリオ総額</h3>
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white number-display">
-            {loading ? '...' : formatJPY(getTotalPortfolioJPY().toString())}
+            {loading ? '...' : formatStablecoin(getTotalPortfolioValue().toString())}
           </p>
           <p className="text-sm text-gray-500 mt-1">
             {getAssetCount()} 資産
@@ -268,7 +268,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">発行</p>
-                <p className="text-sm text-gray-500">JPYを発行</p>
+                <p className="text-sm text-gray-500">ステーブルコインを発行</p>
               </div>
             </div>
           </Link>
@@ -282,7 +282,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">償還</p>
-                <p className="text-sm text-gray-500">JPYを償還</p>
+                <p className="text-sm text-gray-500">ステーブルコインを償還</p>
               </div>
             </div>
           </Link>

@@ -21,7 +21,7 @@ const config: Config = {
           900: '#1e3a8a',
           950: '#172554',
         },
-        // Japanese Yen gold accent
+        // Gold accent
         accent: {
           50: '#fffbeb',
           100: '#fef3c7',

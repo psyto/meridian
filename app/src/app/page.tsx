@@ -11,7 +11,7 @@ export default function Home() {
               Meridian
             </h1>
             <p className="text-xl md:text-2xl text-primary-100 mb-4">
-              日本円ステーブルコインインフラ
+              ステーブルコインインフラ
             </p>
             <p className="text-lg text-primary-200 mb-8 max-w-2xl mx-auto">
               トークン化証券・RWA取引のための次世代金融インフラ
@@ -27,7 +27,7 @@ export default function Home() {
                 href="/dashboard/mint"
                 className="bg-primary-500 hover:bg-primary-400 text-white font-medium py-3 px-8 rounded-lg transition-colors border border-primary-400"
               >
-                JPY発行
+                発行
               </Link>
             </div>
           </div>
@@ -41,13 +41,13 @@ export default function Home() {
             主要機能
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* JPY Stablecoin */}
+            {/* Stablecoin */}
             <div className="card">
               <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center mb-4">
                 <span className="text-2xl">¥</span>
               </div>
               <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
-                日本円ステーブルコイン
+                ステーブルコイン
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 信託型3号電子決済手段に準拠。100万円制限なしで国内送金が可能。
@@ -156,7 +156,7 @@ export default function Home() {
             今すぐ始める
           </h2>
           <p className="text-primary-100 mb-8 max-w-xl mx-auto">
-            ウォレットを接続してKYC認証を完了すると、日本円ステーブルコインの発行・送金・取引が可能になります。
+            ウォレットを接続してKYC認証を完了すると、ステーブルコインの発行・送金・取引が可能になります。
           </p>
           <Link
             href="/dashboard/compliance"

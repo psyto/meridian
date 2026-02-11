@@ -109,7 +109,7 @@ export default function CompliancePage() {
               KYC認証ステータス
             </h2>
             <p className="text-sm text-gray-500">
-              本人確認を完了するとJPYの発行・送金が可能になります
+              本人確認を完了するとステーブルコインの発行・送金が可能になります
             </p>
           </div>
           <div className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -344,7 +344,7 @@ export default function CompliancePage() {
         </div>
         <p className="text-sm text-gray-500 mt-4">
           KYC認証完了後、自動的にオンチェーンのホワイトリストに登録されます。
-          ホワイトリスト登録後はJPYトークンの送受信が可能になります。
+          ホワイトリスト登録後はステーブルコイントークンの送受信が可能になります。
         </p>
       </div>
 

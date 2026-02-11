@@ -9,11 +9,11 @@ import {
 } from '@solana/spl-token';
 import { expect } from 'chai';
 
-describe('meridian-jpy', () => {
+describe('meridian-stablecoin', () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.MeridianJpy as Program;
+  const program = anchor.workspace.MeridianStablecoin as Program;
   const authority = provider.wallet;
 
   let mintConfigPda: PublicKey;
@@ -47,7 +47,7 @@ describe('meridian-jpy', () => {
   });
 
   describe('initialize', () => {
-    it('should initialize JPY mint with Token-2022', async () => {
+    it('should initialize stablecoin mint with Token-2022', async () => {
       const tx = await program.methods
         .initialize({
           freezeAuthority: null,
@@ -148,7 +148,7 @@ describe('meridian-jpy', () => {
     it('should initialize collateral vault', async () => {
       const tx = await program.methods
         .initializeVault({
-          collateralType: { fiatJpy: {} },
+          collateralType: { fiat: {} },
           auditor: authority.publicKey,
         })
         .accounts({
@@ -202,7 +202,7 @@ describe('meridian-jpy', () => {
       );
     });
 
-    it('should mint JPY tokens to a verified recipient', async () => {
+    it('should mint stablecoin tokens to a verified recipient', async () => {
       const amount = new anchor.BN(1_000_000_00);
       const reference = Buffer.alloc(32);
 
@@ -225,7 +225,7 @@ describe('meridian-jpy', () => {
       expect(mintConfig.totalSupply.toNumber()).to.equal(1_000_000_00);
     });
 
-    it('should burn JPY tokens for redemption', async () => {
+    it('should burn stablecoin tokens for redemption', async () => {
       const amount = new anchor.BN(500_000_00);
       const redemptionInfo = Buffer.alloc(64);
 

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "programs/meridian-jpy",
+    "programs/meridian-stablecoin",
     "programs/transfer-hook",
     "programs/securities-engine",
     "programs/rwa-registry",

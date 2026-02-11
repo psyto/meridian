@@ -3,7 +3,7 @@
 //!
 
 //! Provides unified oracle infrastructure for:
-//! - Real-time price feeds (JPY/USD, security prices)
+//! - Real-time price feeds (fiat/USD, security prices)
 //! - Time-Weighted Average Price (TWAP)
 //! - Realized and implied volatility
 //! - Funding rates from CEX markets
@@ -221,7 +221,7 @@ pub struct PriceFeed {
     /// Authority that can update the feed
     pub authority: Pubkey,
 
-    /// Asset symbol (e.g., "JPY", "MERI")
+    /// Asset symbol (e.g., "JPY", "USD", "MERI")
     pub asset_symbol: String,
 
     /// Asset type
@@ -321,7 +321,7 @@ pub struct PriceSample {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
 pub enum AssetType {
-    /// Fiat currency (JPY, USD)
+    /// Fiat currency (e.g., JPY, USD, EUR)
     Fiat,
     /// Tokenized equity
     Equity,

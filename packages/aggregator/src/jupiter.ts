@@ -15,7 +15,7 @@ const DEFAULT_MAX_ROUTES = 3;
 const DEFAULT_TIMEOUT_MS = 10000;
 
 /**
- * Jupiter DEX Aggregator client for Meridian JPY pairs
+ * Jupiter DEX Aggregator client for Meridian stablecoin pairs
  */
 export class JupiterAggregator {
   private readonly apiBaseUrl: string;

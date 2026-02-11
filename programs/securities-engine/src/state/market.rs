@@ -10,7 +10,7 @@ pub struct Market {
     /// Security token mint (tokenized equity/RWA)
     pub security_mint: Pubkey,
 
-    /// Quote token mint (JPY stablecoin)
+    /// Quote token mint
     pub quote_mint: Pubkey,
 
     /// Market type

@@ -55,8 +55,8 @@ body {
   }
 }
 
-/* Japanese Yen symbol styling */
-.yen-symbol {
+/* Currency symbol styling */
+.currency-symbol {
   font-family: 'Noto Sans JP', sans-serif;
 }
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { store } from '@/app/lib/store';
 
 /**
- * JPY Minting API
+ * Stablecoin Minting API
  */
 
 const MintRequestSchema = z.object({

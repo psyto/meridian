@@ -1,7 +1,7 @@
 {
   "name": "@meridian/sdk",
   "version": "0.1.0",
-  "description": "TypeScript SDK for Meridian JPY Stablecoin and Securities Platform",
+  "description": "TypeScript SDK for Meridian Stablecoin and Securities Platform",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
-    "@solana/web3.js": "^1.98.0",
-    "@solana/spl-token": "^0.4.12"
+    "@solana/spl-token": "^0.4.12",
+    "@solana/web3.js": "^1.98.0"
   },
   "devDependencies": {
     "tsup": "^8.0.1",

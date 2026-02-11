@@ -70,7 +70,7 @@ export default function AdminDashboard() {
           管理者ダッシュボード
         </h1>
         <p className="text-gray-500 mt-1">
-          JPY発行・償還リクエストの管理
+          ステーブルコイン発行・償還リクエストの管理
         </p>
       </div>
 
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">発行リクエスト審査</h3>
-              <p className="text-sm text-gray-500">銀行振込確認後、JPYトークンを発行</p>
+              <p className="text-sm text-gray-500">銀行振込確認後、ステーブルコイントークンを発行</p>
             </div>
           </div>
         </Link>
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white">償還リクエスト処理</h3>
-              <p className="text-sm text-gray-500">JPYトークン焼却後、銀行振込を実行</p>
+              <p className="text-sm text-gray-500">ステーブルコイントークン焼却後、銀行振込を実行</p>
             </div>
           </div>
         </Link>

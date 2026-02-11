@@ -10,7 +10,7 @@ const WalletMultiButton = dynamic(
 );
 
 interface BalanceData {
-  jpyBalance: string;
+  stablecoinBalance: string;
   usdcBalance: string;
   totalSupply: string;
 }
@@ -19,7 +19,7 @@ const mockMarkets = [
   { symbol: 'ALPHA', name: 'Alpha Token', price: 3250, change: 2.5, volume: '¥1.2B', type: 'rwa' },
   { symbol: 'BETA', name: 'Beta Index', price: 15800, change: -1.2, volume: '¥890M', type: 'rwa' },
   { symbol: 'GAMMA', name: 'Gamma Fund', price: 2890, change: 0.8, volume: '¥2.1B', type: 'rwa' },
-  { symbol: 'JPY-USDC', name: 'JPY/USDC', price: 0.0067, change: 0.01, volume: '¥5.6B', type: 'swap' },
+  { symbol: 'STBL-USDC', name: 'STBL/USDC', price: 0.0067, change: 0.01, volume: '¥5.6B', type: 'swap' },
 ];
 
 export default function TradePage() {
@@ -41,7 +41,7 @@ export default function TradePage() {
   const fetchBalance = async () => {
     if (!publicKey) return;
     try {
-      const response = await fetch(`/api/v1/jpy/balance?wallet=${publicKey.toBase58()}`);
+      const response = await fetch(`/api/v1/stablecoin/balance?wallet=${publicKey.toBase58()}`);
       const data = await response.json();
       if (data.success) {
         setBalance(data.data);
@@ -51,17 +51,17 @@ export default function TradePage() {
     }
   };
 
-  const formatJPY = (amount: string | number) => {
+  const formatStablecoin = (amount: string | number) => {
     const value = typeof amount === 'string' ? Number(amount) : amount;
     return new Intl.NumberFormat('ja-JP').format(value);
   };
 
-  // Calculate USDC amount based on JPY input (1 USD ≈ 150 JPY, USDC = USD)
+  // Calculate USDC amount based on stablecoin input
   useEffect(() => {
     if (fromAmount) {
-      const jpyValue = parseFloat(fromAmount.replace(/,/g, ''));
-      if (!isNaN(jpyValue)) {
-        const usdcValue = jpyValue / 150;
+      const stablecoinValue = parseFloat(fromAmount.replace(/,/g, ''));
+      if (!isNaN(stablecoinValue)) {
+        const usdcValue = stablecoinValue / 150;
         setToAmount(usdcValue.toFixed(2));
       }
     } else {
@@ -81,8 +81,8 @@ export default function TradePage() {
       return;
     }
 
-    const jpyBalance = balance ? Number(balance.jpyBalance) : 0;
-    if (amount > jpyBalance) {
+    const stablecoinBalance = balance ? Number(balance.stablecoinBalance) : 0;
+    if (amount > stablecoinBalance) {
       alert('残高が不足しています');
       return;
     }
@@ -94,7 +94,7 @@ export default function TradePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: publicKey.toBase58(),
-          fromToken: 'JPY',
+          fromToken: 'STABLECOIN',
           toToken: 'USDC',
           fromAmount: Math.floor(amount).toString(),
           toAmount: toAmount,
@@ -104,7 +104,7 @@ export default function TradePage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`${formatJPY(amount)} JPY → ${toAmount} USDC のスワップが完了しました`);
+        alert(`${formatStablecoin(amount)} STABLECOIN → ${toAmount} USDC のスワップが完了しました`);
         setFromAmount('');
         setToAmount('');
         fetchBalance();
@@ -119,7 +119,7 @@ export default function TradePage() {
     }
   };
 
-  const jpyBalance = balance ? formatJPY(balance.jpyBalance) : '0';
+  const stablecoinBalance = balance ? formatStablecoin(balance.stablecoinBalance) : '0';
 
   if (!connected) {
     return (
@@ -190,7 +190,7 @@ export default function TradePage() {
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-2">
               <div className="flex justify-between mb-2">
                 <span className="text-sm text-gray-500">支払い</span>
-                <span className="text-sm text-gray-500">残高: ¥{jpyBalance}</span>
+                <span className="text-sm text-gray-500">残高: ¥{stablecoinBalance}</span>
               </div>
               <div className="flex items-center gap-4">
                 <input
@@ -201,16 +201,16 @@ export default function TradePage() {
                   className="flex-1 bg-transparent text-2xl font-medium outline-none text-gray-900 dark:text-white"
                 />
                 <button className="flex items-center gap-2 bg-white dark:bg-gray-600 px-3 py-2 rounded-lg">
-                  <span className="font-medium">JPY</span>
+                  <span className="font-medium">STABLECOIN</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
-              {balance && Number(balance.jpyBalance) > 0 && (
+              {balance && Number(balance.stablecoinBalance) > 0 && (
                 <button
                   className="text-xs text-primary-600 mt-2"
-                  onClick={() => setFromAmount(balance.jpyBalance)}
+                  onClick={() => setFromAmount(balance.stablecoinBalance)}
                 >
                   最大
                 </button>
@@ -255,7 +255,7 @@ export default function TradePage() {
             <div className="space-y-2 mb-6 text-sm">
               <div className="flex justify-between text-gray-500">
                 <span>レート</span>
-                <span>1 JPY = 0.0067 USDC</span>
+                <span>1 STABLECOIN = 0.0067 USDC</span>
               </div>
               <div className="flex justify-between text-gray-500">
                 <span>価格影響</span>
@@ -280,7 +280,7 @@ export default function TradePage() {
           {/* Chart / Info */}
           <div className="card">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              JPY / USDC
+              STABLECOIN / USDC
             </h3>
             <div className="bg-gray-100 dark:bg-gray-700 rounded-lg h-64 flex items-center justify-center text-gray-500">
               チャートエリア
@@ -343,7 +343,7 @@ export default function TradePage() {
                       </div>
                     </td>
                     <td className="py-4 text-right font-medium text-gray-900 dark:text-white">
-                      {market.symbol === 'JPY-USDC' ? market.price : `¥${market.price.toLocaleString()}`}
+                      {market.symbol === 'STBL-USDC' ? market.price : `¥${market.price.toLocaleString()}`}
                     </td>
                     <td className={`py-4 text-right font-medium ${market.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                       {market.change >= 0 ? '+' : ''}{market.change}%
@@ -373,7 +373,7 @@ export default function TradePage() {
 
           <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              RWA（実物資産トークン）取引は現在準備中です。JPY/USDCスワップをご利用ください。
+              RWA（実物資産トークン）取引は現在準備中です。ステーブルコイン/USDCスワップをご利用ください。
             </p>
           </div>
         </div>

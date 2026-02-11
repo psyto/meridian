@@ -73,13 +73,13 @@ export async function POST(
       walletAddress: existingRequest.walletAddress,
       type: existingRequest.type,
       amount: existingRequest.amount,
-      token: 'JPY',
+      token: 'STABLECOIN',
       txSignature: mockTxSignature,
       status: 'confirmed',
       confirmedAt: new Date().toISOString(),
     });
 
-    console.log(`[ADMIN] Balance updated for ${existingRequest.walletAddress}: ${newBalance.jpyBalance.toString()} JPY`);
+    console.log(`[ADMIN] Balance updated for ${existingRequest.walletAddress}: ${newBalance.stablecoinBalance.toString()} stablecoin`);
 
     // Update to completed
     const updatedRequest = store.updateRequest(id, {

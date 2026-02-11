@@ -44,7 +44,7 @@ pub struct WhitelistEntry {
     pub bump: u8,
 }
 
-/// KYC verification levels based on Japanese PSA requirements
+/// KYC verification levels for regulatory compliance
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
 pub enum KycLevel {
     /// Basic verification (email, phone)

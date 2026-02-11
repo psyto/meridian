@@ -10,9 +10,9 @@ import { MeridianClient } from './client';
 import { BN } from '@coral-xyz/anchor';
 
 /**
- * JPY Stablecoin SDK Module
+ * Stablecoin SDK Module
  *
- * Handles minting, burning, and transferring JPY tokens
+ * Handles minting, burning, and transferring stablecoin tokens
  * with KYC/AML compliance via transfer hooks.
  */
 
@@ -71,9 +71,9 @@ export interface TransferRequest {
 }
 
 /**
- * JPY Stablecoin SDK
+ * Stablecoin SDK
  */
-export class JpySdk {
+export class StablecoinSdk {
   private client: MeridianClient;
 
   constructor(client: MeridianClient) {
@@ -116,7 +116,7 @@ export class JpySdk {
   }
 
   /**
-   * Get JPY token balance for an address
+   * Get stablecoin token balance for an address
    */
   async getBalance(owner: PublicKey, mint: PublicKey): Promise<BN> {
     try {
@@ -135,7 +135,7 @@ export class JpySdk {
   }
 
   /**
-   * Get total supply of JPY tokens
+   * Get total supply of stablecoin tokens
    */
   async getTotalSupply(mint: PublicKey): Promise<BN> {
     try {
@@ -169,7 +169,7 @@ export class JpySdk {
         { pubkey: issuerPda, isSigner: false, isWritable: true },
         // Additional accounts...
       ],
-      programId: this.client.programIds.jpyMint,
+      programId: this.client.programIds.stablecoinMint,
       data,
     });
   }
@@ -191,7 +191,7 @@ export class JpySdk {
         { pubkey: mintConfigPda, isSigner: false, isWritable: true },
         // Additional accounts...
       ],
-      programId: this.client.programIds.jpyMint,
+      programId: this.client.programIds.stablecoinMint,
       data,
     });
   }
@@ -218,13 +218,13 @@ export class JpySdk {
         { pubkey: recipient, isSigner: false, isWritable: true },
         // Transfer hook accounts...
       ],
-      programId: this.client.programIds.jpyMint,
+      programId: this.client.programIds.stablecoinMint,
       data,
     });
   }
 
   /**
-   * Format JPY amount for display (2 decimals)
+   * Format stablecoin amount for display (2 decimals)
    */
   formatAmount(amount: BN): string {
     const str = amount.toString().padStart(3, '0');
@@ -234,7 +234,7 @@ export class JpySdk {
   }
 
   /**
-   * Parse JPY amount from string (e.g., "1234.56" -> 123456)
+   * Parse stablecoin amount from string (e.g., "1234.56" -> 123456)
    */
   parseAmount(amountStr: string): BN {
     const parts = amountStr.replace(/[¥,]/g, '').split('.');
@@ -245,8 +245,8 @@ export class JpySdk {
 }
 
 /**
- * Create JPY SDK instance
+ * Create Stablecoin SDK instance
  */
-export function createJpySdk(client: MeridianClient): JpySdk {
-  return new JpySdk(client);
+export function createStablecoinSdk(client: MeridianClient): StablecoinSdk {
+  return new StablecoinSdk(client);
 }

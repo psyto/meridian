@@ -7,7 +7,7 @@ pub struct KycRegistry {
     /// Registry authority (compliance officer)
     pub authority: Pubkey,
 
-    /// Associated JPY mint
+    /// Associated stablecoin mint
     pub mint: Pubkey,
 
     /// Total whitelisted wallets

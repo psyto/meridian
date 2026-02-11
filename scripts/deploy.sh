@@ -5,7 +5,7 @@
 set -euo pipefail
 
 CLUSTER="${1:-localnet}"
-PROGRAMS=("meridian_jpy" "transfer_hook" "securities_engine" "rwa_registry" "oracle")
+PROGRAMS=("meridian_stablecoin" "transfer_hook" "securities_engine" "rwa_registry" "oracle")
 
 echo "=== Meridian Program Deployment ==="
 echo "Cluster: $CLUSTER"

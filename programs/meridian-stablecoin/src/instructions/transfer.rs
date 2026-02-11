@@ -5,10 +5,9 @@ use anchor_spl::token_interface::{Mint, TokenAccount};
 use crate::state::*;
 use crate::errors::MeridianError;
 
-/// Transfer JPY with compliance check via transfer hook
-/// No 100万円 limit for trust-type electronic payment method (信託型3号電子決済手段)
+/// Transfer stablecoin with compliance check via transfer hook
 #[derive(Accounts)]
-pub struct TransferJpy<'info> {
+pub struct TransferStablecoin<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
 
@@ -53,7 +52,7 @@ pub struct TransferParams {
     pub memo: Option<[u8; 32]>,
 }
 
-pub fn handler(ctx: Context<TransferJpy>, params: TransferParams) -> Result<()> {
+pub fn handler(ctx: Context<TransferStablecoin>, params: TransferParams) -> Result<()> {
     let clock = Clock::get()?;
 
     require!(
@@ -77,10 +76,10 @@ pub fn handler(ctx: Context<TransferJpy>, params: TransferParams) -> Result<()> 
         cpi_accounts,
     );
 
-    // Decimals = 2 for JPY (¥100.00)
+    // Decimals = 2 for stablecoin
     token_2022::transfer_checked(cpi_ctx, params.amount, 2)?;
 
-    emit!(JpyTransferred {
+    emit!(StablecoinTransferred {
         mint: ctx.accounts.mint.key(),
         sender: ctx.accounts.sender.key(),
         recipient: ctx.accounts.recipient_token_account.key(),
@@ -93,7 +92,7 @@ pub fn handler(ctx: Context<TransferJpy>, params: TransferParams) -> Result<()> 
 }
 
 #[event]
-pub struct JpyTransferred {
+pub struct StablecoinTransferred {
     pub mint: Pubkey,
     pub sender: Pubkey,
     pub recipient: Pubkey,

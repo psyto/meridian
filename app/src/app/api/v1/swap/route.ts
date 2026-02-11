@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
         price: '1000000',
         route: [
           {
-            pool: 'JPY_USDC_POOL',
+            pool: 'STABLECOIN_USDC_POOL',
             inputMint,
             outputMint,
             amountIn: amount,
@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
     const swapAmount = BigInt(fromAmount);
 
     // Check if user has enough balance
-    if (fromToken === 'JPY') {
-      if (currentBalance.jpyBalance < swapAmount) {
+    if (fromToken === 'STABLECOIN') {
+      if (currentBalance.stablecoinBalance < swapAmount) {
         return NextResponse.json(
           {
             success: false,
@@ -131,10 +131,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Deduct from JPY balance
-      store.updateTokenBalance(walletAddress, 'JPY', swapAmount, 'subtract');
+      // Deduct from stablecoin balance
+      store.updateTokenBalance(walletAddress, 'STABLECOIN', swapAmount, 'subtract');
 
-      // Add USDC balance (convert: 1 JPY = 0.0067 USDC, so amount / 150)
+      // Add USDC balance (convert: 1 stablecoin = 0.0067 USDC, so amount / 150)
       // Store USDC as micro units (6 decimals) - multiply by 1000000
       const usdcAmount = (swapAmount * BigInt(1000000)) / BigInt(150);
       store.updateTokenBalance(walletAddress, 'USDC', usdcAmount, 'add');
@@ -153,10 +153,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Deduct USDC and add JPY
+      // Deduct USDC and add stablecoin
       store.updateTokenBalance(walletAddress, 'USDC', usdcSwapAmount, 'subtract');
-      const jpyAmount = (usdcSwapAmount * BigInt(150)) / BigInt(1000000);
-      store.updateTokenBalance(walletAddress, 'JPY', jpyAmount, 'add');
+      const stablecoinAmount = (usdcSwapAmount * BigInt(150)) / BigInt(1000000);
+      store.updateTokenBalance(walletAddress, 'STABLECOIN', stablecoinAmount, 'add');
     }
 
     // Create mock transaction signature

@@ -4,7 +4,7 @@ import type { QuoteResponse, SwapRoute, AggregatorConfig } from './types';
 
 /**
  * Route optimizer that finds the best swap path
- * for JPY stablecoin pairs across multiple DEXes
+ * for stablecoin pairs across multiple DEXes
  */
 export class RouteOptimizer {
   private aggregator: JupiterAggregator;

@@ -433,7 +433,7 @@ pub struct Dividend {
     /// Total dividend amount
     pub total_amount: u64,
 
-    /// Payment token (JPY stablecoin)
+    /// Payment token (stablecoin)
     pub payment_token: Pubkey,
 
     /// Record date

@@ -1,7 +1,7 @@
 //! Transfer Hook Program for KYC/AML Compliance
 //!
-//! Enforces Japanese PSA (資金決済法) requirements via Token-2022 transfer hooks.
-//! All transfers of JPY stablecoin are validated for:
+//! Enforces regulatory compliance requirements via Token-2022 transfer hooks.
+//! All transfers of stablecoin are validated for:
 //! - KYC verification status
 //! - Jurisdiction restrictions
 //! - Daily transaction limits (if applicable)

@@ -14,7 +14,7 @@ const KycSubmissionSchema = z.object({
   documentHash: z.string().length(64), // SHA-256 hash
 });
 
-// POST /api/v1/jpy/compliance/kyc/submit
+// POST /api/v1/stablecoin/compliance/kyc/submit
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/v1/jpy/compliance?wallet=...
+// GET /api/v1/stablecoin/compliance?wallet=...
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

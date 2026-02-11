@@ -31,7 +31,7 @@ export function getTranslations(locale: Locale = defaultLocale): TranslationKeys
 
 /**
  * Get a nested translation value by key path
- * Example: t('jpy.mint.title') => '発行'
+ * Example: t('stablecoin.mint.title') => '発行'
  */
 export function t(keyPath: string, locale: Locale = defaultLocale): string {
   const keys = keyPath.split('.');
