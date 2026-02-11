@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import { findKycRegistryPda, findWhitelistEntryPda } from '@accredit/sdk';
 
 export interface MeridianConfig {
   connection: Connection;
@@ -15,7 +16,7 @@ export interface MeridianConfig {
 
 export const DEFAULT_PROGRAM_IDS = {
   stablecoinMint: new PublicKey('EjzAJTrJMjJKUeC13GwXWbfQJGUdKDAyJkwVdyhmgUEH'),
-  transferHook: new PublicKey('AEDwQMQbLnpwQzkwCfNCkMn3zTAyTvqT23S7jy6Ft3r9'),
+  transferHook: new PublicKey('4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf'),
   securitiesEngine: new PublicKey('3iA5QKAovwfLENEiSCQJc1HNmCGGKAQg7ruMb428jNB7'),
   rwaRegistry: new PublicKey('GotJsPzK1B7Q95G1fpL4CX9L3aE1gnqbCSG8D4qJm7ax'),
   oracle: new PublicKey('E5df5JndQUdp34zJWnAwaj7YQTJeZYErtLuyZonLKzH7'),
@@ -47,31 +48,20 @@ export class MeridianClient {
     }
   }
 
-  /**
-   * Get the Anchor provider
-   */
   getProvider(): AnchorProvider | undefined {
     return this.provider;
   }
 
-  /**
-   * Get the current slot
-   */
   async getSlot(): Promise<number> {
     return this.connection.getSlot();
   }
 
-  /**
-   * Get account balance in SOL
-   */
   async getBalance(address: PublicKey): Promise<number> {
     const balance = await this.connection.getBalance(address);
     return balance / 1e9;
   }
 
-  /**
-   * Derive PDA for mint config
-   */
+  // Stablecoin PDAs (Meridian-specific)
   deriveMintConfigPda(): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('mint_config')],
@@ -79,9 +69,6 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for issuer
-   */
   deriveIssuerPda(authority: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('issuer'), authority.toBuffer()],
@@ -89,9 +76,6 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for collateral vault
-   */
   deriveCollateralVaultPda(mintConfig: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('collateral_vault'), mintConfig.toBuffer()],
@@ -99,29 +83,16 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for KYC registry
-   */
+  // KYC PDAs — delegated to @accredit/sdk
   deriveKycRegistryPda(mint: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from('kyc_registry'), mint.toBuffer()],
-      this.programIds.transferHook
-    );
+    return findKycRegistryPda(mint, this.programIds.transferHook);
   }
 
-  /**
-   * Derive PDA for whitelist entry
-   */
   deriveWhitelistEntryPda(wallet: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from('whitelist'), wallet.toBuffer()],
-      this.programIds.transferHook
-    );
+    return findWhitelistEntryPda(wallet, this.programIds.transferHook);
   }
 
-  /**
-   * Derive PDA for market
-   */
+  // Securities PDAs (Meridian-specific)
   deriveMarketPda(securityMint: PublicKey, quoteMint: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('market'), securityMint.toBuffer(), quoteMint.toBuffer()],
@@ -129,9 +100,6 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for pool
-   */
   derivePoolPda(market: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('pool'), market.toBuffer()],
@@ -139,9 +107,7 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for RWA asset
-   */
+  // RWA PDAs (Meridian-specific)
   deriveRwaAssetPda(symbol: string): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('asset'), Buffer.from(symbol)],
@@ -149,9 +115,7 @@ export class MeridianClient {
     );
   }
 
-  /**
-   * Derive PDA for price feed
-   */
+  // Oracle PDAs (Meridian-specific)
   derivePriceFeedPda(assetSymbol: string): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
       [Buffer.from('price_feed'), Buffer.from(assetSymbol)],
@@ -160,9 +124,6 @@ export class MeridianClient {
   }
 }
 
-/**
- * Create a new Meridian client
- */
 export function createMeridianClient(config: MeridianConfig): MeridianClient {
   return new MeridianClient(config);
 }

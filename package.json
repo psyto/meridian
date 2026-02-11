@@ -4,8 +4,11 @@
   "description": "Stablecoin Infrastructure for Tokenized Securities and RWA Trading",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "app"
+    "packages/sdk",
+    "packages/aggregator",
+    "packages/encryption",
+    "app",
+    "../accredit/packages/*"
   ],
   "scripts": {
     "dev": "turbo run dev",

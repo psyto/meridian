@@ -1,43 +1,11 @@
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 
-/**
- * Common types used across the Meridian SDK
- */
+// Re-export shared KYC/AML types from @accredit/types
+export { KycLevel, Jurisdiction } from '@accredit/types';
+export type { WhitelistEntry } from '@accredit/types';
 
-// KYC/AML Types
-export enum KycLevel {
-  Basic = 0,
-  Standard = 1,
-  Enhanced = 2,
-  Institutional = 3,
-}
-
-export enum Jurisdiction {
-  Japan = 0,
-  Singapore = 1,
-  HongKong = 2,
-  Eu = 3,
-  Usa = 4,
-  Other = 5,
-}
-
-export interface WhitelistEntry {
-  wallet: PublicKey;
-  registry: PublicKey;
-  kycLevel: KycLevel;
-  jurisdiction: Jurisdiction;
-  kycHash: Uint8Array;
-  isActive: boolean;
-  dailyLimit: BN;
-  dailyVolume: BN;
-  volumeResetTime: BN;
-  verifiedAt: BN;
-  expiryTimestamp: BN;
-  lastActivity: BN;
-}
-
-// Oracle Types
+// Oracle Types (Meridian-specific)
 export enum AssetType {
   Fiat = 0,
   Equity = 1,
