@@ -2,7 +2,7 @@
 
 **Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
 
-A Layer 1 blockchain platform for Asia's onchain capital markets.
+A Layer 1 blockchain platform for onchain capital markets.
 
 ## Overview
 
