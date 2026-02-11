@@ -49,7 +49,7 @@ describe('transfer-hook', () => {
 
       const registry = await program.account.kycRegistry.fetch(registryPda);
       expect(registry.authority.toString()).to.equal(authority.publicKey.toString());
-      expect(registry.whitelistCount).to.equal(0);
+      expect(registry.whitelistCount.toNumber()).to.equal(0);
       expect(registry.isActive).to.be.true;
     });
   });

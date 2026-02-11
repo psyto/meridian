@@ -16,7 +16,7 @@ export interface MeridianConfig {
 
 export const DEFAULT_PROGRAM_IDS = {
   stablecoinMint: new PublicKey('EjzAJTrJMjJKUeC13GwXWbfQJGUdKDAyJkwVdyhmgUEH'),
-  transferHook: new PublicKey('4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf'),
+  transferHook: new PublicKey('5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL'),
   securitiesEngine: new PublicKey('3iA5QKAovwfLENEiSCQJc1HNmCGGKAQg7ruMb428jNB7'),
   rwaRegistry: new PublicKey('GotJsPzK1B7Q95G1fpL4CX9L3aE1gnqbCSG8D4qJm7ax'),
   oracle: new PublicKey('E5df5JndQUdp34zJWnAwaj7YQTJeZYErtLuyZonLKzH7'),

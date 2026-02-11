@@ -8,19 +8,19 @@ skip-lint = false
 
 [programs.localnet]
 meridian_stablecoin = "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP"
-transfer_hook = "4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf"
+transfer_hook = "5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL"
 securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
 rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
 oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
-compliant_registry = "hhcx645NBLLRrKry3dkDMTMzZfrCUEJk3UurUYBxjww"
+compliant_registry = "66tKcQqpv8GH2igWWBcLVrTjvo8cgpVJJAE8xadAgnYA"
 
 [programs.devnet]
 meridian_stablecoin = "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP"
-transfer_hook = "4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf"
+transfer_hook = "5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL"
 securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
 rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
 oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
-compliant_registry = "hhcx645NBLLRrKry3dkDMTMzZfrCUEJk3UurUYBxjww"
+compliant_registry = "66tKcQqpv8GH2igWWBcLVrTjvo8cgpVJJAE8xadAgnYA"
 
 [registry]
 url = "https://api.apr.dev"
