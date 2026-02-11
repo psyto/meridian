@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PublicKey } from '@solana/web3.js';
 import {
   JupiterAggregator,
   RouteOptimizer,
@@ -262,9 +261,7 @@ describe('RouteOptimizer', () => {
       const directQuote = mockQuoteResponse({ outAmount: '980000' });
       const multiHopQuote = mockQuoteResponse({ outAmount: '990000' });
 
-      let callIdx = 0;
       fetchSpy.mockImplementation(async (url) => {
-        callIdx++;
         const urlStr = url instanceof Request ? url.url : url.toString();
         const data = urlStr.includes('onlyDirectRoutes=true') ? directQuote : multiHopQuote;
         return {

@@ -1,5 +1,4 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { PoolComplianceEntry, PoolStatus } from './types';
 
 const POOL_ENTRY_SEED = Buffer.from('pool_entry');
