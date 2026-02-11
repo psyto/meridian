@@ -183,7 +183,7 @@ Compliance-aware pool management for institutional DeFi:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/psyto/meridian.git
 cd meridian
 
 # Install dependencies
