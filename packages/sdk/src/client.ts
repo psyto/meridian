@@ -14,11 +14,11 @@ export interface MeridianConfig {
 }
 
 export const DEFAULT_PROGRAM_IDS = {
-  stablecoinMint: new PublicKey('JPYm1111111111111111111111111111111111111111'),
-  transferHook: new PublicKey('THKm1111111111111111111111111111111111111111'),
-  securitiesEngine: new PublicKey('SECm1111111111111111111111111111111111111111'),
-  rwaRegistry: new PublicKey('RWAm1111111111111111111111111111111111111111'),
-  oracle: new PublicKey('ORCm1111111111111111111111111111111111111111'),
+  stablecoinMint: new PublicKey('EjzAJTrJMjJKUeC13GwXWbfQJGUdKDAyJkwVdyhmgUEH'),
+  transferHook: new PublicKey('AEDwQMQbLnpwQzkwCfNCkMn3zTAyTvqT23S7jy6Ft3r9'),
+  securitiesEngine: new PublicKey('3iA5QKAovwfLENEiSCQJc1HNmCGGKAQg7ruMb428jNB7'),
+  rwaRegistry: new PublicKey('GotJsPzK1B7Q95G1fpL4CX9L3aE1gnqbCSG8D4qJm7ax'),
+  oracle: new PublicKey('E5df5JndQUdp34zJWnAwaj7YQTJeZYErtLuyZonLKzH7'),
 };
 
 /**
