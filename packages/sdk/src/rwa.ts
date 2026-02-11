@@ -33,6 +33,15 @@ export enum Currency {
   Sgd = 3,
 }
 
+export enum Jurisdiction {
+  Japan = 0,
+  Singapore = 1,
+  HongKong = 2,
+  Usa = 3,
+  Eu = 4,
+  Other = 5,
+}
+
 export interface RwaAsset {
   authority: PublicKey;
   custodian: PublicKey;
@@ -44,10 +53,14 @@ export interface RwaAsset {
   name: string;
   symbol: string;
   isin: Uint8Array | null;
+  jurisdiction: Jurisdiction;
+  legalDocumentHash: Uint8Array;
+  custodyProofHash: Uint8Array;
   status: AssetStatus;
   isFrozen: boolean;
   lastAudit: BN;
   createdAt: BN;
+  bump: number;
 }
 
 export interface OwnershipProof {
@@ -57,6 +70,7 @@ export interface OwnershipProof {
   acquisitionPrice: BN;
   acquiredAt: BN;
   isActive: boolean;
+  bump: number;
 }
 
 export interface Dividend {
@@ -109,8 +123,7 @@ export class RwaSdk {
       const accountInfo = await this.client.connection.getAccountInfo(assetPda);
       if (!accountInfo) return null;
 
-      // Deserialize account data
-      return null;
+      return this.deserializeRwaAsset(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -132,7 +145,7 @@ export class RwaSdk {
       const accountInfo = await this.client.connection.getAccountInfo(proofPda);
       if (!accountInfo) return null;
 
-      return null;
+      return this.deserializeOwnershipProof(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -213,6 +226,136 @@ export class RwaSdk {
       programId: this.client.programIds.rwaRegistry,
       data,
     });
+  }
+
+  private deserializeRwaAsset(data: Buffer): RwaAsset | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const authority = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const custodian = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const assetType = data[offset] as RwaAssetType;
+      offset += 1;
+
+      const tokenMint = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const totalSupply = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const valuation = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const valuationCurrency = data[offset] as Currency;
+      offset += 1;
+
+      // String: 4-byte length prefix + UTF-8 data
+      const nameLen = data.readUInt32LE(offset);
+      offset += 4;
+      const name = data.subarray(offset, offset + nameLen).toString('utf8');
+      offset += nameLen;
+
+      const symbolLen = data.readUInt32LE(offset);
+      offset += 4;
+      const symbol = data.subarray(offset, offset + symbolLen).toString('utf8');
+      offset += symbolLen;
+
+      // Option<[u8; 12]>
+      const hasIsin = data[offset] === 1;
+      offset += 1;
+      const isin = hasIsin
+        ? new Uint8Array(data.subarray(offset, offset + 12))
+        : null;
+      offset += 12;
+
+      const jurisdiction = data[offset] as Jurisdiction;
+      offset += 1;
+
+      const legalDocumentHash = new Uint8Array(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const custodyProofHash = new Uint8Array(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const status = data[offset] as AssetStatus;
+      offset += 1;
+
+      const isFrozen = data[offset] === 1;
+      offset += 1;
+
+      const lastAudit = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const createdAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const bump = data[offset];
+
+      return {
+        authority,
+        custodian,
+        assetType,
+        tokenMint,
+        totalSupply,
+        valuation,
+        valuationCurrency,
+        name,
+        symbol,
+        isin,
+        jurisdiction,
+        legalDocumentHash,
+        custodyProofHash,
+        status,
+        isFrozen,
+        lastAudit,
+        createdAt,
+        bump,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private deserializeOwnershipProof(data: Buffer): OwnershipProof | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const asset = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const owner = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const amount = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const acquisitionPrice = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const acquiredAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const isActive = data[offset] === 1;
+      offset += 1;
+
+      const bump = data[offset];
+
+      return {
+        asset,
+        owner,
+        amount,
+        acquisitionPrice,
+        acquiredAt,
+        isActive,
+        bump,
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**

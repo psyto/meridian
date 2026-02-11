@@ -17,6 +17,13 @@ export enum MarketType {
   VarianceSwap = 4,
 }
 
+export enum MarketStatus {
+  Active = 0,
+  Paused = 1,
+  Settling = 2,
+  Closed = 3,
+}
+
 export enum Side {
   Long = 0,
   Short = 1,
@@ -27,15 +34,22 @@ export interface Market {
   securityMint: PublicKey;
   quoteMint: PublicKey;
   marketType: MarketType;
+  status: MarketStatus;
+  oracle: PublicKey;
   tradingFeeBps: number;
   protocolFeeBps: number;
   minTradeSize: BN;
   maxTradeSize: BN;
   totalVolume: BN;
+  totalFees: BN;
   volume24h: BN;
+  volume24hReset: BN;
   symbol: string;
   name: string;
+  isin: Uint8Array | null;
   isActive: boolean;
+  createdAt: BN;
+  bump: number;
 }
 
 export interface Pool {
@@ -44,8 +58,19 @@ export interface Pool {
   quoteLiquidity: BN;
   lpMint: PublicKey;
   lpSupply: BN;
+  authority: PublicKey;
+  securityVault: PublicKey;
+  quoteVault: PublicKey;
+  accumulatedFeesSecurity: BN;
+  accumulatedFeesQuote: BN;
   twap: BN;
+  twapLastUpdate: BN;
+  cumulativePrice: BN;
+  kLast: BN;
   isActive: boolean;
+  createdAt: BN;
+  bump: number;
+  authorityBump: number;
 }
 
 export interface Position {
@@ -89,8 +114,7 @@ export class SecuritiesSdk {
       const accountInfo = await this.client.connection.getAccountInfo(marketPda);
       if (!accountInfo) return null;
 
-      // Deserialize account data
-      return null;
+      return this.deserializeMarket(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -106,7 +130,7 @@ export class SecuritiesSdk {
       const accountInfo = await this.client.connection.getAccountInfo(poolPda);
       if (!accountInfo) return null;
 
-      return null;
+      return this.deserializePool(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -251,6 +275,188 @@ export class SecuritiesSdk {
     const quoteRatio = quoteAmount.mul(pool.lpSupply).div(pool.quoteLiquidity);
 
     return BN.min(securityRatio, quoteRatio);
+  }
+
+  private deserializeMarket(data: Buffer): Market | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const authority = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const securityMint = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const quoteMint = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const marketType = data[offset] as MarketType;
+      offset += 1;
+
+      const status = data[offset] as MarketStatus;
+      offset += 1;
+
+      const oracle = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const tradingFeeBps = data.readUInt16LE(offset);
+      offset += 2;
+
+      const protocolFeeBps = data.readUInt16LE(offset);
+      offset += 2;
+
+      const minTradeSize = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const maxTradeSize = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const totalVolume = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const totalFees = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const volume24h = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const volume24hReset = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      // String: 4-byte length prefix + UTF-8 data
+      const symbolLen = data.readUInt32LE(offset);
+      offset += 4;
+      const symbol = data.subarray(offset, offset + symbolLen).toString('utf8');
+      offset += symbolLen;
+
+      const nameLen = data.readUInt32LE(offset);
+      offset += 4;
+      const name = data.subarray(offset, offset + nameLen).toString('utf8');
+      offset += nameLen;
+
+      // Option<[u8; 12]>
+      const hasIsin = data[offset] === 1;
+      offset += 1;
+      const isin = hasIsin
+        ? new Uint8Array(data.subarray(offset, offset + 12))
+        : null;
+      offset += 12;
+
+      const isActive = data[offset] === 1;
+      offset += 1;
+
+      const createdAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const bump = data[offset];
+
+      return {
+        authority,
+        securityMint,
+        quoteMint,
+        marketType,
+        status,
+        oracle,
+        tradingFeeBps,
+        protocolFeeBps,
+        minTradeSize,
+        maxTradeSize,
+        totalVolume,
+        totalFees,
+        volume24h,
+        volume24hReset,
+        symbol,
+        name,
+        isin,
+        isActive,
+        createdAt,
+        bump,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private deserializePool(data: Buffer): Pool | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const market = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const securityLiquidity = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const quoteLiquidity = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const lpMint = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const lpSupply = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const authority = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const securityVault = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const quoteVault = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const accumulatedFeesSecurity = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const accumulatedFeesQuote = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const twap = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const twapLastUpdate = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const cumulativePrice = new BN(data.subarray(offset, offset + 16), 'le');
+      offset += 16;
+
+      const kLast = new BN(data.subarray(offset, offset + 16), 'le');
+      offset += 16;
+
+      const isActive = data[offset] === 1;
+      offset += 1;
+
+      const createdAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const bump = data[offset];
+      offset += 1;
+
+      const authorityBump = data[offset];
+
+      return {
+        market,
+        securityLiquidity,
+        quoteLiquidity,
+        lpMint,
+        lpSupply,
+        authority,
+        securityVault,
+        quoteVault,
+        accumulatedFeesSecurity,
+        accumulatedFeesQuote,
+        twap,
+        twapLastUpdate,
+        cumulativePrice,
+        kLast,
+        isActive,
+        createdAt,
+        bump,
+        authorityBump,
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**

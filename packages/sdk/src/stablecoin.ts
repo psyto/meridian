@@ -87,9 +87,7 @@ export class StablecoinSdk {
       const accountInfo = await this.client.connection.getAccountInfo(mintConfigPda);
       if (!accountInfo) return null;
 
-      // Deserialize account data (simplified - would use Anchor's coder in production)
-      // This is a placeholder for actual deserialization
-      return null;
+      return this.deserializeMintConfig(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -105,8 +103,7 @@ export class StablecoinSdk {
       const accountInfo = await this.client.connection.getAccountInfo(issuerPda);
       if (!accountInfo) return null;
 
-      // Deserialize account data
-      return null;
+      return this.deserializeIssuer(accountInfo.data as Buffer);
     } catch {
       return null;
     }
@@ -218,6 +215,139 @@ export class StablecoinSdk {
       programId: this.client.programIds.stablecoinMint,
       data,
     });
+  }
+
+  private deserializeMintConfig(data: Buffer): MintConfig | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const authority = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const mint = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const transferHookProgram = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const totalSupply = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const totalCollateral = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const collateralRatioBps = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const isPaused = data[offset] === 1;
+      offset += 1;
+
+      // Option<Pubkey>
+      const hasFreezeAuthority = data[offset] === 1;
+      offset += 1;
+      const freezeAuthority = hasFreezeAuthority
+        ? new PublicKey(data.subarray(offset, offset + 32))
+        : null;
+      offset += 32;
+
+      const hasPriceOracle = data[offset] === 1;
+      offset += 1;
+      const priceOracle = hasPriceOracle
+        ? new PublicKey(data.subarray(offset, offset + 32))
+        : null;
+      offset += 32;
+
+      const lastAudit = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const createdAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const updatedAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const bump = data[offset];
+
+      return {
+        authority,
+        mint,
+        transferHookProgram,
+        totalSupply,
+        totalCollateral,
+        collateralRatioBps,
+        isPaused,
+        freezeAuthority,
+        priceOracle,
+        lastAudit,
+        createdAt,
+        updatedAt,
+        bump,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private deserializeIssuer(data: Buffer): Issuer | null {
+    try {
+      let offset = 8; // skip discriminator
+
+      const authority = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const mintConfig = new PublicKey(data.subarray(offset, offset + 32));
+      offset += 32;
+
+      const issuerType = data[offset] as IssuerType;
+      offset += 1;
+
+      const dailyMintLimit = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const dailyBurnLimit = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const dailyMinted = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const dailyBurned = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const lastDailyReset = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const totalMinted = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const totalBurned = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const isActive = data[offset] === 1;
+      offset += 1;
+
+      const registeredAt = new BN(data.subarray(offset, offset + 8), 'le');
+      offset += 8;
+
+      const bump = data[offset];
+
+      return {
+        authority,
+        mintConfig,
+        issuerType,
+        dailyMintLimit,
+        dailyBurnLimit,
+        dailyMinted,
+        dailyBurned,
+        lastDailyReset,
+        totalMinted,
+        totalBurned,
+        isActive,
+        registeredAt,
+        bump,
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**
