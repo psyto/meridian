@@ -108,6 +108,10 @@ Compliance-aware pool management for institutional DeFi:
 - Batch route verification for Jupiter-compatible routing
 - Audit hash and expiry tracking per pool
 
+**Instructions:** `initialize_pool_registry`, `add_compliant_pool`, `suspend_pool`, `revoke_pool`, `reinstate_pool`, `initialize_compliance_config`, `verify_compliant_route`
+
+**Events:** `PoolRegistryCreated`, `PoolAdded`, `PoolStatusChanged`, `ComplianceConfigCreated`, `RouteVerified`
+
 ## Packages
 
 ### @meridian/compliant-router
@@ -121,16 +125,50 @@ A Jupiter-compatible router that only routes through KYC-whitelisted pools, enab
 - **ZkComplianceProver** — Generates Noir ZK proofs that a trader meets KYC requirements without revealing identity.
 
 ```typescript
-import { ComplianceAwareRouter } from '@meridian/compliant-router';
+import { ComplianceAwareRouter, QuoteRequest } from '@meridian/compliant-router';
+import { Connection, PublicKey } from '@solana/web3.js';
 
-const router = new ComplianceAwareRouter(config);
-await router.syncWhitelist();
+const connection = new Connection('https://api.mainnet-beta.solana.com');
+const registryAuthority = new PublicKey('...');
 
-const result = await router.getCompliantQuote(
-  traderWallet, inputMint, outputMint, amount, slippageBps
-);
-// result contains the Jupiter quote filtered to only compliant pool hops
+const router = new ComplianceAwareRouter(connection, registryAuthority, {
+  defaultSlippageBps: 50,
+  fallbackToDirectRoutes: true,
+  maxRouteHops: 4,
+});
+
+const request: QuoteRequest = { inputMint, outputMint, amount };
+const result = await router.getCompliantQuote(trader, request, jurisdictionBitmask);
+
+// CompliantQuoteResult fields:
+//   result.quote              — Jupiter QuoteResponse (filtered to compliant route)
+//   result.wasFiltered        — true if the original route was re-fetched for compliance
+//   result.compliantHopCount  — number of compliant hops in the route
+//   result.traderKycLevel     — trader's KYC level (Basic/Standard/Enhanced/Institutional)
+//   result.traderJurisdiction — trader's jurisdiction
 ```
+
+**`ComplianceRouterConfig` fields:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `registryProgramId` | `PublicKey` | Built-in | Compliant registry program ID |
+| `transferHookProgramId` | `PublicKey` | Built-in | Transfer-hook program ID for KYC lookups |
+| `jupiterApiBaseUrl` | `string` | `https://quote-api.jup.ag/v6` | Jupiter API endpoint |
+| `defaultSlippageBps` | `number` | `50` | Default slippage in basis points |
+| `fallbackToDirectRoutes` | `boolean` | `true` | Fall back to direct routes when multi-hop fails compliance |
+| `maxRouteHops` | `number` | `4` | Maximum route hops to consider |
+
+## Design: Token-2022 Confidential Transfers
+
+**Problem**: Solana Token-2022's confidential transfer extension and transfer hook extension are incompatible — a token mint cannot enable both simultaneously. This means a compliant stablecoin using transfer hooks for KYC enforcement cannot also use confidential transfers for privacy.
+
+**Solution**: Meridian uses an application-layer ZK compliance approach via the `ZkComplianceProver`:
+
+- Instead of relying on Token-2022 confidential transfers, the `ZkComplianceProver` generates Noir ZK proofs that attest a trader meets KYC requirements (level, jurisdiction, expiry) without revealing identity details
+- The proof commits to KYC level, jurisdiction, and expiry via Pedersen commitments — the verifier learns only that requirements are satisfied, not the actual values
+- This preserves transfer hook enforcement (KYC/AML on every transfer) while providing privacy at the compliance verification layer
+- The `compliant-registry` program stores a `zk_verifier_key` in `ComplianceConfig` for on-chain proof verification
 
 ## Getting Started
 
@@ -191,8 +229,8 @@ GET  /api/v1/stablecoin/compliance?wallet=...  # Check status
 
 ### Trading
 ```
-GET  /api/v1/swap/quote    # Get swap quote
-POST /api/v1/swap/execute  # Execute swap
+GET  /api/v1/swap/quote    # Get compliant swap quote (filters non-whitelisted pools)
+POST /api/v1/swap/execute  # Execute compliant swap
 ```
 
 ### Securities
