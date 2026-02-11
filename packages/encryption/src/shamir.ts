@@ -33,28 +33,27 @@ export class ShamirSecretSharing {
    * Split a secret into shares
    */
   split(secret: Uint8Array): ShamirShare[] {
-    const shares: ShamirShare[] = [];
+    const shares: ShamirShare[] = Array.from({ length: this.totalShares }, (_, i) => ({
+      index: i + 1,
+      data: new Uint8Array(secret.length),
+    }));
 
-    for (let i = 1; i <= this.totalShares; i++) {
-      const shareData = new Uint8Array(secret.length);
+    for (let byteIdx = 0; byteIdx < secret.length; byteIdx++) {
+      // Generate random polynomial coefficients once per byte
+      const coefficients = new Uint8Array(this.threshold);
+      coefficients[0] = secret[byteIdx];
 
-      for (let byteIdx = 0; byteIdx < secret.length; byteIdx++) {
-        // Generate random polynomial coefficients
-        const coefficients = new Uint8Array(this.threshold);
-        coefficients[0] = secret[byteIdx];
-
-        // Random coefficients for degree 1..threshold-1
-        const randomBytes = new Uint8Array(this.threshold - 1);
-        crypto.getRandomValues(randomBytes);
-        for (let c = 1; c < this.threshold; c++) {
-          coefficients[c] = randomBytes[c - 1];
-        }
-
-        // Evaluate polynomial at point i
-        shareData[byteIdx] = this.evaluatePolynomial(coefficients, i);
+      // Random coefficients for degree 1..threshold-1
+      const randomBytes = new Uint8Array(this.threshold - 1);
+      crypto.getRandomValues(randomBytes);
+      for (let c = 1; c < this.threshold; c++) {
+        coefficients[c] = randomBytes[c - 1];
       }
 
-      shares.push({ index: i, data: shareData });
+      // Evaluate the same polynomial at each share point
+      for (let i = 0; i < this.totalShares; i++) {
+        shares[i].data[byteIdx] = this.evaluatePolynomial(coefficients, i + 1);
+      }
     }
 
     return shares;
