@@ -11,6 +11,64 @@ Meridianは機関投資家向けのインフラストラクチャを提供しま
 - **証券取引**: トークン化株式の24時間365日スポット・デリバティブ市場
 - **RWAトークン化**: 実物資産の登録、保管検証、配当管理
 - **コンプライアンス**: Token-2022トランスファーフックによるKYC/AML機能内蔵
+- **ZKプライバシー**: アプリケーション層ZK証明によるプライバシー保護型コンプライアンス検証 — Token-2022のトランスファーフックとコンフィデンシャルトランスファーが共存できない制約を解決
+
+## 設計：ZKコンプライアンスとToken-2022コンフィデンシャルトランスファー
+
+**課題**: Solana Token-2022のコンフィデンシャルトランスファー拡張とトランスファーフック拡張は互換性がありません。トークンミントは両方を同時に有効化できないため、KYC強制にトランスファーフックを使用するコンプライアンス対応ステーブルコインは、プライバシーのためのコンフィデンシャルトランスファーを併用できません。
+
+**解決策**: Meridianは`ZkComplianceProver`によるアプリケーション層ZKコンプライアンスアプローチを採用しています：
+
+- Token-2022のコンフィデンシャルトランスファーに依存する代わりに、`ZkComplianceProver`はトレーダーがKYC要件（レベル、管轄権、有効期限）を満たすことをID情報を開示せずに証明するNoir ZK証明を生成します
+- 証明はKYCレベル、管轄権、有効期限をPedersenコミットメントでコミットし、検証者は要件が満たされていることのみを知り、実際の値は知りません
+- これによりトランスファーフックの強制（全送金でのKYC/AML）を維持しつつ、コンプライアンス検証レイヤーでプライバシーを提供します
+- `compliant-registry`プログラムはオンチェーン証明検証のため`ComplianceConfig`に`zk_verifier_key`を保存します
+
+### @meridian/compliant-router
+
+KYCホワイトリスト済みプールのみを経由するJupiter互換ルーター。機関投資家のDeFiアクセスを実現します。
+
+**主要クラス：**
+- **ComplianceAwareRouter** — Jupiterアグリゲーションをコンプライアンスフィルタリングでラップ
+- **PoolWhitelistManager** — オンチェーンのcompliant-registryからプールエントリを同期
+- **RouteComplianceFilter** — routePlan内の各ammKeyをホワイトリストと照合
+- **KycComplianceChecker** — transfer-hookのWhitelistEntryからトレーダーのKYCを検証
+- **ZkComplianceProver** — Noir ZK証明によるプライバシー保護型KYC検証
+
+```typescript
+import { ComplianceAwareRouter, QuoteRequest } from '@meridian/compliant-router';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+const connection = new Connection('https://api.mainnet-beta.solana.com');
+const registryAuthority = new PublicKey('...');
+
+const router = new ComplianceAwareRouter(connection, registryAuthority, {
+  defaultSlippageBps: 50,
+  fallbackToDirectRoutes: true,
+  maxRouteHops: 4,
+});
+
+const request: QuoteRequest = { inputMint, outputMint, amount };
+const result = await router.getCompliantQuote(trader, request, jurisdictionBitmask);
+
+// CompliantQuoteResult フィールド:
+//   result.quote              — Jupiter QuoteResponse（コンプライアンス準拠ルートにフィルタ済み）
+//   result.wasFiltered        — 元のルートがコンプライアンスのため再取得された場合true
+//   result.compliantHopCount  — ルート内のコンプライアンス準拠ホップ数
+//   result.traderKycLevel     — トレーダーのKYCレベル（Basic/Standard/Enhanced/Institutional）
+//   result.traderJurisdiction — トレーダーの管轄権
+```
+
+**`ComplianceRouterConfig` フィールド：**
+
+| フィールド | 型 | デフォルト | 説明 |
+|-----------|-----|----------|------|
+| `registryProgramId` | `PublicKey` | 組み込み | コンプライアンスレジストリプログラムID |
+| `transferHookProgramId` | `PublicKey` | 組み込み | KYC検索用トランスファーフックプログラムID |
+| `jupiterApiBaseUrl` | `string` | `https://quote-api.jup.ag/v6` | Jupiter APIエンドポイント |
+| `defaultSlippageBps` | `number` | `50` | デフォルトスリッページ（ベーシスポイント） |
+| `fallbackToDirectRoutes` | `boolean` | `true` | マルチホップがコンプライアンス違反時にダイレクトルートへフォールバック |
+| `maxRouteHops` | `number` | `4` | 考慮する最大ルートホップ数 |
 
 ## アーキテクチャ
 
@@ -111,64 +169,6 @@ Token-2022拡張機能を備えたコアステーブルコイン：
 **インストラクション:** `initialize_pool_registry`, `add_compliant_pool`, `suspend_pool`, `revoke_pool`, `reinstate_pool`, `initialize_compliance_config`, `verify_compliant_route`
 
 **イベント:** `PoolRegistryCreated`, `PoolAdded`, `PoolStatusChanged`, `ComplianceConfigCreated`, `RouteVerified`
-
-## パッケージ
-
-### @meridian/compliant-router
-KYCホワイトリスト済みプールのみを経由するJupiter互換ルーター。機関投資家のDeFiアクセスを実現します。
-
-**主要クラス：**
-- **ComplianceAwareRouter** — Jupiterアグリゲーションをコンプライアンスフィルタリングでラップ
-- **PoolWhitelistManager** — オンチェーンのcompliant-registryからプールエントリを同期
-- **RouteComplianceFilter** — routePlan内の各ammKeyをホワイトリストと照合
-- **KycComplianceChecker** — transfer-hookのWhitelistEntryからトレーダーのKYCを検証
-- **ZkComplianceProver** — Noir ZK証明によるプライバシー保護型KYC検証
-
-```typescript
-import { ComplianceAwareRouter, QuoteRequest } from '@meridian/compliant-router';
-import { Connection, PublicKey } from '@solana/web3.js';
-
-const connection = new Connection('https://api.mainnet-beta.solana.com');
-const registryAuthority = new PublicKey('...');
-
-const router = new ComplianceAwareRouter(connection, registryAuthority, {
-  defaultSlippageBps: 50,
-  fallbackToDirectRoutes: true,
-  maxRouteHops: 4,
-});
-
-const request: QuoteRequest = { inputMint, outputMint, amount };
-const result = await router.getCompliantQuote(trader, request, jurisdictionBitmask);
-
-// CompliantQuoteResult フィールド:
-//   result.quote              — Jupiter QuoteResponse（コンプライアンス準拠ルートにフィルタ済み）
-//   result.wasFiltered        — 元のルートがコンプライアンスのため再取得された場合true
-//   result.compliantHopCount  — ルート内のコンプライアンス準拠ホップ数
-//   result.traderKycLevel     — トレーダーのKYCレベル（Basic/Standard/Enhanced/Institutional）
-//   result.traderJurisdiction — トレーダーの管轄権
-```
-
-**`ComplianceRouterConfig` フィールド：**
-
-| フィールド | 型 | デフォルト | 説明 |
-|-----------|-----|----------|------|
-| `registryProgramId` | `PublicKey` | 組み込み | コンプライアンスレジストリプログラムID |
-| `transferHookProgramId` | `PublicKey` | 組み込み | KYC検索用トランスファーフックプログラムID |
-| `jupiterApiBaseUrl` | `string` | `https://quote-api.jup.ag/v6` | Jupiter APIエンドポイント |
-| `defaultSlippageBps` | `number` | `50` | デフォルトスリッページ（ベーシスポイント） |
-| `fallbackToDirectRoutes` | `boolean` | `true` | マルチホップがコンプライアンス違反時にダイレクトルートへフォールバック |
-| `maxRouteHops` | `number` | `4` | 考慮する最大ルートホップ数 |
-
-## 設計：Token-2022コンフィデンシャルトランスファー
-
-**課題**: Solana Token-2022のコンフィデンシャルトランスファー拡張とトランスファーフック拡張は互換性がありません。トークンミントは両方を同時に有効化できないため、KYC強制にトランスファーフックを使用するコンプライアンス対応ステーブルコインは、プライバシーのためのコンフィデンシャルトランスファーを併用できません。
-
-**解決策**: Meridianは`ZkComplianceProver`によるアプリケーション層ZKコンプライアンスアプローチを採用しています：
-
-- Token-2022のコンフィデンシャルトランスファーに依存する代わりに、`ZkComplianceProver`はトレーダーがKYC要件（レベル、管轄権、有効期限）を満たすことをID情報を開示せずに証明するNoir ZK証明を生成します
-- 証明はKYCレベル、管轄権、有効期限をPedersenコミットメントでコミットし、検証者は要件が満たされていることのみを知り、実際の値は知りません
-- これによりトランスファーフックの強制（全送金でのKYC/AML）を維持しつつ、コンプライアンス検証レイヤーでプライバシーを提供します
-- `compliant-registry`プログラムはオンチェーン証明検証のため`ComplianceConfig`に`zk_verifier_key`を保存します
 
 ## 始め方
 
