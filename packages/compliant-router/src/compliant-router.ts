@@ -1,6 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { JupiterAggregator, RouteOptimizer } from '@meridian/aggregator';
-import type { QuoteResponse, QuoteRequest } from '@meridian/aggregator';
+import { JupiterAggregator, RouteOptimizer } from './aggregator';
+import type { QuoteResponse, QuoteRequest } from './types';
 import { PoolWhitelistManager } from './pool-whitelist';
 import { RouteComplianceFilter } from './route-filter';
 import { KycComplianceChecker } from './kyc-checker';

@@ -10,10 +10,11 @@
     "test": "vitest",
     "lint": "eslint src/"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
-    "@meridian/aggregator": "workspace:*",
-    "@meridian/sdk": "workspace:*",
     "@solana/web3.js": "^1.98.0"
   },
   "devDependencies": {

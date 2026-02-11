@@ -1,4 +1,4 @@
-import type { QuoteResponse } from '@meridian/aggregator';
+import type { QuoteResponse } from './types';
 import type { PoolWhitelistManager } from './pool-whitelist';
 import type { RouteComplianceResult } from './types';
 
