@@ -1,6 +1,6 @@
 # Meridian
 
-**Stablecoin Infrastructure for Tokenized Securities and RWA Trading**
+**DeFi Where Every Swap is KYC-Compliant**
 
 A Layer 1 blockchain platform for onchain capital markets.
 
