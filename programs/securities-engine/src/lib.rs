@@ -127,6 +127,7 @@ pub mod securities_engine {
         pool.is_active = true;
         pool.created_at = clock.unix_timestamp;
         pool.bump = ctx.bumps.pool;
+        pool.authority_bump = ctx.bumps.pool_authority;
 
         Ok(())
     }
@@ -175,10 +176,10 @@ pub mod securities_engine {
             quote_amount,
         )?;
 
-        // Mint LP tokens
+        // Mint LP tokens (sign as pool_authority PDA)
         let market_key = ctx.accounts.market.key();
-        let seeds = &[Pool::SEED_PREFIX, market_key.as_ref(), &[pool.bump]];
-        let signer_seeds = &[&seeds[..]];
+        let authority_seeds = &[b"pool_authority" as &[u8], market_key.as_ref(), &[pool.authority_bump]];
+        let signer_seeds = &[&authority_seeds[..]];
 
         token::mint_to(
             CpiContext::new_with_signer(
@@ -262,10 +263,10 @@ pub mod securities_engine {
             amount_in,
         )?;
 
-        // Transfer output tokens from vault
+        // Transfer output tokens from vault (sign as pool_authority PDA)
         let market_key = ctx.accounts.market.key();
-        let seeds = &[Pool::SEED_PREFIX, market_key.as_ref(), &[pool.bump]];
-        let signer_seeds = &[&seeds[..]];
+        let authority_seeds = &[b"pool_authority" as &[u8], market_key.as_ref(), &[pool.authority_bump]];
+        let signer_seeds = &[&authority_seeds[..]];
 
         let (from_vault, to_account) = if is_security_input {
             (

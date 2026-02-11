@@ -54,6 +54,9 @@ pub struct Pool {
 
     /// Bump seed
     pub bump: u8,
+
+    /// Pool authority bump seed
+    pub authority_bump: u8,
 }
 
 impl Pool {

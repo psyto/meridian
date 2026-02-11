@@ -194,7 +194,11 @@ pub mod rwa_registry {
         dividend.payment_token = params.payment_token;
         dividend.record_date = params.record_date;
         dividend.payment_date = params.payment_date;
-        dividend.status = DividendStatus::Announced;
+        dividend.status = if params.payment_date <= clock.unix_timestamp {
+            DividendStatus::Payable
+        } else {
+            DividendStatus::Announced
+        };
         dividend.claimed_amount = 0;
         dividend.created_at = clock.unix_timestamp;
         dividend.bump = ctx.bumps.dividend;
@@ -213,7 +217,7 @@ pub mod rwa_registry {
     /// Claim dividend
     pub fn claim_dividend(ctx: Context<ClaimDividend>) -> Result<()> {
         let clock = Clock::get()?;
-        let dividend = &ctx.accounts.dividend;
+        let dividend = &mut ctx.accounts.dividend;
         let ownership = &ctx.accounts.ownership_proof;
 
         require!(
@@ -225,6 +229,8 @@ pub mod rwa_registry {
         // Calculate claimable amount
         let claimable = (ownership.amount as u128 * dividend.amount_per_token as u128
             / 1_000_000) as u64;
+
+        dividend.claimed_amount = dividend.claimed_amount.checked_add(claimable).unwrap();
 
         // Transfer dividend (implementation would use SPL token transfer)
         // For now, just emit event
