@@ -111,7 +111,7 @@ export class RwaSdk {
 
       // Deserialize account data
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -133,7 +133,7 @@ export class RwaSdk {
       if (!accountInfo) return null;
 
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -141,7 +141,7 @@ export class RwaSdk {
   /**
    * Get pending dividends for an asset
    */
-  async getPendingDividends(asset: PublicKey): Promise<Dividend[]> {
+  async getPendingDividends(_asset: PublicKey): Promise<Dividend[]> {
     // Would query program accounts filtered by asset
     return [];
   }
@@ -174,7 +174,7 @@ export class RwaSdk {
   createVerifyCustodyInstruction(
     custodian: PublicKey,
     asset: PublicKey,
-    proofHash: Uint8Array
+    _proofHash: Uint8Array
   ): TransactionInstruction {
     const data = Buffer.alloc(8 + 32);
 

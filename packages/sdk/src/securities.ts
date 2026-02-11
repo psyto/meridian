@@ -91,7 +91,7 @@ export class SecuritiesSdk {
 
       // Deserialize account data
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -107,7 +107,7 @@ export class SecuritiesSdk {
       if (!accountInfo) return null;
 
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -162,9 +162,9 @@ export class SecuritiesSdk {
   createSwapInstruction(
     user: PublicKey,
     market: PublicKey,
-    amountIn: BN,
-    minAmountOut: BN,
-    isSecurityInput: boolean
+    _amountIn: BN,
+    _minAmountOut: BN,
+    _isSecurityInput: boolean
   ): TransactionInstruction {
     const [poolPda] = this.client.derivePoolPda(market);
 
@@ -189,9 +189,9 @@ export class SecuritiesSdk {
   createAddLiquidityInstruction(
     user: PublicKey,
     market: PublicKey,
-    securityAmount: BN,
-    quoteAmount: BN,
-    minLpTokens: BN
+    _securityAmount: BN,
+    _quoteAmount: BN,
+    _minLpTokens: BN
   ): TransactionInstruction {
     const [poolPda] = this.client.derivePoolPda(market);
 
@@ -215,10 +215,10 @@ export class SecuritiesSdk {
   createOpenPositionInstruction(
     user: PublicKey,
     market: PublicKey,
-    side: Side,
-    size: BN,
-    leverage: number,
-    collateral: BN
+    _side: Side,
+    _size: BN,
+    _leverage: number,
+    _collateral: BN
   ): TransactionInstruction {
     const data = Buffer.alloc(8 + 1 + 8 + 1 + 8);
 

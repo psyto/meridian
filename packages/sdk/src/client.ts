@@ -1,5 +1,5 @@
-import { Connection, PublicKey, Keypair, Transaction } from '@solana/web3.js';
-import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
 
 export interface MeridianConfig {
   connection: Connection;

@@ -1,9 +1,6 @@
 import {
-  Connection,
   PublicKey,
-  Transaction,
   TransactionInstruction,
-  SystemProgram,
 } from '@solana/web3.js';
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token';
 import { MeridianClient } from './client';
@@ -93,7 +90,7 @@ export class StablecoinSdk {
       // Deserialize account data (simplified - would use Anchor's coder in production)
       // This is a placeholder for actual deserialization
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -110,7 +107,7 @@ export class StablecoinSdk {
 
       // Deserialize account data
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -129,7 +126,7 @@ export class StablecoinSdk {
 
       const accountInfo = await this.client.connection.getTokenAccountBalance(ata);
       return new BN(accountInfo.value.amount);
-    } catch (e) {
+    } catch {
       return new BN(0);
     }
   }
@@ -141,7 +138,7 @@ export class StablecoinSdk {
     try {
       const mintInfo = await this.client.connection.getTokenSupply(mint);
       return new BN(mintInfo.value.amount);
-    } catch (e) {
+    } catch {
       return new BN(0);
     }
   }
@@ -151,8 +148,8 @@ export class StablecoinSdk {
    */
   createMintInstruction(
     issuerAuthority: PublicKey,
-    recipient: PublicKey,
-    params: MintRequest
+    _recipient: PublicKey,
+    _params: MintRequest
   ): TransactionInstruction {
     const [mintConfigPda] = this.client.deriveMintConfigPda();
     const [issuerPda] = this.client.deriveIssuerPda(issuerAuthority);
@@ -179,7 +176,7 @@ export class StablecoinSdk {
    */
   createBurnInstruction(
     holder: PublicKey,
-    params: BurnRequest
+    _params: BurnRequest
   ): TransactionInstruction {
     const [mintConfigPda] = this.client.deriveMintConfigPda();
 
@@ -202,7 +199,7 @@ export class StablecoinSdk {
   createTransferInstruction(
     sender: PublicKey,
     recipient: PublicKey,
-    params: TransferRequest
+    _params: TransferRequest
   ): TransactionInstruction {
     const [mintConfigPda] = this.client.deriveMintConfigPda();
 
