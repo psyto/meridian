@@ -12,7 +12,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Mint, MintTo, Burn};
 
-declare_id!("RWAm1111111111111111111111111111111111111111");
+declare_id!("BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D");
 
 #[error_code]
 pub enum RwaError {
@@ -55,7 +55,8 @@ pub mod rwa_registry {
         asset.valuation = params.valuation;
         asset.valuation_currency = params.valuation_currency;
         asset.name = params.name;
-        asset.symbol = params.symbol;
+        let symbol = params.symbol;
+        asset.symbol = symbol.clone();
         asset.isin = params.isin;
         asset.jurisdiction = params.jurisdiction;
         asset.legal_document_hash = params.legal_document_hash;
@@ -69,7 +70,7 @@ pub mod rwa_registry {
         emit!(AssetRegistered {
             asset: asset.key(),
             asset_type: params.asset_type,
-            symbol: params.symbol.clone(),
+            symbol,
             valuation: params.valuation,
             timestamp: clock.unix_timestamp,
         });
@@ -518,6 +519,7 @@ pub struct VerifyCustody<'info> {
 #[instruction(amount: u64, recipient: Pubkey)]
 pub struct MintTokens<'info> {
     #[account(
+        mut,
         constraint = authority.key() == asset.authority @ RwaError::Unauthorized
     )]
     pub authority: Signer<'info>,
@@ -565,6 +567,7 @@ pub struct UpdateValuation<'info> {
 #[instruction(params: DividendParams)]
 pub struct DistributeDividend<'info> {
     #[account(
+        mut,
         constraint = authority.key() == asset.authority @ RwaError::Unauthorized
     )]
     pub authority: Signer<'info>,

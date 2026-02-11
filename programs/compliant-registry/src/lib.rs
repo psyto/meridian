@@ -6,7 +6,7 @@ pub mod state;
 use errors::ComplianceError;
 use state::*;
 
-declare_id!("CRGm1111111111111111111111111111111111111111");
+declare_id!("hhcx645NBLLRrKry3dkDMTMzZfrCUEJk3UurUYBxjww");
 
 #[program]
 pub mod compliant_registry {
@@ -190,8 +190,8 @@ pub mod compliant_registry {
 
     /// Batch-verify that all AMM keys in a route are compliant
     /// Emits a RouteVerified event on success
-    pub fn verify_compliant_route(
-        ctx: Context<VerifyCompliantRoute>,
+    pub fn verify_compliant_route<'info>(
+        ctx: Context<'_, '_, 'info, 'info, VerifyCompliantRoute<'info>>,
         amm_keys: Vec<Pubkey>,
     ) -> Result<()> {
         let config = &ctx.accounts.config;
@@ -214,7 +214,7 @@ pub mod compliant_registry {
             let account_info = &ctx.remaining_accounts[i];
 
             // Deserialize the pool entry account
-            let pool_entry: Account<PoolComplianceEntry> =
+            let pool_entry: Account<'info, PoolComplianceEntry> =
                 Account::try_from(account_info)?;
 
             // Verify it belongs to the correct registry

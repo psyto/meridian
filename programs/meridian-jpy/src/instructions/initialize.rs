@@ -1,11 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022::{self, Token2022};
-use anchor_spl::token_interface::{Mint, TokenAccount};
-use spl_token_2022::extension::ExtensionType;
-use spl_transfer_hook_interface::instruction::initialize_extra_account_meta_list;
+use anchor_spl::token_2022::Token2022;
+use anchor_spl::token_interface::Mint;
 
 use crate::state::*;
-use crate::errors::MeridianError;
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {

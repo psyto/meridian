@@ -23,7 +23,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint, MintTo, Burn}
 pub mod state;
 use state::*;
 
-declare_id!("SECm1111111111111111111111111111111111111111");
+declare_id!("7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe");
 
 #[error_code]
 pub enum SecuritiesError {
@@ -87,7 +87,8 @@ pub mod securities_engine {
         market.total_fees = 0;
         market.volume_24h = 0;
         market.volume_24h_reset = clock.unix_timestamp;
-        market.symbol = params.symbol;
+        let symbol = params.symbol;
+        market.symbol = symbol.clone();
         market.name = params.name;
         market.isin = params.isin;
         market.is_active = true;
@@ -96,7 +97,7 @@ pub mod securities_engine {
 
         emit!(MarketCreated {
             market: market.key(),
-            symbol: params.symbol.clone(),
+            symbol,
             market_type: params.market_type,
             timestamp: clock.unix_timestamp,
         });

@@ -30,7 +30,7 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("JPYm1111111111111111111111111111111111111111");
+declare_id!("HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP");
 
 #[program]
 pub mod meridian_jpy {

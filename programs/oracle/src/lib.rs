@@ -11,7 +11,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("ORCm1111111111111111111111111111111111111111");
+declare_id!("BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw");
 
 /// Maximum price samples to store for TWAP calculation
 pub const MAX_PRICE_SAMPLES: usize = 100;
@@ -457,7 +457,7 @@ pub struct InitializeVolatilityIndex<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
-    pub price_feed: Account<'info, PriceFeed>,
+    pub price_feed: Box<Account<'info, PriceFeed>>,
 
     #[account(
         init,

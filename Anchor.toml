@@ -7,20 +7,20 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-meridian_jpy = "JPYm1111111111111111111111111111111111111111"
-transfer_hook = "THKm1111111111111111111111111111111111111111"
-securities_engine = "SECm1111111111111111111111111111111111111111"
-rwa_registry = "RWAm1111111111111111111111111111111111111111"
-oracle = "ORCm1111111111111111111111111111111111111111"
-compliant_registry = "CRGm1111111111111111111111111111111111111111"
+meridian_jpy = "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP"
+transfer_hook = "4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf"
+securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
+rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
+oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
+compliant_registry = "hhcx645NBLLRrKry3dkDMTMzZfrCUEJk3UurUYBxjww"
 
 [programs.devnet]
-meridian_jpy = "JPYm1111111111111111111111111111111111111111"
-transfer_hook = "THKm1111111111111111111111111111111111111111"
-securities_engine = "SECm1111111111111111111111111111111111111111"
-rwa_registry = "RWAm1111111111111111111111111111111111111111"
-oracle = "ORCm1111111111111111111111111111111111111111"
-compliant_registry = "CRGm1111111111111111111111111111111111111111"
+meridian_jpy = "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP"
+transfer_hook = "4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf"
+securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
+rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
+oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
+compliant_registry = "hhcx645NBLLRrKry3dkDMTMzZfrCUEJk3UurUYBxjww"
 
 [registry]
 url = "https://api.apr.dev"

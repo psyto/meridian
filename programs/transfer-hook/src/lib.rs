@@ -21,10 +21,8 @@ use spl_tlv_account_resolution::{
 pub mod state;
 use state::*;
 
-declare_id!("THKm1111111111111111111111111111111111111111");
+declare_id!("4CoN4C1mqdkgvgQeXMSa1Pnb7guFH89DekEvRHgKmivf");
 
-/// Size of ExtraAccountMetaList with 3 extra accounts
-pub const EXTRA_ACCOUNT_METAS_SIZE: usize = ExtraAccountMetaList::size_of(3).unwrap();
 
 #[error_code]
 pub enum TransferHookError {
@@ -250,20 +248,29 @@ pub mod transfer_hook {
 
     /// Fallback instruction for transfer hook interface
     pub fn fallback<'info>(
-        program_id: &Pubkey,
-        accounts: &'info [AccountInfo<'info>],
+        _program_id: &Pubkey,
+        _accounts: &'info [AccountInfo<'info>],
         data: &[u8],
     ) -> Result<()> {
-        let instruction = ExecuteInstruction::unpack(data)?;
+        use spl_discriminator::discriminator::SplDiscriminate;
 
-        // Only handle execute instruction
-        match instruction {
-            ExecuteInstruction::Execute { amount } => {
-                // Deserialize accounts and call execute
-                msg!("Transfer hook fallback: execute with amount {}", amount);
-                Ok(())
+        // Check if the instruction discriminator matches ExecuteInstruction
+        if data.len() < 8 {
+            return Err(ProgramError::InvalidInstructionData.into());
+        }
+
+        let discriminator = &data[..8];
+        if discriminator == ExecuteInstruction::SPL_DISCRIMINATOR.as_slice() {
+            if data.len() < 16 {
+                return Err(ProgramError::InvalidInstructionData.into());
             }
-            _ => Err(ProgramError::InvalidInstructionData.into()),
+            let amount = u64::from_le_bytes(
+                data[8..16].try_into().map_err(|_| ProgramError::InvalidInstructionData)?
+            );
+            msg!("Transfer hook fallback: execute with amount {}", amount);
+            Ok(())
+        } else {
+            Err(ProgramError::InvalidInstructionData.into())
         }
     }
 }
