@@ -90,4 +90,28 @@ pub mod meridian_stablecoin {
     pub fn submit_audit(ctx: Context<SubmitAudit>, params: SubmitAuditParams) -> Result<()> {
         instructions::collateral::submit_audit_handler(ctx, params)
     }
+
+    // =========================================================================
+    // SSS-2 Compliance Instructions
+    // =========================================================================
+
+    /// Seize tokens from a frozen account via permanent delegate (SSS-2 only)
+    /// Fails gracefully if permanent delegate was not enabled during initialization.
+    pub fn seize(ctx: Context<Seize>, params: SeizeParams) -> Result<()> {
+        instructions::seize::seize_handler(ctx, params)
+    }
+
+    // =========================================================================
+    // Role Management
+    // =========================================================================
+
+    /// Initialize role-based access control
+    pub fn initialize_roles(ctx: Context<InitializeRoles>) -> Result<()> {
+        instructions::roles::initialize_roles_handler(ctx)
+    }
+
+    /// Update roles (master authority only)
+    pub fn update_roles(ctx: Context<UpdateRoles>, params: UpdateRolesParams) -> Result<()> {
+        instructions::roles::update_roles_handler(ctx, params)
+    }
 }

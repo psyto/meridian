@@ -78,4 +78,24 @@ pub enum MeridianError {
     /// Jurisdiction not supported
     #[msg("Jurisdiction not supported")]
     UnsupportedJurisdiction,
+
+    /// Permanent delegate not enabled for this stablecoin
+    #[msg("Permanent delegate not enabled: initialize with SSS-2 preset")]
+    PermanentDelegateNotEnabled,
+
+    /// Seize requires a treasury account
+    #[msg("Treasury not configured: set treasury before seizing")]
+    TreasuryNotConfigured,
+
+    /// Compliance module not enabled
+    #[msg("Compliance module not enabled for this preset")]
+    ComplianceModuleNotEnabled,
+
+    /// Account is not frozen (seize requires frozen account)
+    #[msg("Account must be frozen before seize")]
+    AccountNotFrozen,
+
+    /// Invalid role: caller does not have the required role
+    #[msg("Caller does not have the required role")]
+    InvalidRole,
 }

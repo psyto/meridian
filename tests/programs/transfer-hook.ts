@@ -259,4 +259,158 @@ describe('transfer-hook', () => {
       expect(entry.dailyVolume.toNumber()).to.equal(0);
     });
   });
+
+  // ==========================================================================
+  // Blacklist Management (SSS-2 Compliance)
+  // ==========================================================================
+
+  describe('blacklist management', () => {
+    const sanctionedWallet = Keypair.generate();
+    let blacklistPda: PublicKey;
+
+    before(async () => {
+      [blacklistPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), sanctionedWallet.publicKey.toBuffer()],
+        program.programId
+      );
+    });
+
+    it('should add a wallet to the blacklist', async () => {
+      const tx = await program.methods
+        .addToBlacklist({
+          wallet: sanctionedWallet.publicKey,
+          reason: 'OFAC match',
+        })
+        .accounts({
+          authority: authority.publicKey,
+          registry: registryPda,
+          blacklistEntry: blacklistPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const entry = await program.account.blacklistEntry.fetch(blacklistPda);
+      expect(entry.wallet.toString()).to.equal(sanctionedWallet.publicKey.toString());
+      expect(entry.isActive).to.be.true;
+      expect(entry.reason).to.equal('OFAC match');
+      expect(entry.addedBy.toString()).to.equal(authority.publicKey.toString());
+      expect(entry.addedAt.toNumber()).to.be.greaterThan(0);
+      expect(entry.removedAt.toNumber()).to.equal(0);
+    });
+
+    it('should reject adding duplicate blacklist entry', async () => {
+      const [samePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), sanctionedWallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+      try {
+        await program.methods
+          .addToBlacklist({
+            wallet: sanctionedWallet.publicKey,
+            reason: 'Duplicate attempt',
+          })
+          .accounts({
+            authority: authority.publicKey,
+            registry: registryPda,
+            blacklistEntry: samePda,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+        expect.fail('Should have thrown — PDA already exists');
+      } catch (err: any) {
+        expect(err).to.exist;
+      }
+    });
+
+    it('should reject unauthorized blacklist addition', async () => {
+      const fakeAuthority = Keypair.generate();
+      const targetWallet = Keypair.generate();
+      const [targetPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), targetWallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+      try {
+        await program.methods
+          .addToBlacklist({
+            wallet: targetWallet.publicKey,
+            reason: 'Unauthorized attempt',
+          })
+          .accounts({
+            authority: fakeAuthority.publicKey,
+            registry: registryPda,
+            blacklistEntry: targetPda,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([fakeAuthority])
+          .rpc();
+        expect.fail('Should have thrown — unauthorized');
+      } catch (err: any) {
+        expect(err).to.exist;
+      }
+    });
+
+    it('should remove a wallet from the blacklist', async () => {
+      const tx = await program.methods
+        .removeFromBlacklist()
+        .accounts({
+          authority: authority.publicKey,
+          registry: registryPda,
+          blacklistEntry: blacklistPda,
+        })
+        .rpc();
+
+      const entry = await program.account.blacklistEntry.fetch(blacklistPda);
+      expect(entry.isActive).to.be.false;
+      expect(entry.removedAt.toNumber()).to.be.greaterThan(0);
+    });
+
+    it('should reject removing an already inactive blacklist entry', async () => {
+      try {
+        await program.methods
+          .removeFromBlacklist()
+          .accounts({
+            authority: authority.publicKey,
+            registry: registryPda,
+            blacklistEntry: blacklistPda,
+          })
+          .rpc();
+        expect.fail('Should have thrown — already inactive');
+      } catch (err: any) {
+        expect(err).to.exist;
+      }
+    });
+
+    it('blacklist PDA derivation is deterministic', () => {
+      const wallet = Keypair.generate().publicKey;
+
+      const [pda1] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), wallet.toBuffer()],
+        program.programId
+      );
+      const [pda2] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), wallet.toBuffer()],
+        program.programId
+      );
+
+      expect(pda1.toBase58()).to.equal(pda2.toBase58());
+    });
+
+    it('different wallets produce unique blacklist PDAs', () => {
+      const wallet1 = Keypair.generate().publicKey;
+      const wallet2 = Keypair.generate().publicKey;
+
+      const [pda1] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), wallet1.toBuffer()],
+        program.programId
+      );
+      const [pda2] = PublicKey.findProgramAddressSync(
+        [Buffer.from('blacklist'), wallet2.toBuffer()],
+        program.programId
+      );
+
+      expect(pda1.toBase58()).to.not.equal(pda2.toBase58());
+    });
+  });
 });

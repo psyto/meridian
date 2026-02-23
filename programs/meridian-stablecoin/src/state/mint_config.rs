@@ -1,5 +1,55 @@
 use anchor_lang::prelude::*;
 
+/// Stablecoin standard preset
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
+pub enum StablecoinPreset {
+    /// SSS-1: Minimal Stablecoin — mint + freeze + metadata only
+    Sss1,
+    /// SSS-2: Compliant Stablecoin — SSS-1 + permanent delegate + transfer hook + blacklist
+    Sss2,
+    /// Custom: manually configured extensions
+    Custom,
+}
+
+impl Default for StablecoinPreset {
+    fn default() -> Self {
+        StablecoinPreset::Sss1
+    }
+}
+
+/// Role-based access control for stablecoin operations
+#[account]
+#[derive(InitSpace)]
+pub struct RoleConfig {
+    /// Master authority — can assign all other roles
+    pub master_authority: Pubkey,
+
+    /// Minter role (can mint tokens, subject to quotas)
+    pub minter: Option<Pubkey>,
+
+    /// Burner role (can burn tokens)
+    pub burner: Option<Pubkey>,
+
+    /// Blacklister role (SSS-2: can manage blacklist)
+    pub blacklister: Option<Pubkey>,
+
+    /// Pauser role (can pause/unpause)
+    pub pauser: Option<Pubkey>,
+
+    /// Seizer role (SSS-2: can seize via permanent delegate)
+    pub seizer: Option<Pubkey>,
+
+    /// Associated mint config
+    pub mint_config: Pubkey,
+
+    /// Bump seed
+    pub bump: u8,
+}
+
+impl RoleConfig {
+    pub const SEED_PREFIX: &'static [u8] = b"role_config";
+}
+
 /// Configuration for the stablecoin mint
 #[account]
 #[derive(InitSpace)]
@@ -43,6 +93,28 @@ pub struct MintConfig {
 
     /// Bump seed for PDA
     pub bump: u8,
+
+    // =========================================================================
+    // SSS preset configuration (v2)
+    // =========================================================================
+
+    /// Which preset was used to initialize this stablecoin
+    pub preset: StablecoinPreset,
+
+    /// SSS-2: Enable permanent delegate (required for seize)
+    pub enable_permanent_delegate: bool,
+
+    /// SSS-2: Enable transfer hook for compliance checks
+    pub enable_transfer_hook: bool,
+
+    /// SSS-2: New token accounts start frozen (must be thawed after KYC)
+    pub default_account_frozen: bool,
+
+    /// Token decimals (configurable per stablecoin)
+    pub decimals: u8,
+
+    /// Treasury account for seized tokens
+    pub treasury: Option<Pubkey>,
 }
 
 impl MintConfig {
@@ -65,5 +137,11 @@ impl MintConfig {
     /// Check if burning is allowed
     pub fn can_burn(&self, amount: u64) -> bool {
         !self.is_paused && self.total_supply >= amount
+    }
+
+    /// Check if SSS-2 compliance features are enabled
+    pub fn is_compliant(&self) -> bool {
+        matches!(self.preset, StablecoinPreset::Sss2) ||
+        (self.enable_permanent_delegate && self.enable_transfer_hook)
     }
 }
