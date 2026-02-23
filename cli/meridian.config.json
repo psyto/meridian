@@ -1,0 +1,7 @@
+{
+  "rpcUrl": "http://localhost:8899",
+  "stablecoinProgramId": "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP",
+  "transferHookProgramId": "5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL",
+  "wallet": "~/.config/solana/id.json",
+  "commitment": "confirmed"
+}

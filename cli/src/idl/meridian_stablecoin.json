@@ -1,0 +1,2807 @@
+{
+  "address": "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP",
+  "metadata": {
+    "name": "meridian_stablecoin",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Stablecoin with Token-2022 Extensions - Compliant Electronic Payment Method"
+  },
+  "instructions": [
+    {
+      "name": "burn",
+      "docs": [
+        "Burn stablecoin tokens for fiat redemption"
+      ],
+      "discriminator": [
+        116,
+        110,
+        29,
+        56,
+        107,
+        219,
+        42,
+        93
+      ],
+      "accounts": [
+        {
+          "name": "holder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "holder_token_account",
+          "docs": [
+            "Holder's token account to burn from"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "BurnParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Initialize the stablecoin mint with Token-2022 extensions"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Token-2022 mint with extensions configured based on preset.",
+            "SSS-1: mint_authority + freeze_authority + metadata",
+            "SSS-2: SSS-1 + transfer_hook + permanent_delegate"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "transfer_hook_program"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "InitializeParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "initialize_roles",
+      "docs": [
+        "Initialize role-based access control"
+      ],
+      "discriminator": [
+        164,
+        43,
+        91,
+        219,
+        220,
+        247,
+        50,
+        96
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "role_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_vault",
+      "docs": [
+        "Initialize collateral vault"
+      ],
+      "discriminator": [
+        48,
+        191,
+        163,
+        44,
+        71,
+        129,
+        63,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "InitializeVaultParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "mint",
+      "docs": [
+        "Mint stablecoin tokens to a verified recipient"
+      ],
+      "discriminator": [
+        51,
+        57,
+        225,
+        47,
+        182,
+        146,
+        137,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "issuer_authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "issuer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  115,
+                  115,
+                  117,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "issuer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient token account (must be whitelisted via transfer hook)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "MintParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "pause",
+      "docs": [
+        "Pause minting/burning operations (emergency)"
+      ],
+      "discriminator": [
+        211,
+        22,
+        221,
+        251,
+        74,
+        121,
+        193,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_issuer",
+      "docs": [
+        "Register an authorized issuer (Trust Bank, Distributor, etc.)"
+      ],
+      "discriminator": [
+        145,
+        117,
+        52,
+        59,
+        189,
+        27,
+        127,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "issuer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  115,
+                  115,
+                  117,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "issuer_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "RegisterIssuerParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "seize",
+      "docs": [
+        "Seize tokens from a frozen account via permanent delegate (SSS-2 only)",
+        "Fails gracefully if permanent delegate was not enabled during initialization."
+      ],
+      "discriminator": [
+        129,
+        159,
+        143,
+        31,
+        161,
+        224,
+        241,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Authority performing the seize (must be master authority or seizer role)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "source",
+          "docs": [
+            "The frozen account to seize tokens from"
+          ],
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury account to receive seized tokens"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "SeizeParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "submit_audit",
+      "docs": [
+        "Submit audit report"
+      ],
+      "discriminator": [
+        129,
+        202,
+        59,
+        247,
+        177,
+        24,
+        17,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "auditor",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "SubmitAuditParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "transfer",
+      "docs": [
+        "Transfer stablecoin with compliance check via transfer hook"
+      ],
+      "discriminator": [
+        163,
+        52,
+        200,
+        231,
+        140,
+        3,
+        69,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "sender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "sender_token_account",
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "writable": true
+        },
+        {
+          "name": "transfer_hook_program"
+        },
+        {
+          "name": "extra_account_meta_list"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "TransferParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "unpause",
+      "docs": [
+        "Resume minting/burning operations"
+      ],
+      "discriminator": [
+        169,
+        144,
+        4,
+        38,
+        10,
+        141,
+        188,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_collateral",
+      "docs": [
+        "Update collateral (deposit/withdrawal)"
+      ],
+      "discriminator": [
+        218,
+        227,
+        184,
+        124,
+        133,
+        81,
+        157,
+        131
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collateral_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  108,
+                  108,
+                  97,
+                  116,
+                  101,
+                  114,
+                  97,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateCollateralParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_issuer",
+      "docs": [
+        "Update issuer configuration"
+      ],
+      "discriminator": [
+        9,
+        100,
+        234,
+        30,
+        84,
+        43,
+        30,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "issuer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  115,
+                  115,
+                  117,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "issuer.authority",
+                "account": "Issuer"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateIssuerParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_roles",
+      "docs": [
+        "Update roles (master authority only)"
+      ],
+      "discriminator": [
+        220,
+        152,
+        205,
+        233,
+        177,
+        123,
+        219,
+        125
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "role_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint_config"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateRolesParams"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CollateralVault",
+      "discriminator": [
+        19,
+        189,
+        95,
+        155,
+        100,
+        9,
+        159,
+        145
+      ]
+    },
+    {
+      "name": "Issuer",
+      "discriminator": [
+        216,
+        19,
+        83,
+        230,
+        108,
+        53,
+        80,
+        14
+      ]
+    },
+    {
+      "name": "MintConfig",
+      "discriminator": [
+        168,
+        252,
+        88,
+        182,
+        219,
+        205,
+        39,
+        53
+      ]
+    },
+    {
+      "name": "RoleConfig",
+      "discriminator": [
+        60,
+        138,
+        76,
+        113,
+        196,
+        104,
+        162,
+        73
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AuditSubmitted",
+      "discriminator": [
+        234,
+        39,
+        161,
+        79,
+        250,
+        32,
+        106,
+        3
+      ]
+    },
+    {
+      "name": "CollateralUpdated",
+      "discriminator": [
+        64,
+        22,
+        207,
+        249,
+        114,
+        44,
+        203,
+        32
+      ]
+    },
+    {
+      "name": "IssuerRegistered",
+      "discriminator": [
+        98,
+        108,
+        156,
+        224,
+        9,
+        0,
+        195,
+        21
+      ]
+    },
+    {
+      "name": "IssuerUpdated",
+      "discriminator": [
+        132,
+        41,
+        150,
+        0,
+        234,
+        169,
+        60,
+        157
+      ]
+    },
+    {
+      "name": "MintInitialized",
+      "discriminator": [
+        46,
+        171,
+        107,
+        161,
+        175,
+        104,
+        236,
+        230
+      ]
+    },
+    {
+      "name": "MintPaused",
+      "discriminator": [
+        190,
+        101,
+        215,
+        127,
+        210,
+        131,
+        124,
+        246
+      ]
+    },
+    {
+      "name": "MintUnpaused",
+      "discriminator": [
+        71,
+        38,
+        143,
+        177,
+        243,
+        7,
+        181,
+        14
+      ]
+    },
+    {
+      "name": "RolesInitialized",
+      "discriminator": [
+        39,
+        61,
+        216,
+        80,
+        210,
+        234,
+        185,
+        240
+      ]
+    },
+    {
+      "name": "RolesUpdated",
+      "discriminator": [
+        81,
+        37,
+        176,
+        32,
+        30,
+        204,
+        251,
+        246
+      ]
+    },
+    {
+      "name": "StablecoinBurned",
+      "discriminator": [
+        235,
+        15,
+        32,
+        126,
+        86,
+        185,
+        36,
+        7
+      ]
+    },
+    {
+      "name": "StablecoinMinted",
+      "discriminator": [
+        78,
+        169,
+        253,
+        17,
+        186,
+        58,
+        17,
+        168
+      ]
+    },
+    {
+      "name": "StablecoinTransferred",
+      "discriminator": [
+        89,
+        52,
+        51,
+        248,
+        38,
+        168,
+        70,
+        112
+      ]
+    },
+    {
+      "name": "TokensSeized",
+      "discriminator": [
+        51,
+        129,
+        131,
+        114,
+        206,
+        234,
+        140,
+        122
+      ]
+    },
+    {
+      "name": "VaultInitialized",
+      "discriminator": [
+        180,
+        43,
+        207,
+        2,
+        18,
+        71,
+        3,
+        75
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: caller is not the authority"
+    },
+    {
+      "code": 6001,
+      "name": "MintPaused",
+      "msg": "Mint is currently paused"
+    },
+    {
+      "code": 6002,
+      "name": "AlreadyPaused",
+      "msg": "Mint is already paused"
+    },
+    {
+      "code": 6003,
+      "name": "NotPaused",
+      "msg": "Mint is not paused"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidMint",
+      "msg": "Invalid mint address"
+    },
+    {
+      "code": 6005,
+      "name": "IssuerInactive",
+      "msg": "Issuer is inactive"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidIssuer",
+      "msg": "Invalid issuer"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientCollateral",
+      "msg": "Insufficient collateral to mint"
+    },
+    {
+      "code": 6008,
+      "name": "DailyLimitExceeded",
+      "msg": "Daily limit exceeded"
+    },
+    {
+      "code": 6009,
+      "name": "InsufficientSupply",
+      "msg": "Insufficient supply to burn"
+    },
+    {
+      "code": 6010,
+      "name": "InsufficientBalance",
+      "msg": "Insufficient balance"
+    },
+    {
+      "code": 6011,
+      "name": "VaultInactive",
+      "msg": "Vault is inactive"
+    },
+    {
+      "code": 6012,
+      "name": "CollateralRatioViolation",
+      "msg": "Collateral ratio violation: must maintain 100% backing"
+    },
+    {
+      "code": 6013,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount: must be greater than zero"
+    },
+    {
+      "code": 6015,
+      "name": "KycRequired",
+      "msg": "KYC verification required"
+    },
+    {
+      "code": 6016,
+      "name": "KycExpired",
+      "msg": "KYC verification expired"
+    },
+    {
+      "code": 6017,
+      "name": "ComplianceCheckFailed",
+      "msg": "Transfer not allowed: compliance check failed"
+    },
+    {
+      "code": 6018,
+      "name": "UnsupportedJurisdiction",
+      "msg": "Jurisdiction not supported"
+    },
+    {
+      "code": 6019,
+      "name": "PermanentDelegateNotEnabled",
+      "msg": "Permanent delegate not enabled: initialize with SSS-2 preset"
+    },
+    {
+      "code": 6020,
+      "name": "TreasuryNotConfigured",
+      "msg": "Treasury not configured: set treasury before seizing"
+    },
+    {
+      "code": 6021,
+      "name": "ComplianceModuleNotEnabled",
+      "msg": "Compliance module not enabled for this preset"
+    },
+    {
+      "code": 6022,
+      "name": "AccountNotFrozen",
+      "msg": "Account must be frozen before seize"
+    },
+    {
+      "code": 6023,
+      "name": "InvalidRole",
+      "msg": "Caller does not have the required role"
+    }
+  ],
+  "types": [
+    {
+      "name": "AuditSubmitted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "auditor",
+            "type": "pubkey"
+          },
+          {
+            "name": "verified_amount",
+            "type": "u64"
+          },
+          {
+            "name": "audit_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "collateral_ratio",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BurnParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "redemption_info",
+            "docs": [
+              "Bank account info for fiat redemption (encrypted)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CollateralType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Fiat"
+          },
+          {
+            "name": "GovernmentBond"
+          },
+          {
+            "name": "BankDeposit"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CollateralUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "is_deposit",
+            "type": "bool"
+          },
+          {
+            "name": "proof_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "new_total",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_ratio",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CollateralVault",
+      "docs": [
+        "Collateral vault tracking fiat reserves"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint_config",
+            "docs": [
+              "Associated stablecoin mint config"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_collateral",
+            "docs": [
+              "Total fiat collateral held (in smallest unit)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "docs": [
+              "Vault authority (Trust Bank)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "auditor",
+            "docs": [
+              "Auditor public key for verification"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "last_audit_hash",
+            "docs": [
+              "Last audit proof hash (SHA-256)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_audit_at",
+            "docs": [
+              "Last audit timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "collateral_type",
+            "docs": [
+              "Collateral type"
+            ],
+            "type": {
+              "defined": {
+                "name": "CollateralType"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "docs": [
+              "Vault status"
+            ],
+            "type": {
+              "defined": {
+                "name": "VaultStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Creation timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitializeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "preset",
+            "docs": [
+              "SSS-1 (minimal) or SSS-2 (compliant) or Custom"
+            ],
+            "type": {
+              "defined": {
+                "name": "StablecoinPreset"
+              }
+            }
+          },
+          {
+            "name": "name",
+            "docs": [
+              "Token name (stored in on-chain metadata)"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "docs": [
+              "Token symbol"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "docs": [
+              "Metadata URI"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "decimals",
+            "docs": [
+              "Token decimals (default: 2 for fiat stablecoins)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "freeze_authority",
+            "docs": [
+              "Freeze authority override"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "price_oracle",
+            "docs": [
+              "Price oracle"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "treasury",
+            "docs": [
+              "Treasury for seized tokens (required for SSS-2)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "enable_permanent_delegate",
+            "docs": [
+              "Enable permanent delegate (auto-enabled for SSS-2)"
+            ],
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "enable_transfer_hook",
+            "docs": [
+              "Enable transfer hook (auto-enabled for SSS-2)"
+            ],
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "default_account_frozen",
+            "docs": [
+              "New accounts start frozen (auto-enabled for SSS-2)"
+            ],
+            "type": {
+              "option": "bool"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitializeVaultParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "collateral_type",
+            "type": {
+              "defined": {
+                "name": "CollateralType"
+              }
+            }
+          },
+          {
+            "name": "auditor",
+            "type": {
+              "option": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Issuer",
+      "docs": [
+        "Authorized issuer/distributor for stablecoin"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Issuer's public key"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint_config",
+            "docs": [
+              "Associated mint config"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer_type",
+            "docs": [
+              "Issuer type"
+            ],
+            "type": {
+              "defined": {
+                "name": "IssuerType"
+              }
+            }
+          },
+          {
+            "name": "daily_mint_limit",
+            "docs": [
+              "Daily mint limit (0 = unlimited)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "daily_burn_limit",
+            "docs": [
+              "Daily burn limit (0 = unlimited)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "daily_minted",
+            "docs": [
+              "Current daily minted amount"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "daily_burned",
+            "docs": [
+              "Current daily burned amount"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_daily_reset",
+            "docs": [
+              "Last daily reset timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "total_minted",
+            "docs": [
+              "Total minted all time"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_burned",
+            "docs": [
+              "Total burned all time"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Is active"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "registered_at",
+            "docs": [
+              "Registration timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IssuerRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer_type",
+            "type": {
+              "defined": {
+                "name": "IssuerType"
+              }
+            }
+          },
+          {
+            "name": "daily_mint_limit",
+            "type": "u64"
+          },
+          {
+            "name": "daily_burn_limit",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IssuerType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "TrustBank"
+          },
+          {
+            "name": "Distributor"
+          },
+          {
+            "name": "Exchange"
+          },
+          {
+            "name": "ApiPartner"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IssuerUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "daily_mint_limit",
+            "type": "u64"
+          },
+          {
+            "name": "daily_burn_limit",
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintConfig",
+      "docs": [
+        "Configuration for the stablecoin mint"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Authority that can mint/burn (Trust Bank)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "SPL Token-2022 mint address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_hook_program",
+            "docs": [
+              "Transfer hook program for KYC/AML compliance"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "total_supply",
+            "docs": [
+              "Total stablecoin tokens in circulation"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_collateral",
+            "docs": [
+              "Total fiat collateral backing (in smallest unit)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "collateral_ratio_bps",
+            "docs": [
+              "Collateral ratio in basis points (10000 = 100%)",
+              "For trust-type stablecoin, should always be >= 10000"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_paused",
+            "docs": [
+              "Emergency pause flag"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "freeze_authority",
+            "docs": [
+              "Freeze authority for regulatory compliance"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "price_oracle",
+            "docs": [
+              "Oracle for price feed"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "last_audit",
+            "docs": [
+              "Last audit timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Creation timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "docs": [
+              "Last updated timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed for PDA"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "preset",
+            "docs": [
+              "Which preset was used to initialize this stablecoin"
+            ],
+            "type": {
+              "defined": {
+                "name": "StablecoinPreset"
+              }
+            }
+          },
+          {
+            "name": "enable_permanent_delegate",
+            "docs": [
+              "SSS-2: Enable permanent delegate (required for seize)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "enable_transfer_hook",
+            "docs": [
+              "SSS-2: Enable transfer hook for compliance checks"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "default_account_frozen",
+            "docs": [
+              "SSS-2: New token accounts start frozen (must be thawed after KYC)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "decimals",
+            "docs": [
+              "Token decimals (configurable per stablecoin)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "treasury",
+            "docs": [
+              "Treasury account for seized tokens"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_hook_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "preset",
+            "type": {
+              "defined": {
+                "name": "StablecoinPreset"
+              }
+            }
+          },
+          {
+            "name": "enable_permanent_delegate",
+            "type": "bool"
+          },
+          {
+            "name": "enable_transfer_hook",
+            "type": "bool"
+          },
+          {
+            "name": "default_account_frozen",
+            "type": "bool"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "reference",
+            "docs": [
+              "Bank transfer reference for audit trail"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintPaused",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MintUnpaused",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegisterIssuerParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer_type",
+            "type": {
+              "defined": {
+                "name": "IssuerType"
+              }
+            }
+          },
+          {
+            "name": "daily_mint_limit",
+            "type": "u64"
+          },
+          {
+            "name": "daily_burn_limit",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleConfig",
+      "docs": [
+        "Role-based access control for stablecoin operations"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "master_authority",
+            "docs": [
+              "Master authority — can assign all other roles"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "minter",
+            "docs": [
+              "Minter role (can mint tokens, subject to quotas)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "burner",
+            "docs": [
+              "Burner role (can burn tokens)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "blacklister",
+            "docs": [
+              "Blacklister role (SSS-2: can manage blacklist)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "pauser",
+            "docs": [
+              "Pauser role (can pause/unpause)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "seizer",
+            "docs": [
+              "Seizer role (SSS-2: can seize via permanent delegate)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "mint_config",
+            "docs": [
+              "Associated mint config"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RolesInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "master_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RolesUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "updated_by",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeizeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "docs": [
+              "Amount to seize (0 = seize entire balance)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "reason",
+            "docs": [
+              "Reason for seizure (audit trail)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StablecoinBurned",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "holder",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "redemption_info",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "total_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StablecoinMinted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "reference",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "total_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StablecoinPreset",
+      "docs": [
+        "Stablecoin standard preset"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Sss1"
+          },
+          {
+            "name": "Sss2"
+          },
+          {
+            "name": "Custom"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StablecoinTransferred",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "sender",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "memo",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SubmitAuditParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "verified_amount",
+            "docs": [
+              "Verified collateral amount"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "audit_hash",
+            "docs": [
+              "Audit proof hash"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokensSeized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "from",
+            "type": "pubkey"
+          },
+          {
+            "name": "to",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "reason",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "seized_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "memo",
+            "docs": [
+              "Optional memo for the transfer"
+            ],
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateCollateralParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "docs": [
+              "Amount to add (positive) or remove (negative expressed as separate flag)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_deposit",
+            "docs": [
+              "True = deposit, False = withdrawal"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "proof_hash",
+            "docs": [
+              "Proof hash for audit trail"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateIssuerParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "daily_mint_limit",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "daily_burn_limit",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "is_active",
+            "type": {
+              "option": "bool"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateRolesParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": {
+              "option": {
+                "option": "pubkey"
+              }
+            }
+          },
+          {
+            "name": "burner",
+            "type": {
+              "option": {
+                "option": "pubkey"
+              }
+            }
+          },
+          {
+            "name": "blacklister",
+            "type": {
+              "option": {
+                "option": "pubkey"
+              }
+            }
+          },
+          {
+            "name": "pauser",
+            "type": {
+              "option": {
+                "option": "pubkey"
+              }
+            }
+          },
+          {
+            "name": "seizer",
+            "type": {
+              "option": {
+                "option": "pubkey"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_type",
+            "type": {
+              "defined": {
+                "name": "CollateralType"
+              }
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Suspended"
+          },
+          {
+            "name": "UnderAudit"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    }
+  ]
+}

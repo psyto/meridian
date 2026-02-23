@@ -1,0 +1,1828 @@
+{
+  "address": "5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL",
+  "metadata": {
+    "name": "transfer_hook",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Unified Transfer Hook for KYC/AML Compliance"
+  },
+  "instructions": [
+    {
+      "name": "add_to_blacklist",
+      "docs": [
+        "Add wallet to blacklist (SSS-2 compliance)"
+      ],
+      "discriminator": [
+        90,
+        115,
+        98,
+        231,
+        173,
+        119,
+        117,
+        176
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "blacklist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "params.wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "AddToBlacklistParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_to_whitelist",
+      "docs": [
+        "Add wallet to whitelist with full compliance parameters"
+      ],
+      "discriminator": [
+        157,
+        211,
+        52,
+        54,
+        144,
+        81,
+        5,
+        55
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "whitelist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "params.wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "AddToWhitelistParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "execute",
+      "docs": [
+        "Execute transfer hook - validates KYC/AML compliance",
+        "Called automatically by Token-2022 on every transfer",
+        "",
+        "Validation order:",
+        "1. Registry active check",
+        "2. Blacklist check (SSS-2) — reject if either party is blacklisted",
+        "3. Whitelist check — verify KYC status, jurisdiction, limits"
+      ],
+      "discriminator": [
+        130,
+        221,
+        242,
+        154,
+        13,
+        193,
+        189,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "source"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "destination"
+        },
+        {
+          "name": "owner"
+        },
+        {
+          "name": "extra_account_meta_list"
+        },
+        {
+          "name": "registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "source"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_whitelist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "destination"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sender_blacklist",
+          "docs": [
+            "Sender blacklist entry (optional — only exists if wallet was blacklisted)",
+            "For SSS-1 tokens this PDA won't exist and will be None."
+          ],
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "source"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_blacklist",
+          "docs": [
+            "Recipient blacklist entry (optional — only exists if wallet was blacklisted)"
+          ],
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "destination"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_extra_account_meta_list",
+      "docs": [
+        "Initialize extra account metas for transfer hook resolution"
+      ],
+      "discriminator": [
+        92,
+        197,
+        174,
+        197,
+        41,
+        124,
+        19,
+        3
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "extra_account_meta_list",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_registry",
+      "docs": [
+        "Initialize the KYC registry for a specific mint"
+      ],
+      "discriminator": [
+        189,
+        181,
+        20,
+        17,
+        174,
+        57,
+        249,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_registry",
+      "docs": [
+        "Pause the registry (emergency function)"
+      ],
+      "discriminator": [
+        106,
+        147,
+        106,
+        131,
+        69,
+        218,
+        76,
+        249
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_from_blacklist",
+      "docs": [
+        "Remove wallet from blacklist"
+      ],
+      "discriminator": [
+        47,
+        105,
+        20,
+        10,
+        165,
+        168,
+        203,
+        219
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "blacklist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "blacklist_entry.wallet",
+                "account": "BlacklistEntry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_from_whitelist",
+      "docs": [
+        "Remove wallet from whitelist"
+      ],
+      "discriminator": [
+        7,
+        144,
+        216,
+        239,
+        243,
+        236,
+        193,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "whitelist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "whitelist_entry.wallet",
+                "account": "WhitelistEntry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_registry",
+      "docs": [
+        "Resume the registry"
+      ],
+      "discriminator": [
+        214,
+        222,
+        128,
+        181,
+        158,
+        27,
+        118,
+        208
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_kyc_level",
+      "docs": [
+        "Update KYC level and jurisdiction for a whitelisted address"
+      ],
+      "discriminator": [
+        67,
+        174,
+        20,
+        196,
+        208,
+        224,
+        187,
+        139
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "whitelist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "whitelist_entry.wallet",
+                "account": "WhitelistEntry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_kyc_level",
+          "type": {
+            "defined": {
+              "name": "KycLevel"
+            }
+          }
+        },
+        {
+          "name": "new_jurisdiction",
+          "type": {
+            "defined": {
+              "name": "Jurisdiction"
+            }
+          }
+        },
+        {
+          "name": "new_expiry",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "update_registry_authority",
+      "docs": [
+        "Update registry authority"
+      ],
+      "discriminator": [
+        36,
+        103,
+        15,
+        149,
+        117,
+        134,
+        26,
+        41
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_authority",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BlacklistEntry",
+      "discriminator": [
+        218,
+        179,
+        231,
+        40,
+        141,
+        25,
+        168,
+        189
+      ]
+    },
+    {
+      "name": "KycRegistry",
+      "discriminator": [
+        204,
+        241,
+        19,
+        79,
+        46,
+        77,
+        56,
+        20
+      ]
+    },
+    {
+      "name": "WhitelistEntry",
+      "discriminator": [
+        51,
+        70,
+        173,
+        81,
+        219,
+        192,
+        234,
+        62
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "KycLevelUpdated",
+      "discriminator": [
+        225,
+        93,
+        71,
+        11,
+        223,
+        217,
+        150,
+        9
+      ]
+    },
+    {
+      "name": "RegistryAuthorityUpdated",
+      "discriminator": [
+        49,
+        49,
+        137,
+        63,
+        54,
+        195,
+        212,
+        154
+      ]
+    },
+    {
+      "name": "RegistryInitialized",
+      "discriminator": [
+        144,
+        138,
+        62,
+        105,
+        58,
+        38,
+        100,
+        177
+      ]
+    },
+    {
+      "name": "RegistryPaused",
+      "discriminator": [
+        187,
+        60,
+        205,
+        238,
+        36,
+        219,
+        148,
+        187
+      ]
+    },
+    {
+      "name": "RegistryResumed",
+      "discriminator": [
+        230,
+        212,
+        119,
+        17,
+        235,
+        202,
+        104,
+        244
+      ]
+    },
+    {
+      "name": "TransferValidated",
+      "discriminator": [
+        171,
+        133,
+        176,
+        35,
+        131,
+        74,
+        31,
+        221
+      ]
+    },
+    {
+      "name": "WalletBlacklisted",
+      "discriminator": [
+        110,
+        134,
+        244,
+        48,
+        29,
+        245,
+        216,
+        45
+      ]
+    },
+    {
+      "name": "WalletRemoved",
+      "discriminator": [
+        131,
+        93,
+        27,
+        146,
+        7,
+        156,
+        62,
+        229
+      ]
+    },
+    {
+      "name": "WalletUnblacklisted",
+      "discriminator": [
+        175,
+        77,
+        148,
+        136,
+        175,
+        126,
+        233,
+        42
+      ]
+    },
+    {
+      "name": "WalletWhitelisted",
+      "discriminator": [
+        107,
+        131,
+        66,
+        173,
+        246,
+        146,
+        200,
+        150
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6001,
+      "name": "RegistryInactive",
+      "msg": "KYC registry is not active"
+    },
+    {
+      "code": 6002,
+      "name": "SenderNotWhitelisted",
+      "msg": "Sender is not whitelisted"
+    },
+    {
+      "code": 6003,
+      "name": "RecipientNotWhitelisted",
+      "msg": "Recipient is not whitelisted"
+    },
+    {
+      "code": 6004,
+      "name": "KycExpired",
+      "msg": "KYC verification expired"
+    },
+    {
+      "code": 6005,
+      "name": "DailyLimitExceeded",
+      "msg": "Daily transfer limit exceeded"
+    },
+    {
+      "code": 6006,
+      "name": "JurisdictionNotAllowed",
+      "msg": "Jurisdiction not allowed"
+    },
+    {
+      "code": 6007,
+      "name": "TransferNotAllowed",
+      "msg": "Transfer not allowed"
+    },
+    {
+      "code": 6008,
+      "name": "TransferExceedsLimit",
+      "msg": "Transfer amount exceeds KYC level limit"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidWhitelistEntry",
+      "msg": "Invalid whitelist entry"
+    },
+    {
+      "code": 6010,
+      "name": "SenderBlacklisted",
+      "msg": "Sender is blacklisted"
+    },
+    {
+      "code": 6011,
+      "name": "RecipientBlacklisted",
+      "msg": "Recipient is blacklisted"
+    },
+    {
+      "code": 6012,
+      "name": "AlreadyBlacklisted",
+      "msg": "Blacklist entry already exists"
+    },
+    {
+      "code": 6013,
+      "name": "NotBlacklisted",
+      "msg": "Blacklist entry not active"
+    },
+    {
+      "code": 6014,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "AddToBlacklistParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddToWhitelistParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "type": {
+              "defined": {
+                "name": "Jurisdiction"
+              }
+            }
+          },
+          {
+            "name": "kyc_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "expiry_timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BlacklistEntry",
+      "docs": [
+        "Blacklist entry for a sanctioned/blocked wallet (SSS-2 compliance)",
+        "",
+        "When a BlacklistEntry exists and is_active == true, the transfer hook",
+        "will reject any transfer involving this wallet as sender or recipient."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "docs": [
+              "Blocked wallet address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "registry",
+            "docs": [
+              "Associated KYC registry"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "docs": [
+              "Reason for blacklisting (e.g. \"OFAC match\", \"Sanctions screening\")"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Is entry currently active (blocking transfers)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "added_by",
+            "docs": [
+              "Authority that added this entry"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "added_at",
+            "docs": [
+              "Timestamp when blacklisted"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "removed_at",
+            "docs": [
+              "Timestamp when removed (0 if still active)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Jurisdiction",
+      "docs": [
+        "Supported jurisdictions"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Japan"
+          },
+          {
+            "name": "Singapore"
+          },
+          {
+            "name": "HongKong"
+          },
+          {
+            "name": "Eu"
+          },
+          {
+            "name": "Usa"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KycLevel",
+      "docs": [
+        "KYC verification levels for regulatory compliance"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Basic"
+          },
+          {
+            "name": "Standard"
+          },
+          {
+            "name": "Enhanced"
+          },
+          {
+            "name": "Institutional"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KycLevelUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "new_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "type": {
+              "defined": {
+                "name": "Jurisdiction"
+              }
+            }
+          },
+          {
+            "name": "new_expiry",
+            "type": "i64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KycRegistry",
+      "docs": [
+        "KYC Registry for managing verified wallets (unified superset)"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Registry authority (compliance officer)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "Associated stablecoin mint"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "whitelist_count",
+            "docs": [
+              "Total whitelisted wallets (u64 for wider range)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Is registry active"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "require_kyc",
+            "docs": [
+              "Require KYC for all transfers"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "verified_only",
+            "docs": [
+              "Allow transfers between verified wallets only"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Creation timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "docs": [
+              "Last updated timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryAuthorityUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryPaused",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "paused_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegistryResumed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "resumed_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferValidated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sender",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "sender_kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "recipient_kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WalletBlacklisted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "name": "added_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WalletRemoved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WalletUnblacklisted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "removed_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WalletWhitelisted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "type": {
+              "defined": {
+                "name": "Jurisdiction"
+              }
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistEntry",
+      "docs": [
+        "Whitelist entry for a verified wallet (unified superset)",
+        "",
+        "Defined here (in the program crate) so `#[account]` can reference `crate::ID`.",
+        "Enums and helper logic come from `accredit-types`."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "docs": [
+              "Wallet address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "registry",
+            "docs": [
+              "Associated KYC registry"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "kyc_level",
+            "docs": [
+              "KYC verification level"
+            ],
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "docs": [
+              "User's jurisdiction"
+            ],
+            "type": {
+              "defined": {
+                "name": "Jurisdiction"
+              }
+            }
+          },
+          {
+            "name": "kyc_hash",
+            "docs": [
+              "Encrypted KYC data hash (NaCl box)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "is_active",
+            "docs": [
+              "Is entry active"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "daily_limit",
+            "docs": [
+              "Daily transaction limit (0 = unlimited / use default per-level limit)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "daily_volume",
+            "docs": [
+              "Accumulated daily volume"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "volume_reset_time",
+            "docs": [
+              "Last volume reset timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "verified_at",
+            "docs": [
+              "Verification timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "expiry_timestamp",
+            "docs": [
+              "Expiry timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "last_activity",
+            "docs": [
+              "Last activity timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Creation timestamp"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

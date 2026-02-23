@@ -8,6 +8,7 @@
     "packages/aggregator",
     "packages/encryption",
     "app",
+    "cli",
     "../accredit/packages/*"
   ],
   "scripts": {
