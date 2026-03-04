@@ -4,7 +4,8 @@ import {
   Commitment,
   PublicKey,
 } from "@solana/web3.js";
-import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
+import anchor from "@coral-xyz/anchor";
+const { AnchorProvider, Program, Wallet } = anchor;
 import { readFileSync } from "node:fs";
 import { Config, expandPath } from "./config.js";
 

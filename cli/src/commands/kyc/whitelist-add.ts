@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
+import anchor from "@coral-xyz/anchor";
+const { BN } = anchor;
 import { getGlobalFlags } from "../../cli.js";
 import { loadConfig } from "../../config.js";
 import { createContext } from "../../context.js";
@@ -55,7 +56,7 @@ export function registerWhitelistAdd(parent: Command): void {
         ctx.transferHookProgram.programId
       );
 
-      const expiryTimestamp = new anchor.BN(
+      const expiryTimestamp = new BN(
         Math.floor(Date.now() / 1000) + parseInt(opts.expiryDays) * 86400
       );
 

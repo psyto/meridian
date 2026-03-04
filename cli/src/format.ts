@@ -1,4 +1,5 @@
-import * as anchor from "@coral-xyz/anchor";
+import pkg from "@coral-xyz/anchor";
+const { BN } = pkg;
 
 export function formatTxResult(
   signature: string,
@@ -30,9 +31,19 @@ export function serializeAccount(obj: any, json: boolean): string {
   return formatTable(plain);
 }
 
+function isBN(obj: any): boolean {
+  return (
+    obj !== null &&
+    typeof obj === "object" &&
+    typeof obj.toNumber === "function" &&
+    typeof obj.toString === "function" &&
+    typeof obj.toArray === "function"
+  );
+}
+
 function serializePlain(obj: any): any {
   if (obj === null || obj === undefined) return null;
-  if (anchor.BN.isBN(obj)) return obj.toString();
+  if (isBN(obj)) return obj.toString();
   if (obj.toBase58) return obj.toBase58();
   if (Array.isArray(obj)) {
     if (obj.length > 0 && typeof obj[0] === "number") {
@@ -64,7 +75,7 @@ function formatTable(obj: any, indent = 0): string {
   return lines.join("\n");
 }
 
-export function formatTimestamp(bn: anchor.BN): string {
+export function formatTimestamp(bn: BN): string {
   const ts = bn.toNumber();
   if (ts === 0) return "N/A";
   return new Date(ts * 1000).toISOString();

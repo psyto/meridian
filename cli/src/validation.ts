@@ -1,5 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
+import pkg from "@coral-xyz/anchor";
+const { BN } = pkg;
 
 export function parsePublicKey(value: string): PublicKey {
   try {
@@ -9,12 +10,12 @@ export function parsePublicKey(value: string): PublicKey {
   }
 }
 
-export function parseAmount(value: string): anchor.BN {
+export function parseAmount(value: string): BN {
   const n = Number(value);
   if (isNaN(n) || n < 0 || !Number.isFinite(n)) {
     throw new Error(`Invalid amount: ${value}`);
   }
-  return new anchor.BN(value);
+  return new BN(value);
 }
 
 export function parseHexBytes(value: string, length: number): number[] {
