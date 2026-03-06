@@ -14,6 +14,7 @@
   "dependencies": {
     "@accredit/sdk": "workspace:*",
     "@accredit/types": "workspace:*",
+    "@complr/sdk": "file:../../../complr/sdk",
     "@coral-xyz/anchor": "^0.32.1",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0"

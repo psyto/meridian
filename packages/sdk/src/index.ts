@@ -13,3 +13,4 @@ export * from './securities';
 export * from './rwa';
 export * from './types';
 export * from './utils';
+export { screenWallet, checkTransferCompliance } from './compliance';

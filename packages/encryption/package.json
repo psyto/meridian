@@ -12,8 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "tweetnacl": "^1.0.3",
-    "tweetnacl-util": "^0.15.1"
+    "@veil/crypto": "file:../../../veil/packages/crypto"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

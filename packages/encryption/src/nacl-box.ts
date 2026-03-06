@@ -1,22 +1,27 @@
-import nacl from 'tweetnacl';
-import { encodeUTF8, decodeUTF8 } from 'tweetnacl-util';
+import {
+  EncryptionKeypair,
+  EncryptedData as VeilEncryptedData,
+  generateEncryptionKeypair,
+  deriveEncryptionKeypair,
+  encrypt as veilEncrypt,
+  decrypt as veilDecrypt,
+} from '@veil/crypto';
 import type { KeyPair, EncryptedData, DecryptedData } from './types';
 
 /**
  * NaCl Box encryption for KYC data and confidential metadata.
  *
  * Uses Curve25519-XSalsa20-Poly1305 for authenticated public-key encryption.
- * This is the standard for encrypting KYC/AML data that needs to be shared
- * between specific parties (e.g., compliance officer and trust bank).
+ * Powered by @veil/crypto.
  */
 export class NaclBox {
-  private keyPair: nacl.BoxKeyPair;
+  private keypair: EncryptionKeypair;
 
   constructor(secretKey?: Uint8Array) {
     if (secretKey) {
-      this.keyPair = nacl.box.keyPair.fromSecretKey(secretKey);
+      this.keypair = deriveEncryptionKeypair(secretKey);
     } else {
-      this.keyPair = nacl.box.keyPair();
+      this.keypair = generateEncryptionKeypair();
     }
   }
 
@@ -24,7 +29,7 @@ export class NaclBox {
    * Get the public key for sharing with counterparties
    */
   getPublicKey(): Uint8Array {
-    return this.keyPair.publicKey;
+    return this.keypair.publicKey;
   }
 
   /**
@@ -32,8 +37,8 @@ export class NaclBox {
    */
   getKeyPair(): KeyPair {
     return {
-      publicKey: this.keyPair.publicKey,
-      secretKey: this.keyPair.secretKey,
+      publicKey: this.keypair.publicKey,
+      secretKey: this.keypair.secretKey,
     };
   }
 
@@ -41,22 +46,11 @@ export class NaclBox {
    * Encrypt data for a specific recipient using their public key
    */
   encrypt(plaintext: Uint8Array, recipientPublicKey: Uint8Array): EncryptedData {
-    const nonce = nacl.randomBytes(nacl.box.nonceLength);
-    const ciphertext = nacl.box(
-      plaintext,
-      nonce,
-      recipientPublicKey,
-      this.keyPair.secretKey
-    );
-
-    if (!ciphertext) {
-      throw new Error('Encryption failed');
-    }
-
+    const result = veilEncrypt(plaintext, recipientPublicKey, this.keypair);
     return {
-      ciphertext,
-      nonce,
-      senderPublicKey: this.keyPair.publicKey,
+      ciphertext: result.ciphertext,
+      nonce: result.nonce,
+      senderPublicKey: this.keypair.publicKey,
     };
   }
 
@@ -64,24 +58,18 @@ export class NaclBox {
    * Encrypt a string message
    */
   encryptString(message: string, recipientPublicKey: Uint8Array): EncryptedData {
-    return this.encrypt(decodeUTF8(message), recipientPublicKey);
+    return this.encrypt(new TextEncoder().encode(message), recipientPublicKey);
   }
 
   /**
    * Decrypt data from a specific sender
    */
   decrypt(encrypted: EncryptedData): DecryptedData {
-    const plaintext = nacl.box.open(
-      encrypted.ciphertext,
-      encrypted.nonce,
-      encrypted.senderPublicKey,
-      this.keyPair.secretKey
-    );
+    const combined = new Uint8Array(encrypted.nonce.length + encrypted.ciphertext.length);
+    combined.set(encrypted.nonce, 0);
+    combined.set(encrypted.ciphertext, encrypted.nonce.length);
 
-    if (!plaintext) {
-      throw new Error('Decryption failed - invalid ciphertext or wrong key');
-    }
-
+    const plaintext = veilDecrypt(combined, encrypted.senderPublicKey, this.keypair);
     return { plaintext };
   }
 
@@ -90,7 +78,7 @@ export class NaclBox {
    */
   decryptString(encrypted: EncryptedData): string {
     const { plaintext } = this.decrypt(encrypted);
-    return encodeUTF8(plaintext);
+    return new TextDecoder().decode(plaintext);
   }
 
   /**
@@ -106,14 +94,14 @@ export class NaclBox {
    * Generate a hash from a string
    */
   static async hashString(data: string): Promise<Uint8Array> {
-    return NaclBox.hash(decodeUTF8(data));
+    return NaclBox.hash(new TextEncoder().encode(data));
   }
 
   /**
    * Generate a new random key pair
    */
   static generateKeyPair(): KeyPair {
-    const kp = nacl.box.keyPair();
+    const kp = generateEncryptionKeypair();
     return {
       publicKey: kp.publicKey,
       secretKey: kp.secretKey,
