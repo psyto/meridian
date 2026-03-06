@@ -14,3 +14,12 @@ export * from './rwa';
 export * from './types';
 export * from './utils';
 export { screenWallet, checkTransferCompliance } from './compliance';
+export {
+  matchSecuritiesOrders,
+  getMarketMetrics,
+  getDepthAtPrice,
+  buildOwnershipTree,
+  getOwnershipProof,
+  createSettlementTracker,
+} from './order-matcher';
+export type { SecuritiesOrder, MatchedTrade } from './order-matcher';

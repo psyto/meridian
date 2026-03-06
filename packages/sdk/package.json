@@ -15,6 +15,7 @@
     "@accredit/sdk": "workspace:*",
     "@accredit/types": "workspace:*",
     "@complr/sdk": "file:../../../complr/sdk",
+    "@stratum/core": "file:../../../stratum/packages/core",
     "@coral-xyz/anchor": "^0.32.1",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0"
