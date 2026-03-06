@@ -92,6 +92,7 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 │  └────────────────┘  └────────────────┘  │  @accredit/sdk │             │
 │                                          │  @complr/sdk   │             │
 │                                          │  @veil/crypto  │             │
+│                                          │  @stratum/core │             │
 │                                          └────────────────┘             │
 │                                                                          │
 │  ┌───────────────────────────────────────────────────────────────────┐   │
@@ -124,6 +125,7 @@ This project synthesizes patterns from internal modules:
 | RWA Registry | Asset registration, ownership proofs, dividends |
 | Encryption | NaCl box encryption via @veil/crypto |
 | Compliance | On-chain KYC (@accredit/sdk), off-chain sanctions/PEP (@complr/sdk) |
+| Stratum | OrderMatcher for price-time priority matching, MerkleTree for ownership proofs, Bitfield for settlement tracking (@stratum/core) |
 | API Layer | Next.js patterns, Prisma schema, auth |
 
 ## Programs
@@ -285,6 +287,55 @@ const transferCheck = await checkTransferCompliance(sender, recipient, amount);
 ## Encryption
 
 The `@meridian/encryption` package provides NaCl box encryption for secure key exchange and message confidentiality. It uses **@veil/crypto** as the underlying cryptographic provider (replacing the previous tweetnacl dependency).
+
+## Stratum Integration
+
+The `@meridian/sdk` uses **@stratum/core** data structures for high-performance securities trading, RWA ownership verification, and settlement tracking. The integration is implemented in `packages/sdk/src/order-matcher.ts` and exported from `packages/sdk/src/index.ts`.
+
+### OrderMatcher — Securities Order Book
+
+`matchSecuritiesOrders()` creates an `OrderMatcher` for price-time priority order book matching on the securities engine.
+
+- `getMarketMetrics()` — returns best bid, best ask, spread, and mid-price for the current order book
+- `getDepthAtPrice()` — returns the total order depth available at a given price level
+
+```typescript
+import { matchSecuritiesOrders, getMarketMetrics, getDepthAtPrice } from '@meridian/sdk';
+
+const matcher = matchSecuritiesOrders(orders);
+const fills = matcher.match(incomingOrder);
+
+const metrics = getMarketMetrics(matcher);
+// metrics.spread, metrics.midPrice
+
+const depth = getDepthAtPrice(matcher, 150.25);
+```
+
+### MerkleTree — RWA Ownership Proofs
+
+`buildOwnershipTree()` constructs a `MerkleTree` that aggregates RWA ownership records for on-chain proof verification. This powers the rwa-registry's ownership proof management.
+
+- `getOwnershipProof()` — generates a Merkle proof for a specific ownership record, used by the rwa-registry program to verify asset ownership without revealing the full ownership set
+
+```typescript
+import { buildOwnershipTree, getOwnershipProof } from '@meridian/sdk';
+
+const tree = buildOwnershipTree(ownershipRecords);
+const proof = getOwnershipProof(tree, recordIndex);
+// proof can be submitted on-chain for ownership verification
+```
+
+### Bitfield — Settlement Tracking
+
+`createSettlementTracker()` uses a `Bitfield` to efficiently track settlement status across large batches of matched orders. Each bit represents whether an order has been settled.
+
+```typescript
+import { createSettlementTracker } from '@meridian/sdk';
+
+const tracker = createSettlementTracker(matchedOrderCount);
+tracker.set(orderId);            // mark order as settled
+tracker.get(orderId);            // check settlement status
+```
 
 ## Regulatory Compliance
 
