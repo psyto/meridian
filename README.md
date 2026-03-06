@@ -10,7 +10,7 @@ Meridian provides institutional-grade infrastructure for:
 - **Stablecoin**: Trust-type electronic payment method compliant
 - **Securities Trading**: 24/7 spot and derivatives markets for tokenized equities
 - **RWA Tokenization**: Real-world asset registration, custody verification, and dividends
-- **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks
+- **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks, powered by the Fabrknt compliance stack (@accredit/sdk for on-chain KYC, @complr/sdk for off-chain sanctions/PEP screening)
 - **ZK Privacy**: Application-layer ZK proofs for private compliance verification — solving the Token-2022 limitation where transfer hooks and confidential transfers cannot coexist
 
 ## Design: ZK Compliance and Token-2022 Confidential Transfers
@@ -89,7 +89,10 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 │  │  RWA REGISTRY  │  │     ORACLE     │  │      SDK       │             │
 │  │                │  │                │  │                │             │
 │  │  rwa-registry  │  │     oracle     │  │  @meridian/sdk │             │
-│  └────────────────┘  └────────────────┘  └────────────────┘             │
+│  └────────────────┘  └────────────────┘  │  @accredit/sdk │             │
+│                                          │  @complr/sdk   │             │
+│                                          │  @veil/crypto  │             │
+│                                          └────────────────┘             │
 │                                                                          │
 │  ┌───────────────────────────────────────────────────────────────────┐   │
 │  │                    COMPLIANT ROUTING LAYER                        │   │
@@ -119,6 +122,8 @@ This project synthesizes patterns from internal modules:
 | Derivatives | Perpetuals, funding rates, variance swaps |
 | Oracle | TWAP, volatility index, funding feeds |
 | RWA Registry | Asset registration, ownership proofs, dividends |
+| Encryption | NaCl box encryption via @veil/crypto |
+| Compliance | On-chain KYC (@accredit/sdk), off-chain sanctions/PEP (@complr/sdk) |
 | API Layer | Next.js patterns, Prisma schema, auth |
 
 ## Programs
@@ -251,6 +256,7 @@ GET  /api/v1/rwa/dividends       # Pending dividends
 
 ```typescript
 import { createMeridianClient, createStablecoinSdk, createSecuritiesSdk } from '@meridian/sdk';
+import { screenWallet, checkTransferCompliance } from '@meridian/sdk';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // Initialize client
@@ -266,7 +272,19 @@ console.log(stablecoinSdk.formatAmount(balance));
 const secSdk = createSecuritiesSdk(client);
 const quote = await secSdk.getSwapQuote(marketPubkey, inputAmount, true);
 console.log(`Output: ${quote.outputAmount}, Impact: ${quote.priceImpact}%`);
+
+// Off-chain compliance screening (via @complr/sdk)
+const screenResult = await screenWallet(walletPubkey.toBase58());
+// screenResult.sanctioned — true if wallet appears on sanctions lists
+// screenResult.pep        — true if wallet is linked to a politically exposed person
+
+const transferCheck = await checkTransferCompliance(sender, recipient, amount);
+// transferCheck.allowed   — true if the transfer passes sanctions/PEP screening
 ```
+
+## Encryption
+
+The `@meridian/encryption` package provides NaCl box encryption for secure key exchange and message confidentiality. It uses **@veil/crypto** as the underlying cryptographic provider (replacing the previous tweetnacl dependency).
 
 ## Regulatory Compliance
 
@@ -276,8 +294,10 @@ console.log(`Output: ${quote.outputAmount}, Impact: ${quote.priceImpact}%`);
 - 100% fiat collateral backing
 - Regular audit requirements
 
-### KYC/AML
+### KYC/AML — Fabrknt Compliance Stack
 - All transfers validated via transfer hook
+- On-chain KYC verification via **@accredit/sdk** (whitelist entry, KYC level, jurisdiction, expiry)
+- Off-chain sanctions and PEP screening via **@complr/sdk** (`screenWallet`, `checkTransferCompliance`)
 - Jurisdiction-based restrictions
 - Multi-level KYC verification
 - Expiry and renewal management
