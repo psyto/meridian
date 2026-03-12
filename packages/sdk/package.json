@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@accredit/sdk": "workspace:*",
-    "@accredit/types": "workspace:*",
+    "@accredit/core": "workspace:*",
     "@complr/sdk": "file:../../../complr/sdk",
     "@stratum/core": "file:../../../stratum/packages/core",
     "@coral-xyz/anchor": "^0.32.1",

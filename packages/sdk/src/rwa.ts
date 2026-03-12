@@ -1,7 +1,10 @@
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { MeridianClient } from './client';
 import { BN } from '@coral-xyz/anchor';
-import { Jurisdiction } from '@accredit/types';
+import { Jurisdiction } from '@accredit/core';
+
+// Re-export for consumers that import directly from this module
+export { Jurisdiction } from '@accredit/core';
 
 /**
  * RWA (Real World Assets) SDK Module
@@ -34,8 +37,7 @@ export enum Currency {
   Sgd = 3,
 }
 
-// Jurisdiction is imported from @accredit/types and used internally.
-// It is re-exported via ./types, not re-exported here to avoid ambiguity.
+// Jurisdiction is imported from @accredit/core and re-exported above.
 
 export interface RwaAsset {
   authority: PublicKey;

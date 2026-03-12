@@ -1,9 +1,9 @@
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 
-// Re-export shared KYC/AML types from @accredit/types
-export { KycLevel, Jurisdiction } from '@accredit/types';
-export type { WhitelistEntry } from '@accredit/types';
+// Re-export shared KYC/AML types from @accredit/core
+export { KycLevel, Jurisdiction } from '@accredit/core';
+export type { WhitelistEntry } from '@accredit/core';
 
 // Oracle Types (Meridian-specific)
 export enum AssetType {

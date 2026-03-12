@@ -13,6 +13,8 @@ securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
 rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
 oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
 compliant_registry = "66tKcQqpv8GH2igWWBcLVrTjvo8cgpVJJAE8xadAgnYA"
+shield_escrow = "SHLDxR5GtSjk4FGebmqZBfLSuGhWMaWM46U9DjMkfWF"
+zk_verifier = "ZKVRFYxR3Ge8mTnUXzKnFHB1aLNhWMdP5DUNbvX91Kt"
 
 [programs.devnet]
 meridian_stablecoin = "HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP"
@@ -21,6 +23,8 @@ securities_engine = "7eoNfGXF5kdonbCwAs1tvaPc5HZFnVC2pgiFDnuG3yTe"
 rwa_registry = "BMej5CMvLs8xN3TGj7o9HKV2px6gyycS26y5ZJSBjL5D"
 oracle = "BXm2LiGwT2AR267gqd1yNbckytysBD8LCaov5zTGUDpw"
 compliant_registry = "66tKcQqpv8GH2igWWBcLVrTjvo8cgpVJJAE8xadAgnYA"
+shield_escrow = "SHLDxR5GtSjk4FGebmqZBfLSuGhWMaWM46U9DjMkfWF"
+zk_verifier = "ZKVRFYxR3Ge8mTnUXzKnFHB1aLNhWMdP5DUNbvX91Kt"
 
 [registry]
 url = "https://api.apr.dev"
@@ -38,6 +42,8 @@ members = [
     "programs/securities-engine",
     "programs/rwa-registry",
     "programs/oracle",
+    "programs/shield-escrow",
+    "programs/zk-verifier",
     "../accredit/programs/transfer-hook",
     "../accredit/programs/compliant-registry"
 ]

@@ -4,6 +4,8 @@ members = [
     "programs/securities-engine",
     "programs/rwa-registry",
     "programs/oracle",
+    "programs/shield-escrow",
+    "programs/zk-verifier",
 ]
 resolver = "2"
 

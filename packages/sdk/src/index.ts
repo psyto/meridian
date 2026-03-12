@@ -31,6 +31,10 @@ export {
   isJurisdictionAllowed,
   ZkKycLevel,
   ZkJurisdiction,
+  ZK_VERIFIER_PROGRAM_ID,
+  deriveVerifierConfigPda,
+  deriveAttestationPda,
+  buildVerifyProofInstruction,
 } from './zk-prover';
 export type {
   KycWitness,
