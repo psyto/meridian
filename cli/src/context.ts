@@ -18,6 +18,10 @@ export interface MeridianContext {
   payer: Keypair;
   stablecoinProgram: Program;
   transferHookProgram: Program;
+  shieldEscrowProgram: Program;
+  shieldEscrowProgramId: PublicKey;
+  zkVerifierProgram: Program;
+  zkVerifierProgramId: PublicKey;
   commitment: Commitment;
 }
 
@@ -26,6 +30,20 @@ function loadKeypair(walletPath: string): Keypair {
   const raw = readFileSync(resolved, "utf-8");
   const secretKey = Uint8Array.from(JSON.parse(raw));
   return Keypair.fromSecretKey(secretKey);
+}
+
+/**
+ * Build a minimal IDL stub so Anchor can construct a Program instance
+ * even when the real IDL JSON has not been generated yet.
+ */
+function makeStubIdl(name: string, programId: string) {
+  return {
+    address: programId,
+    metadata: { name, version: "0.1.0", spec: "0.1.0" },
+    instructions: [],
+    accounts: [],
+    types: [],
+  };
 }
 
 export function createContext(config: Config): MeridianContext {
@@ -46,12 +64,28 @@ export function createContext(config: Config): MeridianContext {
     provider,
   );
 
+  const shieldEscrowProgramId = new PublicKey(config.shieldEscrowProgramId);
+  const shieldEscrowProgram = new Program(
+    makeStubIdl("shield_escrow", config.shieldEscrowProgramId) as any,
+    provider,
+  );
+
+  const zkVerifierProgramId = new PublicKey(config.zkVerifierProgramId);
+  const zkVerifierProgram = new Program(
+    makeStubIdl("zk_verifier", config.zkVerifierProgramId) as any,
+    provider,
+  );
+
   return {
     connection,
     provider,
     payer,
     stablecoinProgram,
     transferHookProgram,
+    shieldEscrowProgram,
+    shieldEscrowProgramId,
+    zkVerifierProgram,
+    zkVerifierProgramId,
     commitment: config.commitment,
   };
 }

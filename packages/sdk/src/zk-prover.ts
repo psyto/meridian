@@ -1,6 +1,8 @@
 import { createHash } from 'crypto';
 import { PublicKey, TransactionInstruction, SystemProgram } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
+import type { ProofBackend } from './proof-backend';
+import { PlaceholderBackend } from './proof-backend';
 
 /**
  * KYC levels for ZK compliance proofs.
@@ -126,6 +128,11 @@ export function isJurisdictionAllowed(jurisdiction: ZkJurisdiction, bitmask: num
  */
 export class ZkComplianceProver {
   private readonly circuitName = 'compliance_proof';
+  private readonly backend: ProofBackend;
+
+  constructor(backend?: ProofBackend) {
+    this.backend = backend ?? new PlaceholderBackend();
+  }
 
   /**
    * Generate a compliance proof for the given KYC attributes.
@@ -228,70 +235,31 @@ export class ZkComplianceProver {
   }
 
   /**
-   * Generate a proof using the Noir circuit backend.
+   * Generate a proof using the configured backend.
    *
-   * Production implementation would:
-   * 1. Serialize witness + public inputs to Prover.toml format
-   * 2. Invoke nargo prove or the bb (Barretenberg) backend
-   * 3. Return the serialized proof bytes
-   *
-   * Current implementation generates a deterministic proof placeholder
-   * that encodes the commitment, suitable for integration testing.
+   * Delegates to the ProofBackend implementation:
+   * - PlaceholderBackend: SHA-256 based, for testing
+   * - NoirBackend: nargo prove / bb prove, for production
    */
   private async proveCircuit(
     witness: KycWitness,
     publicInputs: CompliancePublicInputs,
   ): Promise<string> {
-    // Encode witness + public inputs into a proof artifact
-    // In production: nargo prove / bb prove
-    const proofData = {
-      w: {
-        kl: witness.kycLevel,
-        j: witness.jurisdiction,
-        e: witness.expiry,
-        s: witness.salt,
-      },
-      p: {
-        rkl: publicInputs.requiredKycLevel,
-        jb: publicInputs.jurisdictionBitmask,
-        ct: publicInputs.currentTimestamp,
-        c: publicInputs.commitment,
-      },
-    };
-
-    const hash = createHash('sha256');
-    hash.update(JSON.stringify(proofData));
-    return hash.digest('hex');
+    return this.backend.prove(witness, publicInputs);
   }
 
   /**
-   * Verify a proof using the Noir circuit backend.
+   * Verify a proof using the configured backend.
    *
-   * Production implementation would:
-   * 1. Deserialize the proof bytes
-   * 2. Invoke nargo verify or the bb verifier
-   * 3. Return the verification result
-   *
-   * Current implementation recomputes and validates the commitment,
-   * suitable for integration testing.
+   * Delegates to the ProofBackend implementation:
+   * - PlaceholderBackend: structural validation, for testing
+   * - NoirBackend: bb verify, for production
    */
   private async verifyCircuit(
-    _proof: string,
+    proof: string,
     publicInputs: CompliancePublicInputs,
   ): Promise<boolean> {
-    // In production: bb verify / on-chain verifier
-    // For now, validate that public inputs are internally consistent
-    if (publicInputs.requiredKycLevel < ZkKycLevel.None ||
-        publicInputs.requiredKycLevel > ZkKycLevel.Institutional) {
-      throw new Error('Invalid required KYC level');
-    }
-    if (publicInputs.jurisdictionBitmask === 0) {
-      throw new Error('Empty jurisdiction bitmask');
-    }
-    if (!publicInputs.commitment) {
-      throw new Error('Missing commitment');
-    }
-    return true;
+    return this.backend.verify(proof, publicInputs);
   }
 }
 
@@ -379,7 +347,8 @@ export function buildVerifyProofInstruction(
 
 /**
  * Create a ZkComplianceProver instance.
+ * @param backend - Optional proof backend. Defaults to PlaceholderBackend.
  */
-export function createZkComplianceProver(): ZkComplianceProver {
-  return new ZkComplianceProver();
+export function createZkComplianceProver(backend?: ProofBackend): ZkComplianceProver {
+  return new ZkComplianceProver(backend);
 }

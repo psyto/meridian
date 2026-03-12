@@ -11,6 +11,8 @@ export * from './client';
 export * from './stablecoin';
 export * from './securities';
 export * from './rwa';
+export * from './shield-escrow';
+export * from './zk-verifier';
 export * from './types';
 export * from './utils';
 export { screenWallet, checkTransferCompliance } from './compliance';
@@ -42,3 +44,5 @@ export type {
   ComplianceProof,
   VerificationResult,
 } from './zk-prover';
+export { PlaceholderBackend, NoirBackend } from './proof-backend';
+export type { ProofBackend } from './proof-backend';

@@ -24,6 +24,19 @@ import { registerShowRegistry } from "./commands/kyc/show-registry.js";
 import { registerShowWhitelist } from "./commands/kyc/show-whitelist.js";
 import { registerShowBlacklist } from "./commands/kyc/show-blacklist.js";
 
+// Shield escrow commands
+import { registerShieldInit } from "./commands/shield/init.js";
+import { registerShieldShowConfig } from "./commands/shield/show-config.js";
+import { registerShieldUpdateConfig } from "./commands/shield/update-config.js";
+import { registerShieldShowReceipt } from "./commands/shield/show-receipt.js";
+
+// ZK verifier commands
+import { registerZkInit } from "./commands/zk/init.js";
+import { registerZkShowConfig } from "./commands/zk/show-config.js";
+import { registerZkShowAttestation } from "./commands/zk/show-attestation.js";
+import { registerZkRevoke } from "./commands/zk/revoke.js";
+import { registerZkToggle } from "./commands/zk/toggle.js";
+
 export function createCli(): Command {
   const program = new Command();
 
@@ -38,6 +51,8 @@ export function createCli(): Command {
     .option("--rpc <url>", "RPC URL override")
     .option("--stablecoin-program <pubkey>", "Stablecoin program ID override")
     .option("--transfer-hook-program <pubkey>", "Transfer hook program ID override")
+    .option("--shield-escrow-program <pubkey>", "Shield escrow program ID override")
+    .option("--zk-verifier-program <pubkey>", "ZK verifier program ID override")
     .option("--wallet <path>", "Wallet keypair path override")
     .option(
       "--commitment <level>",
@@ -77,6 +92,27 @@ export function createCli(): Command {
   registerShowWhitelist(kyc);
   registerShowBlacklist(kyc);
 
+  // Shield escrow subcommand group
+  const shield = program
+    .command("shield")
+    .description("Shield escrow operations");
+
+  registerShieldInit(shield);
+  registerShieldShowConfig(shield);
+  registerShieldUpdateConfig(shield);
+  registerShieldShowReceipt(shield);
+
+  // ZK verifier subcommand group
+  const zk = program
+    .command("zk")
+    .description("ZK verifier operations");
+
+  registerZkInit(zk);
+  registerZkShowConfig(zk);
+  registerZkShowAttestation(zk);
+  registerZkRevoke(zk);
+  registerZkToggle(zk);
+
   return program;
 }
 
@@ -87,6 +123,8 @@ export function getGlobalFlags(cmd: Command): GlobalFlags {
     rpc: opts.rpc,
     stablecoinProgram: opts.stablecoinProgram,
     transferHookProgram: opts.transferHookProgram,
+    shieldEscrowProgram: opts.shieldEscrowProgram,
+    zkVerifierProgram: opts.zkVerifierProgram,
     wallet: opts.wallet,
     commitment: opts.commitment,
     json: opts.json ?? false,

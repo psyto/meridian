@@ -9,6 +9,8 @@ const ConfigSchema = z.object({
   rpcUrl: z.string().url(),
   stablecoinProgramId: z.string(),
   transferHookProgramId: z.string(),
+  shieldEscrowProgramId: z.string(),
+  zkVerifierProgramId: z.string(),
   wallet: z.string(),
   commitment: CommitmentSchema.default("confirmed"),
 });
@@ -20,6 +22,8 @@ export interface GlobalFlags {
   rpc?: string;
   stablecoinProgram?: string;
   transferHookProgram?: string;
+  shieldEscrowProgram?: string;
+  zkVerifierProgram?: string;
   wallet?: string;
   commitment?: Commitment;
   json?: boolean;
@@ -57,6 +61,16 @@ export function loadConfig(flags: GlobalFlags): Config {
       fileConfig.transferHookProgramId ??
       process.env.MERIDIAN_TRANSFER_HOOK_PROGRAM_ID ??
       "5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL",
+    shieldEscrowProgramId:
+      flags.shieldEscrowProgram ??
+      fileConfig.shieldEscrowProgramId ??
+      process.env.MERIDIAN_SHIELD_ESCROW_PROGRAM_ID ??
+      "ShLDe5p5mBYKDrb3JXCWu2bJSNa5YMYnVMPKcfEiFrK",
+    zkVerifierProgramId:
+      flags.zkVerifierProgram ??
+      fileConfig.zkVerifierProgramId ??
+      process.env.MERIDIAN_ZK_VERIFIER_PROGRAM_ID ??
+      "ZkVrf1er4eD7sBGYwXPwZmAJk5hRXhbaPvDAqVnQQ8G",
     wallet:
       flags.wallet ??
       fileConfig.wallet ??
