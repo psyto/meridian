@@ -1,5 +1,6 @@
 export { JupiterAggregator, createJupiterAggregator } from './jupiter';
 export { RouteOptimizer } from './router';
+export { ComplianceShieldRouter, createComplianceShieldRouter } from './compliance-shield';
 export type {
   SwapRoute,
   RouteStep,
@@ -8,3 +9,9 @@ export type {
   SwapParams,
   AggregatorConfig,
 } from './types';
+export type {
+  ShieldPolicy,
+  ShieldEscrowConfig,
+  ShieldedQuoteResult,
+  ComplianceShieldConfig,
+} from './compliance-shield';

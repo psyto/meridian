@@ -23,3 +23,18 @@ export {
   createSettlementTracker,
 } from './order-matcher';
 export type { SecuritiesOrder, MatchedTrade } from './order-matcher';
+export {
+  ZkComplianceProver,
+  createZkComplianceProver,
+  computeCommitment,
+  createJurisdictionBitmask,
+  isJurisdictionAllowed,
+  ZkKycLevel,
+  ZkJurisdiction,
+} from './zk-prover';
+export type {
+  KycWitness,
+  CompliancePublicInputs,
+  ComplianceProof,
+  VerificationResult,
+} from './zk-prover';

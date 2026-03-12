@@ -2,7 +2,7 @@
 
 **DeFi Where Every Swap is KYC-Compliant**
 
-A Layer 1 blockchain platform for onchain capital markets.
+An institutional liquidity layer on Solana for onchain capital markets.
 
 ## Overview
 
@@ -70,6 +70,51 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 | `fallbackToDirectRoutes` | `boolean` | `true` | Fall back to direct routes when multi-hop fails compliance |
 | `maxRouteHops` | `number` | `4` | Maximum route hops to consider |
 
+### ComplianceShieldRouter — Hybrid Liquidity Protocol
+
+The `ComplianceShieldRouter` solves the liquidity fragmentation problem identified in compliant-only routing. Instead of binary exclusion of non-whitelisted pools (which causes high slippage due to thin compliant liquidity), it uses a **KYC-whitelisted escrow PDA** as a compliant intermediary to access full Jupiter liquidity.
+
+**The problem:** Compliant-only routing excludes ~95% of DEX liquidity (Raydium, Orca, etc.) because those pools are not KYC-whitelisted. This forces institutional traders into poor execution rates.
+
+**The solution:** A shield escrow mechanism that maintains end-to-end compliance while accessing unrestricted liquidity:
+
+```
+Trader → (compliant transfer) → Shield Escrow (KYC-whitelisted PDA)
+Shield Escrow → (unrestricted swap via Jupiter) → Shield Escrow
+Shield Escrow → (compliant transfer) → Trader
+```
+
+Both transfers to/from the trader pass transfer hook validation. The DEX swap in the middle uses the escrow's own position and doesn't require pool-level KYC.
+
+```typescript
+import { ComplianceShieldRouter, QuoteRequest } from '@meridian/aggregator';
+
+const router = new ComplianceShieldRouter({
+  compliantPoolKeys: new Set(['pool1', 'pool2']),
+  escrow: { escrowPda, escrowProgramId, escrowAuthority },
+  policy: {
+    slippageThresholdBps: 100,      // engage shield at 1% slippage gap
+    maxCompliantImpactPct: 2.0,     // engage shield at 2% price impact
+    minImprovementPct: 0.1,         // require 0.1% improvement to justify shield
+  },
+});
+
+const result = await router.getBestQuote({ inputMint, outputMint, amount });
+
+// result.strategy        — 'compliant-only' | 'shielded' | 'direct-compliant'
+// result.isShielded      — true if using the shield escrow path
+// result.improvementBps  — execution improvement vs compliant-only route
+// result.quote           — the best available Jupiter quote
+```
+
+**`ShieldPolicy` fields:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `slippageThresholdBps` | `number` | `100` | Slippage difference (bps) that triggers shielded routing |
+| `maxCompliantImpactPct` | `number` | `2.0` | Max price impact on compliant route before engaging shield |
+| `minImprovementPct` | `number` | `0.1` | Minimum improvement required to justify shield overhead |
+
 ## Architecture
 
 ```
@@ -101,6 +146,10 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 │  │  compliant-registry (on-chain)    @meridian/compliant-router (TS) │   │
 │  │  Pool whitelist, KYC levels,      Jupiter filter, KYC checker,    │   │
 │  │  jurisdiction rules               ZK compliance proofs            │   │
+│  │                                                                   │   │
+│  │  ComplianceShieldRouter (hybrid)  ZkComplianceProver (Noir ZK)    │   │
+│  │  Escrow-based access to full      Private KYC attestation via     │   │
+│  │  Jupiter liquidity                Pedersen commitments            │   │
 │  └───────────────────────────────────────────────────────────────────┘   │
 │                                                                          │
 │                    ┌─────────────────────┐                               │
@@ -125,6 +174,8 @@ This project synthesizes patterns from internal modules:
 | RWA Registry | Asset registration, ownership proofs, dividends |
 | Encryption | NaCl box encryption via @veil/crypto |
 | Compliance | On-chain KYC (@accredit/sdk), off-chain sanctions/PEP (@complr/sdk) |
+| ZK Privacy | Noir circuit for KYC compliance proofs, ZkComplianceProver TypeScript wrapper |
+| Hybrid Routing | ComplianceShieldRouter for escrow-based access to full Jupiter liquidity |
 | Stratum | OrderMatcher for price-time priority matching, MerkleTree for ownership proofs, Bitfield for settlement tracking (@stratum/core) |
 | API Layer | Next.js patterns, Prisma schema, auth |
 
@@ -283,6 +334,50 @@ const screenResult = await screenWallet(walletPubkey.toBase58());
 const transferCheck = await checkTransferCompliance(sender, recipient, amount);
 // transferCheck.allowed   — true if the transfer passes sanctions/PEP screening
 ```
+
+## ZK Compliance Proofs
+
+The `ZkComplianceProver` in `@meridian/sdk` generates zero-knowledge proofs that attest a trader meets KYC requirements without revealing identity details. The circuit is implemented in Noir (`circuits/compliance_proof/`).
+
+```typescript
+import {
+  ZkComplianceProver,
+  ZkKycLevel,
+  ZkJurisdiction,
+  createJurisdictionBitmask,
+} from '@meridian/sdk';
+
+const prover = new ZkComplianceProver();
+
+// Trader's private KYC attributes (never revealed)
+const witness = {
+  kycLevel: ZkKycLevel.Enhanced,
+  jurisdiction: ZkJurisdiction.Japan,
+  expiry: Math.floor(Date.now() / 1000) + 86400 * 365,
+  salt: prover.generateSalt(),
+};
+
+// Generate proof that trader meets requirements
+const proof = await prover.generateProof(
+  witness,
+  ZkKycLevel.Standard,                                              // minimum required level
+  createJurisdictionBitmask([ZkJurisdiction.Japan, ZkJurisdiction.Singapore]),  // allowed jurisdictions
+);
+
+// proof.proof          — serialized proof bytes (hex)
+// proof.publicInputs   — commitment, required level, bitmask, timestamp
+// proof.circuit        — 'compliance_proof'
+
+// Verify (in production, done on-chain via the zk_verifier_key)
+const result = await prover.verifyProof(proof);
+// result.valid — true if proof is valid
+```
+
+The Noir circuit (`circuits/compliance_proof/src/main.nr`) enforces:
+1. `kyc_level >= required_kyc_level`
+2. `jurisdiction` is set in `jurisdiction_bitmask`
+3. `expiry > current_timestamp`
+4. Pedersen commitment matches the private inputs
 
 ## Encryption
 
