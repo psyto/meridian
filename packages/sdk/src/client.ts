@@ -22,7 +22,7 @@ export const DEFAULT_PROGRAM_IDS = {
   securitiesEngine: new PublicKey('3iA5QKAovwfLENEiSCQJc1HNmCGGKAQg7ruMb428jNB7'),
   rwaRegistry: new PublicKey('GotJsPzK1B7Q95G1fpL4CX9L3aE1gnqbCSG8D4qJm7ax'),
   oracle: new PublicKey('E5df5JndQUdp34zJWnAwaj7YQTJeZYErtLuyZonLKzH7'),
-  shieldEscrow: new PublicKey('SHLDxRoB6XCRiPMJkwn1a2LPjVqWmPcEHyVaGJQNZ4K'),
+  shieldEscrow: new PublicKey('6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk'),
   zkVerifier: new PublicKey('ZKVRFYxR3Ge8mTnUXzKnFHB1aLNhWMdP5DUNbvX91Kt'),
 };
 

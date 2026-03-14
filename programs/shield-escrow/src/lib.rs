@@ -20,7 +20,7 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("SHLDxR5GtSjk4FGebmqZBfLSuGhWMaWM46U9DjMkfWF");
+declare_id!("6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk");
 
 #[program]
 pub mod shield_escrow {
