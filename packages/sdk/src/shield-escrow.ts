@@ -80,7 +80,7 @@ export class ShieldEscrowSdk {
     const nonceBuf = Buffer.alloc(4);
     nonceBuf.writeUInt32LE(nonce);
     return PublicKey.findProgramAddressSync(
-      [Buffer.from('swap_receipt'), trader.toBuffer(), nonceBuf],
+      [Buffer.from('receipt'), trader.toBuffer(), nonceBuf],
       this.client.programIds.shieldEscrow
     );
   }
