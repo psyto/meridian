@@ -22,7 +22,7 @@ Working checklist for the Trust-type Class 3 Electronic Payment Instrument schem
 
 5. **On-chain attestation as regulatory record** -- Can the on-chain `ComplianceAttestation` PDA (created by the `zk-verifier` program at `ZKVRFYxR3Ge8mTnUXzKnFHB1aLNhWMdP5DUNbvX91Kt`) serve as the "record of measures taken" required by PSA Art. 62-8?
 
-6. **Shield escrow as intermediary** -- Does the shield-escrow PDA (at `SHLDxR5GtSjk4FGebmqZBfLSuGhWMaWM46U9DjMkfWF`) qualify as a "compliant intermediary" or does routing through it create a new regulatory classification for the escrow operator?
+6. **Shield escrow as intermediary** -- Does the shield-escrow PDA (at `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk`) qualify as a "compliant intermediary" or does routing through it create a new regulatory classification for the escrow operator?
 
 ## On-Chain Mechanisms to Legal Requirements Mapping
 

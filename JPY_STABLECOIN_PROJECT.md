@@ -571,10 +571,11 @@ interface SwapQuoteResponse {
 meridian/
 ├── programs/
 │   ├── meridian-jpy/         # JPY stablecoin program
-│   ├── transfer-hook/        # KYC/AML transfer hooks
 │   ├── securities-engine/    # Trading infrastructure
 │   ├── oracle/               # Price feeds & market data
-│   └── rwa-registry/         # Real-world asset registry
+│   ├── rwa-registry/         # Real-world asset registry
+│   ├── shield-escrow/        # Compliant hybrid liquidity escrow (devnet: 6fQo...owpk)
+│   └── zk-verifier/          # ZK proof verification & attestations
 │
 ├── app/                      # Next.js web application
 │   ├── src/app/

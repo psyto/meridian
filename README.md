@@ -37,19 +37,19 @@ The proof system is pluggable via the `ProofBackend` interface:
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │
-│  │  STABLECOIN  │ │  COMPLIANCE  │ │   TRADING    │ │   PRIVACY    │       │
-│  │   ENGINE     │ │    LAYER     │ │   ENGINE     │ │    LAYER     │       │
+│  │  STABLECOIN  │ │   TRADING    │ │   PRIVACY    │ │SHIELD ESCROW │       │
+│  │   ENGINE     │ │   ENGINE     │ │    LAYER     │ │  (devnet)    │       │
 │  │              │ │              │ │              │ │              │       │
-│  │ meridian-    │ │ transfer-    │ │ securities-  │ │ zk-verifier  │       │
-│  │ stablecoin   │ │ hook         │ │ engine       │ │              │       │
-│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘       │
-│         │                │                │                │               │
-│  ┌──────┴───────┐ ┌──────┴───────┐ ┌──────┴───────┐ ┌──────┴───────┐       │
-│  │ RWA REGISTRY │ │    ORACLE    │ │SHIELD ESCROW │ │  COMPLIANT   │       │
-│  │              │ │              │ │              │ │  REGISTRY    │       │
-│  │ rwa-registry │ │   oracle     │ │shield-escrow │ │ compliant-   │       │
-│  │              │ │              │ │              │ │ registry     │       │
-│  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘       │
+│  │ meridian-    │ │ securities-  │ │ zk-verifier  │ │shield-escrow │       │
+│  │ stablecoin   │ │ engine       │ │              │ │              │       │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────────────┘       │
+│         │                │                │                                │
+│  ┌──────┴───────┐ ┌──────┴───────┐ ┌──────┴───────┐                       │
+│  │ RWA REGISTRY │ │    ORACLE    │ │  ACCREDIT    │                       │
+│  │              │ │              │ │  (external)  │                       │
+│  │ rwa-registry │ │   oracle     │ │transfer-hook │                       │
+│  │              │ │              │ │compliant-reg │                       │
+│  └──────────────┘ └──────────────┘ └──────────────┘                       │
 │                                                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │                           SDK & TOOLING                             │    │
@@ -81,18 +81,28 @@ The proof system is pluggable via the `ProofBackend` interface:
 
 ## Programs
 
-Eight Anchor programs deployed on Solana:
+Six Anchor workspace programs deployed on Solana, plus two independently deployed Accredit programs referenced by program ID:
 
 | Program | ID | Description |
 |---------|------------|-------------|
 | `meridian-stablecoin` | `HdaU...6CwP` | Token-2022 stablecoin with mint/burn, multi-issuer, pause |
-| `transfer-hook` | `5DLH...jVqW` | KYC whitelist, jurisdiction checks, daily limits, expiry |
 | `securities-engine` | `7eoN...3yTe` | AMM pools, perpetuals, funding/variance swaps, order book |
 | `oracle` | `BXm2...UDpw` | TWAP, volatility index, multi-source funding rates |
 | `rwa-registry` | `BMej...jL5D` | Asset registration, ownership proofs, dividends, freeze |
-| `compliant-registry` | `66tK...gnYA` | Pool whitelist, route verification, pool lifecycle |
-| `shield-escrow` | `SHLD...kfWF` | Compliant hybrid liquidity escrow with fee collection |
+| `shield-escrow` | `6fQo...owpk` | Compliant hybrid liquidity escrow with fee collection (devnet) |
 | `zk-verifier` | `ZKVR...91Kt` | Noir ZK proof verification and compliance attestations |
+
+**Independently deployed (Accredit programs, not Anchor workspace members):**
+
+| Program | ID | Description |
+|---------|------------|-------------|
+| `transfer-hook` | `5DLH...jVqW` | KYC whitelist, jurisdiction checks, daily limits, expiry |
+| `compliant-registry` | `66tK...gnYA` | Pool whitelist, route verification, pool lifecycle |
+
+### Shield Escrow Devnet Deployment
+
+- **Program ID**: `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk`
+- **IDL Account**: `6wX6b5DcyGBKavAjWp7AxfHZm4KTqauUPp5UdtwpxNYq`
 
 ### shield-escrow
 

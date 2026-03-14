@@ -65,7 +65,7 @@ export function loadConfig(flags: GlobalFlags): Config {
       flags.shieldEscrowProgram ??
       fileConfig.shieldEscrowProgramId ??
       process.env.MERIDIAN_SHIELD_ESCROW_PROGRAM_ID ??
-      "ShLDe5p5mBYKDrb3JXCWu2bJSNa5YMYnVMPKcfEiFrK",
+      "6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk",
     zkVerifierProgramId:
       flags.zkVerifierProgram ??
       fileConfig.zkVerifierProgramId ??
