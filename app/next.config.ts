@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -7,7 +8,9 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  turbopack: {},
+  turbopack: {
+    root: path.resolve(__dirname, '..'),
+  },
 };
 
 export default nextConfig;

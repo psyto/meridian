@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface Request {
@@ -17,6 +17,14 @@ interface Request {
 }
 
 export default function AdminRequestsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">読み込み中...</div>}>
+      <AdminRequestsContent />
+    </Suspense>
+  );
+}
+
+function AdminRequestsContent() {
   const searchParams = useSearchParams();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
