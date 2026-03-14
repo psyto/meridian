@@ -1,4 +1,4 @@
-import { OrderMatcher, MerkleTree, Bitfield } from '@stratum/core';
+import { OrderMatcher, MerkleTree, Bitfield } from '@fabrknt/stratum-core';
 import type { OrderBookLevel, OrderBook } from './types';
 
 // ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ const matcher = new OrderMatcher();
  * Match buy and sell orders for a securities market using price-time priority.
  *
  * Bids must be sorted descending by price, asks ascending by price.
- * Uses @stratum/core OrderMatcher for deterministic, auditable matching.
+ * Uses @fabrknt/stratum-core OrderMatcher for deterministic, auditable matching.
  */
 export function matchSecuritiesOrders(
   bids: SecuritiesOrder[],

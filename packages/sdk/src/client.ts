@@ -1,6 +1,6 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { AnchorProvider, Wallet } from '@coral-xyz/anchor';
-import { findKycRegistryPda, findWhitelistEntryPda } from '@accredit/sdk';
+import { findKycRegistryPda, findWhitelistEntryPda } from '@fabrknt/accredit-sdk';
 
 export interface MeridianConfig {
   connection: Connection;
@@ -87,7 +87,7 @@ export class MeridianClient {
     );
   }
 
-  // KYC PDAs — delegated to @accredit/sdk
+  // KYC PDAs — delegated to @fabrknt/accredit-sdk
   deriveKycRegistryPda(mint: PublicKey): [PublicKey, number] {
     return findKycRegistryPda(mint, this.programIds.transferHook);
   }

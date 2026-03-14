@@ -1,4 +1,4 @@
-import { ComplrClient } from "@complr/sdk";
+import { ComplrClient } from "@fabrknt/complr-sdk";
 
 let client: ComplrClient | null = null;
 

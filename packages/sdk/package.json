@@ -12,10 +12,10 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@accredit/sdk": "workspace:*",
-    "@accredit/core": "workspace:*",
-    "@complr/sdk": "file:../../../complr/sdk",
-    "@stratum/core": "file:../../../stratum/packages/core",
+    "@fabrknt/accredit-sdk": "^1.0.0",
+    "@fabrknt/accredit-core": "^1.0.0",
+    "@fabrknt/complr-sdk": "^1.0.0",
+    "@fabrknt/stratum-core": "^1.0.0",
     "@coral-xyz/anchor": "^0.32.1",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0"

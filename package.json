@@ -8,8 +8,7 @@
     "packages/aggregator",
     "packages/encryption",
     "app",
-    "cli",
-    "../accredit/packages/*"
+    "cli"
   ],
   "scripts": {
     "dev": "turbo run dev",

@@ -10,7 +10,7 @@ Meridian provides institutional-grade infrastructure for:
 - **Stablecoin**: Trust-type electronic payment method compliant with Japanese PSA
 - **Securities Trading**: 24/7 spot and derivatives markets for tokenized equities
 - **RWA Tokenization**: Real-world asset registration, custody verification, and dividends
-- **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks, powered by the Fabrknt compliance stack (@accredit/core for on-chain KYC, @complr/sdk for off-chain sanctions/PEP screening)
+- **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks, powered by the Fabrknt compliance stack (@fabrknt/accredit-core for on-chain KYC, @fabrknt/complr-sdk for off-chain sanctions/PEP screening)
 - **ZK Privacy**: Application-layer Noir ZK proofs for private compliance verification, with on-chain attestation via the zk-verifier program
 - **Hybrid Liquidity**: Shield escrow protocol for accessing full Jupiter DEX liquidity while maintaining compliance
 
@@ -59,10 +59,11 @@ The proof system is pluggable via the `ProofBackend` interface:
 │  │  - SecuritiesSdk        - ComplianceShieldRouter    - zk *          │    │
 │  │  - ShieldEscrowSdk      - PoolWhitelistManager     - kyc *         │    │
 │  │  - ZkVerifierSdk                                   - mint/burn     │    │
-│  │  - ZkComplianceProver   @accredit/core             - config        │    │
-│  │  - ProofBackend         @complr/sdk                                │    │
-│  │                         @veil/crypto                               │    │
-│  │                         @stratum/core                              │    │
+│  │  - ZkComplianceProver   @fabrknt/accredit-core     - config               │    │
+│  │  - ProofBackend         @fabrknt/accredit-sdk                             │    │
+│  │                         @fabrknt/complr-sdk                               │    │
+│  │                         @fabrknt/veil-crypto                              │    │
+│  │                         @fabrknt/stratum-core                             │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
 │                      ┌─────────────────────┐                                │
@@ -251,7 +252,7 @@ The circuit enforces four constraints:
 ```typescript
 import { screenWallet, checkTransferCompliance } from '@meridian/sdk';
 
-// Off-chain sanctions/PEP screening (via @complr/sdk)
+// Off-chain sanctions/PEP screening (via @fabrknt/complr-sdk)
 const screenResult = await screenWallet(walletPubkey.toBase58());
 // screenResult.sanctioned, screenResult.pep
 
@@ -259,7 +260,7 @@ const transferCheck = await checkTransferCompliance(sender, recipient, amount);
 // transferCheck.allowed
 ```
 
-### Order Matching (via @stratum/core)
+### Order Matching (via @fabrknt/stratum-core)
 
 ```typescript
 import { matchSecuritiesOrders, getMarketMetrics, getDepthAtPrice } from '@meridian/sdk';
@@ -273,7 +274,7 @@ const metrics = getMarketMetrics(matcher);
 const depth = getDepthAtPrice(matcher, 150.25);
 ```
 
-### RWA Ownership Proofs (via @stratum/core)
+### RWA Ownership Proofs (via @fabrknt/stratum-core)
 
 ```typescript
 import { buildOwnershipTree, getOwnershipProof, createSettlementTracker } from '@meridian/sdk';
@@ -381,6 +382,39 @@ npx tsx benchmarks/zk-proof-bench.ts
 
 Measures commitment computation, proof generation, and proof verification latency over 100 iterations with min/avg/p95/max statistics.
 
+## External Dependencies — Fabrknt Compliance Stack
+
+Meridian consumes the Fabrknt compliance and infrastructure packages as versioned npm dependencies and a Rust git dependency. These are **not** local workspace packages.
+
+### TypeScript (npm)
+
+| Package | Version | Used By | Purpose |
+|---------|---------|---------|---------|
+| `@fabrknt/accredit-core` | `^1.0.0` | `@meridian/sdk` | On-chain KYC verification (whitelist entry, KYC level, jurisdiction, expiry) |
+| `@fabrknt/accredit-sdk` | `^1.0.0` | `@meridian/sdk` | Accredit client utilities and account deserialization |
+| `@fabrknt/complr-sdk` | `^1.0.0` | `@meridian/sdk` | Off-chain sanctions/PEP screening (`screenWallet`, `checkTransferCompliance`) |
+| `@fabrknt/stratum-core` | `^1.0.0` | `@meridian/sdk` | OrderMatcher, MerkleTree for ownership proofs, Bitfield for settlement tracking |
+| `@fabrknt/veil-crypto` | `^1.0.0` | `@meridian/encryption` | NaCl box encryption (Curve25519-XSalsa20-Poly1305) |
+
+Install via:
+
+```bash
+yarn add @fabrknt/accredit-core@^1.0.0 @fabrknt/accredit-sdk@^1.0.0 @fabrknt/complr-sdk@^1.0.0 @fabrknt/stratum-core@^1.0.0 @fabrknt/veil-crypto@^1.0.0
+```
+
+### Rust (git)
+
+| Crate | Source | Used By | Purpose |
+|-------|--------|---------|---------|
+| `accredit-types` | `github.com/fabrknt/accredit` (tag `v1.0.0`) | On-chain programs | Shared KYC/compliance type definitions for Anchor programs |
+
+Declared in the workspace `Cargo.toml`:
+
+```toml
+[workspace.dependencies]
+accredit-types = { git = "https://github.com/fabrknt/accredit.git", tag = "v1.0.0" }
+```
+
 ## Getting Started
 
 ### Prerequisites
@@ -438,10 +472,10 @@ yarn dev
 | Shield Escrow | Compliant hybrid liquidity, escrow-based Jupiter routing, fee collection |
 | ZK Verifier | Noir proof verification, compliance attestations, kill switch |
 | ZK Circuits | Noir compliance proof circuit with Pedersen commitments |
-| Encryption | NaCl box encryption via @veil/crypto |
-| Compliance | On-chain KYC (@accredit/core), off-chain sanctions/PEP (@complr/sdk) |
+| Encryption | NaCl box encryption via @fabrknt/veil-crypto |
+| Compliance | On-chain KYC (@fabrknt/accredit-core), off-chain sanctions/PEP (@fabrknt/complr-sdk) |
 | Hybrid Routing | ComplianceShieldRouter for escrow-based access to full Jupiter liquidity |
-| Stratum | OrderMatcher, MerkleTree for ownership proofs, Bitfield for settlement (@stratum/core) |
+| Stratum | OrderMatcher, MerkleTree for ownership proofs, Bitfield for settlement (@fabrknt/stratum-core) |
 | API Layer | Next.js patterns, Prisma schema, auth |
 
 ## API Endpoints
@@ -490,8 +524,8 @@ GET  /api/v1/rwa/dividends       # Pending dividends
 
 ### KYC/AML — Fabrknt Compliance Stack
 - All transfers validated via Token-2022 transfer hook
-- On-chain KYC verification via **@accredit/core** (whitelist entry, KYC level, jurisdiction, expiry)
-- Off-chain sanctions and PEP screening via **@complr/sdk** (`screenWallet`, `checkTransferCompliance`)
+- On-chain KYC verification via **@fabrknt/accredit-core** (whitelist entry, KYC level, jurisdiction, expiry)
+- Off-chain sanctions and PEP screening via **@fabrknt/complr-sdk** (`screenWallet`, `checkTransferCompliance`)
 - ZK compliance proofs for private KYC attestation (Noir circuits + on-chain verifier)
 - Jurisdiction-based restrictions with bitmask enforcement
 - Multi-level KYC verification (None/Basic/Standard/Enhanced/Institutional)

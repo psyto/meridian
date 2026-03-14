@@ -12,7 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@veil/crypto": "file:../../../veil/packages/crypto"
+    "@fabrknt/veil-crypto": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

@@ -10,7 +10,7 @@ Meridianは機関投資家向けのインフラストラクチャを提供しま
 - **ステーブルコイン**: 信託型3号電子決済手段に準拠
 - **証券取引**: トークン化株式の24時間365日スポット・デリバティブ市場
 - **RWAトークン化**: 実物資産の登録、保管検証、配当管理
-- **コンプライアンス**: Token-2022トランスファーフックによるKYC/AML機能内蔵
+- **コンプライアンス**: Token-2022トランスファーフックによるKYC/AML機能内蔵、Fabrkntコンプライアンススタック搭載（@fabrknt/accredit-coreによるオンチェーンKYC、@fabrknt/complr-sdkによるオフチェーン制裁/PEPスクリーニング）
 - **ZKプライバシー**: アプリケーション層ZK証明によるプライバシー保護型コンプライアンス検証 — Token-2022のトランスファーフックとコンフィデンシャルトランスファーが共存できない制約を解決
 
 ## 設計：ZKコンプライアンスとToken-2022コンフィデンシャルトランスファー
@@ -95,8 +95,17 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 │  │                   コンプライアンスルーティング層                     │   │
 │  │                                                                   │   │
 │  │  compliant-registry (オンチェーン)  @meridian/compliant-router (TS)│   │
+│  │  shield-escrow (ハイブリッド流動性)  zk-verifier (ZK証明検証)       │   │
 │  │  プールホワイトリスト、KYCレベル、   Jupiterフィルタ、KYC検証、      │   │
 │  │  管轄権ルール                     ZKコンプライアンス証明            │   │
+│  └───────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│  ┌───────────────────────────────────────────────────────────────────┐   │
+│  │                  Fabrkntコンプライアンススタック (npm ^1.0.0)        │   │
+│  │                                                                   │   │
+│  │  @fabrknt/accredit-core    @fabrknt/complr-sdk                    │   │
+│  │  @fabrknt/accredit-sdk     @fabrknt/veil-crypto                   │   │
+│  │  @fabrknt/stratum-core     accredit-types (Rust git dep)          │   │
 │  └───────────────────────────────────────────────────────────────────┘   │
 │                                                                          │
 │                    ┌─────────────────────┐                               │
@@ -119,7 +128,30 @@ const result = await router.getCompliantQuote(trader, request, jurisdictionBitma
 | デリバティブ | パーペチュアル、ファンディングレート、バリアンススワップ |
 | オラクル | TWAP、ボラティリティインデックス、ファンディングフィード |
 | RWAレジストリ | 資産登録、所有権証明、配当 |
+| 暗号化 | @fabrknt/veil-cryptoによるNaClボックス暗号化 |
+| コンプライアンス | オンチェーンKYC (@fabrknt/accredit-core)、オフチェーン制裁/PEP (@fabrknt/complr-sdk) |
+| Stratum | OrderMatcher、所有権証明用MerkleTree、決済用Bitfield (@fabrknt/stratum-core) |
 | APIレイヤー | Next.jsパターン、Prismaスキーマ、認証 |
+
+## 外部依存関係 — Fabrkntコンプライアンススタック
+
+MeridianはFabrkntのコンプライアンス・インフラパッケージをバージョン指定のnpm依存関係およびRust git依存関係として利用しています。ローカルワークスペースパッケージではありません。
+
+### TypeScript (npm)
+
+| パッケージ | バージョン | 用途 |
+|-----------|-----------|------|
+| `@fabrknt/accredit-core` | `^1.0.0` | オンチェーンKYC検証 |
+| `@fabrknt/accredit-sdk` | `^1.0.0` | Accreditクライアントユーティリティ |
+| `@fabrknt/complr-sdk` | `^1.0.0` | オフチェーン制裁/PEPスクリーニング |
+| `@fabrknt/stratum-core` | `^1.0.0` | OrderMatcher、MerkleTree、Bitfield |
+| `@fabrknt/veil-crypto` | `^1.0.0` | NaClボックス暗号化 |
+
+### Rust (git)
+
+| クレート | ソース | 用途 |
+|---------|--------|------|
+| `accredit-types` | `github.com/fabrknt/accredit` (タグ `v1.0.0`) | Anchorプログラム用KYC/コンプライアンス型定義 |
 
 ## プログラム
 
@@ -276,10 +308,13 @@ console.log(`出力: ${quote.outputAmount}, 価格影響: ${quote.priceImpact}%`
 - 100%法定通貨担保
 - 定期監査要件
 
-### KYC/AML
+### KYC/AML — Fabrkntコンプライアンススタック
 - トランスファーフックによる全送金検証
-- 管轄権ベースの制限
-- 多段階KYC検証
+- **@fabrknt/accredit-core**によるオンチェーンKYC検証（ホワイトリスト、KYCレベル、管轄権、有効期限）
+- **@fabrknt/complr-sdk**によるオフチェーン制裁/PEPスクリーニング（`screenWallet`、`checkTransferCompliance`）
+- ZKコンプライアンス証明によるプライバシー保護型KYC証明（Noir回路 + オンチェーン検証）
+- 管轄権ベースの制限（ビットマスク強制）
+- 多段階KYC検証（None/Basic/Standard/Enhanced/Institutional）
 - 有効期限・更新管理
 
 ## パートナー

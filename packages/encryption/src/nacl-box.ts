@@ -5,14 +5,14 @@ import {
   deriveEncryptionKeypair,
   encrypt as veilEncrypt,
   decrypt as veilDecrypt,
-} from '@veil/crypto';
+} from '@fabrknt/veil-crypto';
 import type { KeyPair, EncryptedData, DecryptedData } from './types';
 
 /**
  * NaCl Box encryption for KYC data and confidential metadata.
  *
  * Uses Curve25519-XSalsa20-Poly1305 for authenticated public-key encryption.
- * Powered by @veil/crypto.
+ * Powered by @fabrknt/veil-crypto.
  */
 export class NaclBox {
   private keypair: EncryptionKeypair;

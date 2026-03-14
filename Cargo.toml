@@ -15,7 +15,7 @@ anchor-spl = { version = "0.32.1", features = ["token_2022"] }
 spl-token-2022 = { version = "8.0.1", features = ["no-entrypoint"] }
 spl-transfer-hook-interface = "0.8.2"
 solana-program = "2.2.1"
-accredit-types = { path = "../accredit/crates/accredit-types" }
+accredit-types = { git = "https://github.com/fabrknt/accredit.git", tag = "v1.0.0" }
 
 [profile.release]
 lto = "fat"
