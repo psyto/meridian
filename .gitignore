@@ -53,3 +53,4 @@ prisma/migrations/**/migration_lock.toml
 # Misc
 *.tsbuildinfo
 .demo-keypairs/
+demo-cli.mp4
