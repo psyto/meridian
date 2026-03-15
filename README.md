@@ -425,6 +425,34 @@ Declared in the workspace `Cargo.toml`:
 accredit-types = { git = "https://github.com/fabrknt/accredit.git", tag = "v1.0.0" }
 ```
 
+## Devnet Demo
+
+A working end-to-end demo of the Shield Escrow protocol is available on Solana devnet.
+
+**Deployed Program:**
+
+| Program | Program ID |
+|---------|------------|
+| `shield_escrow` | `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk` |
+
+**What the demo does:**
+
+1. Creates USDC and wSOL Token-2022 mints on devnet
+2. Initializes the shield config with a 0.3% fee
+3. Trader deposits 1,000 USDC into the escrow
+4. Keeper executes a simulated Jupiter swap (990 wSOL output)
+5. Trader withdraws 987.03 wSOL (after 2.97 wSOL fee)
+
+In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API, performs the actual DEX swap, then records the output amount on-chain.
+
+**Bug fix:** The SDK PDA seed was corrected from `swap_receipt` to `receipt` to match the on-chain program.
+
+**Run the demo:**
+
+```bash
+npx tsx scripts/demo-devnet.ts
+```
+
 ## Getting Started
 
 ### Prerequisites

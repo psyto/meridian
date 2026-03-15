@@ -210,6 +210,34 @@ Token-2022拡張機能を備えたコアステーブルコイン：
 
 **イベント:** `PoolRegistryCreated`, `PoolAdded`, `PoolStatusChanged`, `ComplianceConfigCreated`, `RouteVerified`
 
+## Devnetデモ
+
+Shield Escrowプロトコルのエンドツーエンドデモがソラナdevnetで動作しています。
+
+**デプロイ済みプログラム:**
+
+| プログラム | プログラムID |
+|-----------|------------|
+| `shield_escrow` | `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk` |
+
+**デモの流れ:**
+
+1. devnet上にUSDCとwSOLのToken-2022ミントを作成
+2. Shield configを初期化（手数料0.3%）
+3. トレーダーが1,000 USDCをエスクローに預入
+4. キーパーがシミュレートされたJupiterスワップを実行（990 wSOL出力）
+5. トレーダーが987.03 wSOLを引き出し（2.97 wSOL手数料控除後）
+
+本番環境では、ステップ4（スワップ実行）はキーパーサービスがJupiter APIを呼び出し、実際のDEXスワップを実行した後、出力金額をオンチェーンに記録します。
+
+**バグ修正:** SDKのPDAシードが`swap_receipt`から`receipt`に修正され、オンチェーンプログラムと一致するようになりました。
+
+**デモの実行:**
+
+```bash
+npx tsx scripts/demo-devnet.ts
+```
+
 ## 始め方
 
 ### 前提条件

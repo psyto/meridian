@@ -630,6 +630,36 @@ meridian/
 
 ---
 
+## Devnet Demo
+
+The Shield Escrow protocol has a working end-to-end demo deployed on Solana devnet.
+
+**Deployed Program:**
+
+| Program | Program ID |
+|---------|------------|
+| `shield_escrow` | `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk` |
+
+**Demo flow (`scripts/demo-devnet.ts`):**
+
+1. Creates USDC and wSOL Token-2022 mints on devnet
+2. Initializes the shield config with a 0.3% fee
+3. Trader deposits 1,000 USDC into the escrow
+4. Keeper executes a simulated Jupiter swap (990 wSOL output)
+5. Trader withdraws 987.03 wSOL (after 2.97 wSOL fee)
+
+In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API, performs the actual DEX swap, then records the output amount on-chain.
+
+**Bug fix:** The SDK PDA seed was corrected from `swap_receipt` to `receipt` to match the on-chain program.
+
+**Run:**
+
+```bash
+npx tsx scripts/demo-devnet.ts
+```
+
+---
+
 ## References
 
 - [Japanese PSA Regulations](https://www.fsa.go.jp/)
