@@ -11,8 +11,40 @@ Meridian provides institutional-grade infrastructure for:
 - **Securities Trading**: 24/7 spot and derivatives markets for tokenized equities
 - **RWA Tokenization**: Real-world asset registration, custody verification, and dividends
 - **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks, powered by the Fabrknt compliance stack (@fabrknt/accredit-core for on-chain KYC, @fabrknt/complr-sdk for off-chain sanctions/PEP screening)
-- **ZK Privacy**: Application-layer Noir ZK proofs for private compliance verification, with on-chain attestation via the zk-verifier program
+- **ZK Privacy**: ZK compliance proof framework (placeholder verification, production Noir integration planned) for private compliance verification, with on-chain attestation via the zk-verifier program
 - **Hybrid Liquidity**: Shield escrow protocol for accessing full Jupiter DEX liquidity while maintaining compliance
+
+## Security Status
+
+> **This project is in development. It is NOT ready for mainnet deployment.**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| ZK proof verification (on-chain) | **Placeholder** | `verify_proof_inputs` only checks bytes are non-zero. Any non-zero 64-byte input is accepted as a valid "proof". This is not cryptographically secure. |
+| ZK proof generation (SDK) | **Placeholder / Production** | `PlaceholderBackend` uses SHA-256 (testing only). `NoirBackend` delegates to `nargo`/`bb` for real proofs, but on-chain verification does not yet validate them. |
+| Keeper MEV protection | **Partial** | TWAP enforcement and stale swap detection are implemented in the keeper service. However, the keeper is a trusted operator -- it can execute swaps at any price. |
+| Transfer hook KYC/AML | **Functional** | On-chain enforcement via Token-2022 transfer hooks. |
+
+**Before mainnet deployment:**
+1. Replace placeholder `verify_proof_inputs` with real Noir circuit verifier compiled for Solana BPF
+2. Complete formal trusted setup ceremony for verification keys
+3. Commission third-party security audit of all on-chain programs
+4. Implement on-chain TWAP oracle checks in `execute_swap` instruction
+5. Add on-chain maximum execution time window for swap receipts
+
+## ZK Roadmap
+
+The current ZK implementation provides the framework and interfaces for compliance proofs but uses placeholder verification. The path to production:
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1. Circuit Design | Noir compliance circuit with Pedersen commitments (`circuits/compliance_proof/`) | Done |
+| 2. Off-chain Proving | `NoirBackend` in SDK delegates to `nargo prove` / `bb verify` | Done |
+| 3. Placeholder On-chain | `verify_proof_inputs` accepts any non-zero bytes (testing only) | Current |
+| 4. BPF Verifier | Compile Barretenberg verifier for Solana BPF target | Planned |
+| 5. On-chain Integration | Replace `verify_proof_inputs` with real BPF verifier call | Planned |
+| 6. Trusted Setup | Formal ceremony to generate production verification keys | Planned |
+| 7. Audit | Third-party audit of circuits, on-chain verifier, and SDK | Planned |
 
 ## Design: ZK Compliance and Token-2022 Confidential Transfers
 
@@ -20,9 +52,9 @@ Meridian provides institutional-grade infrastructure for:
 
 **Solution**: Meridian uses an application-layer ZK compliance approach:
 
-1. The `ZkComplianceProver` (TypeScript) generates Noir ZK proofs that attest a trader meets KYC requirements (level, jurisdiction, expiry) without revealing identity details
-2. Proofs commit to KYC attributes via Pedersen commitments — the verifier learns only that requirements are satisfied, not the actual values
-3. The on-chain `zk-verifier` program verifies proofs and creates `ComplianceAttestation` PDAs that other programs can check
+1. The `ZkComplianceProver` (TypeScript) generates ZK compliance proofs that attest a trader meets KYC requirements (level, jurisdiction, expiry) without revealing identity details
+2. Proofs commit to KYC attributes via Pedersen commitments -- the verifier learns only that requirements are satisfied, not the actual values
+3. The on-chain `zk-verifier` program accepts proofs and creates `ComplianceAttestation` PDAs that other programs can check. **Note: on-chain verification is currently placeholder (non-zero byte check only). See Security Status above.**
 4. Transfer hook enforcement (KYC/AML on every transfer) is preserved while privacy is provided at the compliance verification layer
 
 The proof system is pluggable via the `ProofBackend` interface:
@@ -90,7 +122,7 @@ Six Anchor workspace programs deployed on Solana, plus two independently deploye
 | `oracle` | `BXm2...UDpw` | TWAP, volatility index, multi-source funding rates |
 | `rwa-registry` | `BMej...jL5D` | Asset registration, ownership proofs, dividends, freeze |
 | `shield-escrow` | `6fQo...owpk` | Compliant hybrid liquidity escrow with fee collection (devnet) |
-| `zk-verifier` | `ZKVR...91Kt` | Noir ZK proof verification and compliance attestations |
+| `zk-verifier` | `ZKVR...91Kt` | ZK compliance proof framework (placeholder verification) and compliance attestations |
 
 **Independently deployed (Accredit programs, not Anchor workspace members):**
 
@@ -113,6 +145,12 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 2. Keeper executes DEX swap via Jupiter-routed pools
 3. Trader withdraws output tokens (transfer hook enforces compliance)
 
+**Keeper Requirements:**
+- The keeper **must enforce TWAP** to prevent MEV extraction between deposit and swap execution. Use `--twap-window` (default: 60s) and `--twap-max-deviation` (default: 2%) flags.
+- The keeper **must monitor for stale swaps** -- receipts Pending longer than `--max-pending-minutes` (default: 10 min) should be flagged and investigated.
+- **Slippage responsibility lies with the keeper operator.** The keeper sets both `output_amount` and `min_output_amount` in `execute_swap`. Operators should set `--max-slippage` appropriately (default: 5%).
+- See the **Security Considerations** section for detailed keeper trust model and MEV risks.
+
 **Instructions:** `initialize`, `deposit`, `execute_swap`, `withdraw`, `refund`, `update_config`
 
 **Accounts:**
@@ -121,7 +159,7 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 
 ### zk-verifier
 
-On-chain verifier for Noir ZK compliance proofs. Stores verification keys and creates attestations for wallets that prove KYC/AML compliance without revealing private data.
+On-chain ZK compliance proof framework (placeholder verification, production Noir integration planned). Stores verification keys and creates attestations for wallets that prove KYC/AML compliance without revealing private data. **Current on-chain verification is placeholder only -- see Security Status.**
 
 **Instructions:** `initialize`, `update_verification_key`, `verify_proof`, `check_attestation`, `revoke_attestation`, `activate`, `deactivate`
 
@@ -205,7 +243,7 @@ const revokeIx = sdk.createRevokeAttestationInstruction(authority, walletPubkey)
 
 ### ZK Compliance Proofs
 
-The `ZkComplianceProver` generates zero-knowledge proofs that attest a trader meets KYC requirements without revealing identity details. The circuit is implemented in Noir (`circuits/compliance_proof/`).
+The `ZkComplianceProver` generates ZK compliance proofs that attest a trader meets KYC requirements without revealing identity details. The circuit is implemented in Noir (`circuits/compliance_proof/`). **Note: the default `PlaceholderBackend` is for testing only and does not produce real zero-knowledge proofs. Use `NoirBackend` for cryptographically valid proofs.**
 
 ```typescript
 import {
@@ -508,7 +546,7 @@ yarn dev
 | Oracle | TWAP, volatility index, funding feeds |
 | RWA Registry | Asset registration, ownership proofs, dividends |
 | Shield Escrow | Compliant hybrid liquidity, escrow-based Jupiter routing, fee collection |
-| ZK Verifier | Noir proof verification, compliance attestations, kill switch |
+| ZK Verifier | ZK compliance proof framework (placeholder verification), compliance attestations, kill switch |
 | ZK Circuits | Noir compliance proof circuit with Pedersen commitments |
 | Encryption | NaCl box encryption via @fabrknt/veil-crypto |
 | Compliance | On-chain KYC (@fabrknt/accredit-core), off-chain sanctions/PEP (@fabrknt/complr-sdk) |
@@ -575,6 +613,56 @@ GET  /api/v1/rwa/dividends       # Pending dividends
 |---------|------|
 | **Meridian Trust Bank** | Stablecoin issuance & redemption |
 | **Meridian Trading** | Distribution as electronic payment operator |
+
+## Security Considerations
+
+### ZK Verification Status
+
+The on-chain `zk-verifier` program currently uses **placeholder proof verification**. The `verify_proof_inputs` function only checks that the submitted proof and commitment bytes are non-zero. This means any 64 bytes of non-zero data will be accepted as a "valid proof," allowing anyone to create forged compliance attestations.
+
+**Impact:** On devnet/testnet this is acceptable for integration testing. On mainnet, this would allow unauthorized access to compliance-gated functionality.
+
+**Mitigation:** The `PlaceholderBackend` emits runtime warnings. The `NoirBackend` is implemented for real proof generation/verification off-chain. On-chain Noir verification requires a BPF-compatible verifier (see ZK Roadmap above).
+
+### Keeper Trust Model
+
+The Shield Escrow keeper is a **trusted operator**. It has the authority to execute swaps and determine the output amount recorded on-chain. This creates several trust assumptions:
+
+1. **Price integrity:** The keeper reports the swap output amount. A malicious keeper could report a lower amount and pocket the difference. The on-chain `execute_swap` instruction checks `output_amount >= min_output_amount`, but `min_output_amount` is also set by the keeper.
+2. **Execution timing:** A delay between deposit and swap creates a window for price manipulation. The keeper implements TWAP enforcement to mitigate this (see `--twap-window` flag).
+3. **Liveness:** If the keeper goes offline, pending swaps are stuck. The `refund` instruction allows the authority to return funds.
+
+**Mitigations implemented:**
+- TWAP enforcement: the keeper checks the current Jupiter quote price against a time-weighted average of recent quotes. If the price deviates more than a configurable threshold (default 2%), execution is delayed.
+- Stale swap detection: swaps pending longer than a configurable window (default 10 minutes) are flagged as warnings.
+- Slippage guard: configurable maximum slippage (default 5%) rejects swaps with excessive price impact.
+
+**Mitigations needed for production:**
+- On-chain oracle price validation in the `execute_swap` instruction
+- On-chain maximum execution time window (reject swaps older than N minutes)
+- Multi-keeper redundancy with on-chain keeper rotation
+- Transparent keeper operation logs for auditability
+
+### MEV Risks
+
+The time lag between a trader's deposit and the keeper's swap execution creates an MEV extraction window:
+
+1. **Front-running:** An attacker observing a pending deposit can front-run the keeper's Jupiter swap.
+2. **Sandwich attacks:** An attacker can sandwich the keeper's swap transaction.
+3. **Keeper MEV:** The keeper itself could extract MEV by timing swaps or manipulating routes.
+
+**Mitigations:**
+- TWAP enforcement in the keeper reduces profitability of short-term price manipulation.
+- Stale swap detection flags delayed executions that may indicate manipulation.
+- For production: consider using MEV-protected RPC endpoints (e.g., Jito bundles) and on-chain price oracle validation.
+
+### Slippage Responsibility
+
+Slippage responsibility lies with the **keeper operator**:
+- The keeper sets both `output_amount` and `min_output_amount` in `execute_swap`.
+- The trader has no on-chain mechanism to set their own slippage tolerance.
+- The keeper's `--max-slippage` flag (default 5%) is the primary slippage control.
+- For production: consider adding trader-specified slippage tolerance in the `deposit` instruction.
 
 ## License
 

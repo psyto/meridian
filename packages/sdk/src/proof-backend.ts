@@ -34,11 +34,20 @@ export interface ProofBackend {
 /**
  * SHA-256 based placeholder backend for testing and development.
  *
- * This replicates the original ZkComplianceProver behavior exactly:
- * - prove() hashes the witness + public inputs with SHA-256
- * - verify() checks structural validity of public inputs
+ * **SECURITY WARNING: This backend provides NO real zero-knowledge guarantees.**
  *
- * Not cryptographically sound — use NoirBackend for production.
+ * - prove() hashes the witness + public inputs with SHA-256 (the "proof"
+ *   contains the witness data in its preimage, so it is trivially forgeable)
+ * - verify() checks structural validity of public inputs only (it does NOT
+ *   verify the proof cryptographically)
+ * - The on-chain zk-verifier program's verify_proof_inputs() only checks
+ *   that proof bytes are non-zero, so ANY non-zero bytes pass verification
+ *
+ * This backend exists solely for integration testing and development.
+ * For production, use NoirBackend which delegates to nargo/bb for real
+ * ZK proof generation and verification.
+ *
+ * Not cryptographically sound -- use NoirBackend for production.
  */
 export class PlaceholderBackend implements ProofBackend {
   async prove(witness: KycWitness, publicInputs: CompliancePublicInputs): Promise<string> {

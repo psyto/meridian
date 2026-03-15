@@ -1,12 +1,25 @@
 //! ZK Verifier Program
 //!
-//! On-chain verifier for Noir ZK compliance proofs. Stores verification keys
+//! On-chain verifier for ZK compliance proofs. Stores verification keys
 //! and creates attestations for wallets that prove KYC/AML compliance
 //! without revealing private data.
 //!
+//! ## Security Notice
+//!
+//! **WARNING: The current `verify_proof_inputs` function is a PLACEHOLDER.**
+//! It only checks that proof and commitment bytes are non-zero. This is NOT
+//! cryptographically secure and MUST NOT be used in production.
+//!
+//! Production deployment requires:
+//! 1. Integration of a real Noir/Barretenberg verifier for Solana BPF
+//! 2. Formal trusted setup ceremony for the verification key
+//! 3. Third-party security audit of the proof verification logic
+//!
+//! See the project README for the ZK Roadmap.
+//!
 //! Key Features:
 //! - Verification key management for Noir circuits
-//! - ZK proof verification and attestation creation
+//! - ZK proof verification framework and attestation creation
 //! - Attestation lifecycle (create, check, revoke)
 //! - Kill switch for emergency deactivation
 

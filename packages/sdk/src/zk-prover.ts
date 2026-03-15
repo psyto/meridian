@@ -129,9 +129,18 @@ export function isJurisdictionAllowed(jurisdiction: ZkJurisdiction, bitmask: num
 export class ZkComplianceProver {
   private readonly circuitName = 'compliance_proof';
   private readonly backend: ProofBackend;
+  private placeholderWarningEmitted = false;
 
   constructor(backend?: ProofBackend) {
     this.backend = backend ?? new PlaceholderBackend();
+    if (this.backend instanceof PlaceholderBackend) {
+      console.warn(
+        '[MERIDIAN ZK WARNING] ZkComplianceProver is using PlaceholderBackend (SHA-256). ' +
+        'This provides NO real zero-knowledge guarantees and is for testing only. ' +
+        'On-chain proof verification is also placeholder (accepts any non-zero bytes). ' +
+        'Use NoirBackend for production deployments.'
+      );
+    }
   }
 
   /**
@@ -148,6 +157,13 @@ export class ZkComplianceProver {
     requiredKycLevel: ZkKycLevel,
     jurisdictionBitmask: number,
   ): Promise<ComplianceProof> {
+    if (this.backend instanceof PlaceholderBackend && !this.placeholderWarningEmitted) {
+      this.placeholderWarningEmitted = true;
+      console.warn(
+        '[MERIDIAN ZK WARNING] Generating proof with PlaceholderBackend. ' +
+        'This proof is NOT a valid zero-knowledge proof and should NOT be submitted on-chain in production.'
+      );
+    }
     const currentTimestamp = Math.floor(Date.now() / 1000);
 
     // Pre-validate witness against requirements (fail fast before proving)

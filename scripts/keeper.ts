@@ -10,12 +10,27 @@
  *   npx tsx scripts/keeper.ts
  *   npx tsx scripts/keeper.ts --interval 5000
  *   npx tsx scripts/keeper.ts --dry-run
+ *   npx tsx scripts/keeper.ts --twap-window 60 --twap-max-deviation 0.02 --twap-samples 3
+ *   npx tsx scripts/keeper.ts --max-pending-minutes 10
  *
  * Environment:
- *   KEEPER_INTERVAL_MS  - polling interval in ms (default: 10000)
- *   KEEPER_DRY_RUN      - set to "true" to skip on-chain execution
- *   KEEPER_MAX_SLIPPAGE  - max slippage fraction (default: 0.05 = 5%)
- *   SOLANA_CLUSTER       - "devnet" | "mainnet-beta" (default: "devnet")
+ *   KEEPER_INTERVAL_MS          - polling interval in ms (default: 10000)
+ *   KEEPER_DRY_RUN              - set to "true" to skip on-chain execution
+ *   KEEPER_MAX_SLIPPAGE         - max slippage fraction (default: 0.05 = 5%)
+ *   SOLANA_CLUSTER              - "devnet" | "mainnet-beta" (default: "devnet")
+ *   KEEPER_TWAP_WINDOW          - TWAP window in seconds (default: 60)
+ *   KEEPER_TWAP_MAX_DEVIATION   - max TWAP deviation fraction (default: 0.02 = 2%)
+ *   KEEPER_TWAP_SAMPLES         - min TWAP samples before execution (default: 3)
+ *   KEEPER_MAX_PENDING_MINUTES  - max age of Pending receipt in minutes (default: 10)
+ *
+ * MEV Protection:
+ *   The keeper enforces TWAP to prevent price manipulation between deposit and swap.
+ *   Before executing a swap, the keeper checks the current Jupiter quote price against
+ *   a time-weighted average of recent quotes. If the price deviates more than the
+ *   configured threshold, execution is delayed until the price stabilizes.
+ *
+ *   Stale swap detection flags receipts that have been Pending longer than the
+ *   configured maximum, which may indicate stuck swaps or manipulation attempts.
  */
 
 import * as anchor from "@coral-xyz/anchor";
@@ -63,6 +78,15 @@ interface KeeperConfig {
   dryRun: boolean;
   maxSlippage: number;
   cluster: "devnet" | "mainnet-beta";
+  /** TWAP window in seconds. The keeper samples quotes over this window
+   *  and rejects execution if the current price deviates too much. */
+  twapWindowSec: number;
+  /** Maximum allowed deviation from TWAP before delaying execution (fraction, e.g. 0.02 = 2%) */
+  twapMaxDeviation: number;
+  /** Number of TWAP samples to collect within the window */
+  twapSamples: number;
+  /** Maximum age of a Pending swap receipt in minutes before it is flagged as stale */
+  maxPendingMinutes: number;
 }
 
 function parseConfig(): KeeperConfig {
@@ -71,6 +95,10 @@ function parseConfig(): KeeperConfig {
   let dryRun = process.env.KEEPER_DRY_RUN === "true";
   let maxSlippage = parseFloat(process.env.KEEPER_MAX_SLIPPAGE || "0.05");
   let cluster = (process.env.SOLANA_CLUSTER || "devnet") as "devnet" | "mainnet-beta";
+  let twapWindowSec = parseInt(process.env.KEEPER_TWAP_WINDOW || "60", 10);
+  let twapMaxDeviation = parseFloat(process.env.KEEPER_TWAP_MAX_DEVIATION || "0.02");
+  let twapSamples = parseInt(process.env.KEEPER_TWAP_SAMPLES || "3", 10);
+  let maxPendingMinutes = parseInt(process.env.KEEPER_MAX_PENDING_MINUTES || "10", 10);
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--interval" && args[i + 1]) {
@@ -84,10 +112,22 @@ function parseConfig(): KeeperConfig {
     } else if (args[i] === "--cluster" && args[i + 1]) {
       cluster = args[i + 1] as "devnet" | "mainnet-beta";
       i++;
+    } else if (args[i] === "--twap-window" && args[i + 1]) {
+      twapWindowSec = parseInt(args[i + 1], 10);
+      i++;
+    } else if (args[i] === "--twap-max-deviation" && args[i + 1]) {
+      twapMaxDeviation = parseFloat(args[i + 1]);
+      i++;
+    } else if (args[i] === "--twap-samples" && args[i + 1]) {
+      twapSamples = parseInt(args[i + 1], 10);
+      i++;
+    } else if (args[i] === "--max-pending-minutes" && args[i + 1]) {
+      maxPendingMinutes = parseInt(args[i + 1], 10);
+      i++;
     }
   }
 
-  return { intervalMs, dryRun, maxSlippage, cluster };
+  return { intervalMs, dryRun, maxSlippage, cluster, twapWindowSec, twapMaxDeviation, twapSamples, maxPendingMinutes };
 }
 
 // ---------------------------------------------------------------------------
@@ -103,6 +143,8 @@ interface KeeperStats {
   lastPollTimestamp: Date | null;
   startedAt: Date;
   errors: number;
+  twapDelays: number;
+  staleSwapsDetected: number;
 }
 
 function createStats(): KeeperStats {
@@ -115,6 +157,8 @@ function createStats(): KeeperStats {
     lastPollTimestamp: null,
     startedAt: new Date(),
     errors: 0,
+    twapDelays: 0,
+    staleSwapsDetected: 0,
   };
 }
 
@@ -133,12 +177,188 @@ function printStats(stats: KeeperStats): void {
   console.log(`  Total input volume:  ${stats.totalInputVolume.toString()} (raw units)`);
   console.log(`  Total output volume: ${stats.totalOutputVolume.toString()} (raw units)`);
   console.log(`  Average slippage:    ${avgSlippage} bps`);
+  console.log(`  TWAP delays:         ${stats.twapDelays}`);
+  console.log(`  Stale swaps:         ${stats.staleSwapsDetected}`);
   console.log(`  Errors:              ${stats.errors}`);
   console.log(
     `  Last poll:           ${stats.lastPollTimestamp?.toISOString() ?? "never"}`
   );
   console.log("====================");
   console.log();
+}
+
+// ---------------------------------------------------------------------------
+// TWAP Price Tracker
+// ---------------------------------------------------------------------------
+
+/** A single price sample with timestamp */
+interface PriceSample {
+  /** Output amount per unit of input (raw quote ratio) */
+  rate: bigint;
+  timestamp: number;
+}
+
+/**
+ * Tracks Jupiter quote prices over a sliding window to compute TWAP.
+ * Keyed by "inputMint:outputMint" pair.
+ */
+class TwapTracker {
+  private samples: Map<string, PriceSample[]> = new Map();
+  private windowMs: number;
+  private maxSamples: number;
+
+  constructor(windowSec: number, maxSamples: number) {
+    this.windowMs = windowSec * 1000;
+    this.maxSamples = Math.max(maxSamples, 1);
+  }
+
+  /** Build a cache key for a trading pair */
+  private pairKey(inputMint: string, outputMint: string): string {
+    return `${inputMint}:${outputMint}`;
+  }
+
+  /** Record a new price sample */
+  addSample(inputMint: string, outputMint: string, inAmount: bigint, outAmount: bigint): void {
+    if (inAmount <= BigInt(0)) return;
+    const key = this.pairKey(inputMint, outputMint);
+    const now = Date.now();
+    // Rate = outAmount * 1e18 / inAmount (scaled for precision)
+    const rate = (outAmount * BigInt("1000000000000000000")) / inAmount;
+
+    let pairSamples = this.samples.get(key);
+    if (!pairSamples) {
+      pairSamples = [];
+      this.samples.set(key, pairSamples);
+    }
+
+    pairSamples.push({ rate, timestamp: now });
+
+    // Prune old samples outside the window
+    const cutoff = now - this.windowMs;
+    this.samples.set(key, pairSamples.filter(s => s.timestamp >= cutoff));
+  }
+
+  /** Get TWAP for a pair. Returns null if insufficient data. */
+  getTwap(inputMint: string, outputMint: string): bigint | null {
+    const key = this.pairKey(inputMint, outputMint);
+    const pairSamples = this.samples.get(key);
+    if (!pairSamples || pairSamples.length === 0) return null;
+
+    // Prune old samples
+    const now = Date.now();
+    const cutoff = now - this.windowMs;
+    const validSamples = pairSamples.filter(s => s.timestamp >= cutoff);
+    this.samples.set(key, validSamples);
+
+    if (validSamples.length === 0) return null;
+
+    // Time-weighted average: weight each sample by duration until next sample
+    if (validSamples.length === 1) return validSamples[0].rate;
+
+    let weightedSum = BigInt(0);
+    let totalWeight = BigInt(0);
+
+    for (let i = 0; i < validSamples.length; i++) {
+      const nextTs = i < validSamples.length - 1
+        ? validSamples[i + 1].timestamp
+        : now;
+      const weight = BigInt(nextTs - validSamples[i].timestamp);
+      weightedSum += validSamples[i].rate * weight;
+      totalWeight += weight;
+    }
+
+    if (totalWeight === BigInt(0)) return validSamples[validSamples.length - 1].rate;
+    return weightedSum / totalWeight;
+  }
+
+  /** Check how many samples are in the current window */
+  getSampleCount(inputMint: string, outputMint: string): number {
+    const key = this.pairKey(inputMint, outputMint);
+    const pairSamples = this.samples.get(key);
+    if (!pairSamples) return 0;
+    const now = Date.now();
+    const cutoff = now - this.windowMs;
+    return pairSamples.filter(s => s.timestamp >= cutoff).length;
+  }
+}
+
+/**
+ * Check if the current quote price deviates too much from TWAP.
+ * Returns { allowed: true } if the swap should proceed, or
+ * { allowed: false, deviation, twapRate, currentRate } if it should be delayed.
+ */
+function checkTwapDeviation(
+  twapTracker: TwapTracker,
+  inputMint: string,
+  outputMint: string,
+  inAmount: bigint,
+  outAmount: bigint,
+  maxDeviation: number,
+  minSamples: number,
+): { allowed: boolean; deviation?: number; twapRate?: string; currentRate?: string; reason?: string } {
+  // Always record the current quote as a sample
+  twapTracker.addSample(inputMint, outputMint, inAmount, outAmount);
+
+  const sampleCount = twapTracker.getSampleCount(inputMint, outputMint);
+  if (sampleCount < minSamples) {
+    return {
+      allowed: false,
+      reason: `Insufficient TWAP samples: ${sampleCount}/${minSamples}. Collecting more data before execution.`,
+    };
+  }
+
+  const twap = twapTracker.getTwap(inputMint, outputMint);
+  if (twap === null || twap === BigInt(0)) {
+    return { allowed: true }; // No TWAP data yet, allow
+  }
+
+  // Current rate (scaled same as TWAP)
+  const currentRate = (outAmount * BigInt("1000000000000000000")) / inAmount;
+
+  // Calculate deviation: |currentRate - twap| / twap
+  const diff = currentRate > twap ? currentRate - twap : twap - currentRate;
+  // deviation as a fraction * 10000 (bps)
+  const deviationBps = Number((diff * BigInt(10000)) / twap);
+  const deviationFraction = deviationBps / 10000;
+
+  if (deviationFraction > maxDeviation) {
+    return {
+      allowed: false,
+      deviation: deviationFraction,
+      twapRate: twap.toString(),
+      currentRate: currentRate.toString(),
+      reason: `Price deviation ${(deviationFraction * 100).toFixed(2)}% exceeds TWAP threshold ${(maxDeviation * 100).toFixed(1)}%`,
+    };
+  }
+
+  return {
+    allowed: true,
+    deviation: deviationFraction,
+    twapRate: twap.toString(),
+    currentRate: currentRate.toString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Stale swap detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if a receipt is stale (Pending for too long).
+ * Returns the age in minutes if stale, or null if not stale.
+ */
+function checkStaleSwap(
+  receipt: PendingReceipt,
+  maxPendingMinutes: number,
+): { isStale: boolean; ageMinutes: number } {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const createdAtSec = receipt.createdAt.toNumber();
+  const ageMinutes = (nowSec - createdAtSec) / 60;
+
+  return {
+    isStale: ageMinutes > maxPendingMinutes,
+    ageMinutes: Math.round(ageMinutes * 10) / 10,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -487,7 +707,8 @@ async function processReceipt(
   authority: Keypair,
   receipt: PendingReceipt,
   config: KeeperConfig,
-  stats: KeeperStats
+  stats: KeeperStats,
+  twapTracker: TwapTracker
 ): Promise<void> {
   console.log();
   console.log(`--- Processing receipt ${receipt.pubkey.toBase58().slice(0, 16)}... ---`);
@@ -497,12 +718,89 @@ async function processReceipt(
   console.log(`  Input Amount: ${receipt.inputAmount.toString()}`);
   console.log(`  Nonce:        ${receipt.nonce.toString()}`);
 
+  // Check for stale swaps
+  const staleCheck = checkStaleSwap(receipt, config.maxPendingMinutes);
+  if (staleCheck.isStale) {
+    console.warn(
+      `  [WARN] STALE SWAP: Receipt has been Pending for ${staleCheck.ageMinutes} minutes ` +
+      `(threshold: ${config.maxPendingMinutes} min). This may indicate a stuck swap or manipulation attempt.`
+    );
+    stats.staleSwapsDetected++;
+  } else {
+    console.log(`  Swap age:     ${staleCheck.ageMinutes} min (max: ${config.maxPendingMinutes} min)`);
+  }
+
   if (config.dryRun) {
     console.log("  [DRY RUN] Skipping execution.");
     return;
   }
 
-  // Step 1: Simulate swap (devnet) or execute Jupiter swap (mainnet)
+  // Step 1: Get a price quote for TWAP checking
+  const inputMintStr = receipt.inputMint.toBase58();
+  const outputMintStr = receipt.outputMint.toBase58();
+  const inputAmountRaw = BigInt(receipt.inputAmount.toString());
+
+  // For devnet, use well-known mints for Jupiter quote; for mainnet, use actual mints
+  const quoteInputMint = config.cluster === "devnet"
+    ? "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    : inputMintStr;
+  const quoteOutputMint = config.cluster === "devnet"
+    ? "So11111111111111111111111111111111111111112"
+    : outputMintStr;
+
+  const jupiterQuote = await getJupiterQuote(
+    quoteInputMint,
+    quoteOutputMint,
+    receipt.inputAmount.toString(),
+    50
+  );
+
+  let quoteOutAmount: bigint;
+  if (jupiterQuote) {
+    quoteOutAmount = BigInt(jupiterQuote.outAmount);
+    console.log(
+      `  Jupiter quote: ${receipt.inputAmount.toString()} -> ${quoteOutAmount.toString()}`
+    );
+    if (jupiterQuote.priceImpactPct) {
+      console.log(`  Price impact:  ${jupiterQuote.priceImpactPct}%`);
+    }
+  } else {
+    // Fallback simulated rate
+    quoteOutAmount = (inputAmountRaw * BigInt(990)) / BigInt(1000);
+    console.log(
+      `  Using fallback simulated rate: ${receipt.inputAmount.toString()} -> ${quoteOutAmount.toString()}`
+    );
+  }
+
+  // Step 2: TWAP check -- record sample and verify deviation
+  const twapResult = checkTwapDeviation(
+    twapTracker,
+    quoteInputMint,
+    quoteOutputMint,
+    inputAmountRaw,
+    quoteOutAmount,
+    config.twapMaxDeviation,
+    config.twapSamples,
+  );
+
+  console.log(`  [TWAP] Samples in window: ${twapTracker.getSampleCount(quoteInputMint, quoteOutputMint)}`);
+  if (twapResult.twapRate) {
+    console.log(`  [TWAP] TWAP rate:    ${twapResult.twapRate}`);
+    console.log(`  [TWAP] Current rate: ${twapResult.currentRate}`);
+  }
+  if (twapResult.deviation !== undefined) {
+    console.log(`  [TWAP] Deviation:    ${(twapResult.deviation * 100).toFixed(3)}% (max: ${(config.twapMaxDeviation * 100).toFixed(1)}%)`);
+  }
+
+  if (!twapResult.allowed) {
+    console.log(`  [TWAP DELAY] ${twapResult.reason}`);
+    stats.twapDelays++;
+    return;
+  }
+
+  console.log(`  [TWAP] Price check PASSED`);
+
+  // Step 3: Simulate swap (devnet) or execute Jupiter swap (mainnet)
   const [escrowAuthority] = deriveEscrowAuthorityPda();
 
   let outputAmount: BN;
@@ -523,38 +821,23 @@ async function processReceipt(
     outputAmount = result.outputAmount;
     slippageBps = result.slippageBps;
   } else {
-    // Mainnet: use Jupiter API for actual swap
-    // For now, this path queries Jupiter but does not execute the actual
-    // swap transaction (that requires CPI or a separate Jupiter tx).
-    // The keeper would need to:
-    //   1. Get Jupiter quote
-    //   2. Get Jupiter swap transaction
-    //   3. Sign and send the swap tx
-    //   4. Read the output amount from the resulting token balance
-    //   5. Call execute_swap with the output amount
-    const quote = await getJupiterQuote(
-      receipt.inputMint.toBase58(),
-      receipt.outputMint.toBase58(),
-      receipt.inputAmount.toString(),
-      50
-    );
-    if (!quote) {
+    // Mainnet: use the Jupiter quote we already obtained
+    if (!jupiterQuote) {
       console.log("  [ERROR] Failed to get Jupiter quote. Skipping.");
       stats.errors++;
       return;
     }
 
-    outputAmount = new BN(quote.outAmount);
-    const inputBigInt = BigInt(receipt.inputAmount.toString());
-    const outputBigInt = BigInt(quote.outAmount);
+    outputAmount = new BN(jupiterQuote.outAmount);
+    const outputBigInt = BigInt(jupiterQuote.outAmount);
     slippageBps =
-      inputBigInt > BigInt(0) && outputBigInt < inputBigInt
-        ? Number(((inputBigInt - outputBigInt) * BigInt(10000)) / inputBigInt)
+      inputAmountRaw > BigInt(0) && outputBigInt < inputAmountRaw
+        ? Number(((inputAmountRaw - outputBigInt) * BigInt(10000)) / inputAmountRaw)
         : 0;
 
     // Slippage guard
     const minAcceptable =
-      (inputBigInt * BigInt(Math.floor((1 - config.maxSlippage) * 10000))) /
+      (inputAmountRaw * BigInt(Math.floor((1 - config.maxSlippage) * 10000))) /
       BigInt(10000);
     if (outputBigInt < minAcceptable) {
       console.log(
@@ -566,7 +849,7 @@ async function processReceipt(
     }
   }
 
-  // Step 2: Call execute_swap on-chain
+  // Step 4: Call execute_swap on-chain
   // min_output_amount = outputAmount * 0.99 (1% tolerance for on-chain rounding)
   const minOutputAmount = new BN(
     (BigInt(outputAmount.toString()) * BigInt(99)) / BigInt(100)
@@ -622,10 +905,12 @@ async function runKeeper(): Promise<void> {
   console.log("#                                                              #");
   console.log("################################################################");
   console.log();
-  console.log(`  Cluster:       ${config.cluster}`);
-  console.log(`  Interval:      ${config.intervalMs}ms`);
-  console.log(`  Max slippage:  ${(config.maxSlippage * 100).toFixed(1)}%`);
-  console.log(`  Dry run:       ${config.dryRun}`);
+  console.log(`  Cluster:         ${config.cluster}`);
+  console.log(`  Interval:        ${config.intervalMs}ms`);
+  console.log(`  Max slippage:    ${(config.maxSlippage * 100).toFixed(1)}%`);
+  console.log(`  TWAP window:     ${config.twapWindowSec}s (${config.twapSamples} samples, ${(config.twapMaxDeviation * 100).toFixed(1)}% max deviation)`);
+  console.log(`  Max pending:     ${config.maxPendingMinutes} min`);
+  console.log(`  Dry run:         ${config.dryRun}`);
   console.log();
 
   // Setup connection
@@ -720,6 +1005,7 @@ async function runKeeper(): Promise<void> {
   console.log();
 
   const stats = createStats();
+  const twapTracker = new TwapTracker(config.twapWindowSec, config.twapSamples * 10);
 
   // Graceful shutdown
   let running = true;
@@ -758,7 +1044,8 @@ async function runKeeper(): Promise<void> {
               authority,
               receipt,
               config,
-              stats
+              stats,
+              twapTracker
             );
           } catch (err: any) {
             console.error(

@@ -57,12 +57,14 @@ pub fn handler(ctx: Context<VerifyProof>, params: VerifyProofParams) -> Result<(
         ZkVerifierError::ProofExpired
     );
 
-    // In production: verify the actual Noir proof against the verification key.
-    // Current implementation validates input consistency and creates attestation.
+    // WARNING: PLACEHOLDER VERIFICATION ONLY.
+    // The current verify_proof_inputs function only checks that bytes are non-zero.
+    // This is NOT cryptographic verification and MUST be replaced before mainnet.
     //
     // TODO: Integrate Noir verifier library when available for Solana BPF.
     // The proof bytes, commitment, and verification key would be passed to
     // the verifier to confirm the ZK proof is valid.
+    msg!("WARNING: Using placeholder proof verification (non-zero check only). Not for production use.");
     let proof_valid = verify_proof_inputs(
         &params.proof,
         &params.commitment,
@@ -108,17 +110,31 @@ pub fn handler(ctx: Context<VerifyProof>, params: VerifyProofParams) -> Result<(
     Ok(())
 }
 
-/// Validate proof input consistency.
-/// In production this would call the actual Noir verifier.
-/// Current implementation checks that proof and commitment are non-zero.
+/// **PLACEHOLDER** — Validate proof input consistency.
+///
+/// # Security Warning
+///
+/// This function is a **testing-only placeholder**. It performs NO cryptographic
+/// verification — it only checks that proof and commitment bytes are non-zero.
+/// ANY non-zero 64-byte proof will be accepted, making it trivial to forge
+/// compliance attestations.
+///
+/// **DO NOT deploy to mainnet without replacing this with real Noir verification.**
+///
+/// Production implementation requires:
+/// - Noir circuit verifier compiled for Solana BPF
+/// - Verification of the proof against the stored verification key
+/// - Validation that public inputs match the proof's committed values
+///
+/// See: NoirBackend in the SDK for the off-chain equivalent using `bb verify`.
 fn verify_proof_inputs(
     proof: &[u8; 64],
     commitment: &[u8; 32],
     _verification_key: &[u8; 128],
 ) -> bool {
-    // Ensure proof bytes are not all zeros (placeholder validation)
+    // PLACEHOLDER: Ensure proof bytes are not all zeros (NOT cryptographic verification)
     let proof_non_zero = proof.iter().any(|&b| b != 0);
-    // Ensure commitment is not all zeros
+    // PLACEHOLDER: Ensure commitment is not all zeros
     let commitment_non_zero = commitment.iter().any(|&b| b != 0);
 
     proof_non_zero && commitment_non_zero
