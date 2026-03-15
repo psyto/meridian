@@ -15,6 +15,12 @@
  *
  * Run with: npx ts-node scripts/demo-devnet.ts
  *       or: npx tsx scripts/demo-devnet.ts
+ *
+ * Flags:
+ *   --use-keeper    After deposit, wait for the keeper service (scripts/keeper.ts)
+ *                   to execute the swap instead of doing it manually inline.
+ *                   Start the keeper in another terminal first:
+ *                     npx tsx scripts/keeper.ts --interval 5000
  */
 
 import * as anchor from "@coral-xyz/anchor";
@@ -354,6 +360,17 @@ async function main() {
   console.log(`  Shield Config PDA: ${shieldConfigPda.toBase58()}`);
 
   // -------------------------------------------------------------------------
+  // Parse flags
+  // -------------------------------------------------------------------------
+  const useKeeper = process.argv.includes("--use-keeper");
+  if (useKeeper) {
+    console.log();
+    console.log("  ** --use-keeper flag detected **");
+    console.log("  Step 6 will wait for the keeper service to execute the swap.");
+    console.log("  Make sure `npx tsx scripts/keeper.ts` is running in another terminal.");
+  }
+
+  // -------------------------------------------------------------------------
   // 5. Deposit
   // -------------------------------------------------------------------------
   step(5, "Trader deposits 1,000 USDC into escrow");
@@ -393,37 +410,78 @@ async function main() {
   console.log(`  Escrow USDC:  ${formatUsdc(escrowUsdcAfterDeposit.amount)}`);
 
   // -------------------------------------------------------------------------
-  // 6. Execute Swap (simulated keeper)
+  // 6. Execute Swap
   // -------------------------------------------------------------------------
-  step(6, "Execute swap (simulated keeper marks swap as completed)");
+  let swapTxSig = "";
 
-  // Simulate Jupiter having deposited swap result: mint 990 wSOL to escrow output
-  // 1000 USDC -> ~990 wSOL (simulated rate, before protocol fee)
-  const simulatedOutputAmount = new BN(990_000_000_000); // 990 wSOL (9 decimals)
-  console.log("  Simulating Jupiter swap result: minting 990 wSOL to escrow...");
-  await mintTo(
-    connection, authority, wsolMint, escrowWsolAta.address, authority, BigInt(simulatedOutputAmount.toString()),
-    [], undefined, TOKEN_2022_PROGRAM_ID
-  );
-  console.log(`  Minted ${formatWsol(simulatedOutputAmount.toNumber())} to escrow wSOL account.`);
+  if (useKeeper) {
+    step(6, "Waiting for keeper service to execute the swap...");
+    console.log("  The receipt is now Pending. The keeper will pick it up,");
+    console.log("  simulate the Jupiter swap, mint output tokens, and call execute_swap.");
+    console.log();
 
-  // Call executeSwap as authority (keeper)
-  const outputAmount = simulatedOutputAmount;
-  const minOutputAmount = new BN(980_000_000_000); // slippage tolerance
+    // Poll until the receipt status changes from Pending
+    const KEEPER_POLL_INTERVAL = 3_000; // 3 seconds
+    const KEEPER_TIMEOUT = 120_000; // 2 minutes
+    const startTime = Date.now();
 
-  console.log(`  Output Amount:     ${formatWsol(outputAmount.toNumber())}`);
-  console.log(`  Min Output Amount: ${formatWsol(minOutputAmount.toNumber())}`);
+    while (Date.now() - startTime < KEEPER_TIMEOUT) {
+      const receipt = await program.account.swapReceipt.fetch(swapReceiptPda);
+      // status is an enum object in Anchor; check for "completed" key
+      const statusObj = receipt.status as any;
+      if (statusObj.completed !== undefined || statusObj.Completed !== undefined) {
+        console.log("  Keeper has executed the swap!");
+        break;
+      }
+      if (statusObj.refunded !== undefined || statusObj.Refunded !== undefined) {
+        throw new Error("Swap was refunded by the keeper instead of executed.");
+      }
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+      process.stdout.write(`\r  Waiting... (${elapsed}s elapsed)`);
+      await new Promise((r) => setTimeout(r, KEEPER_POLL_INTERVAL));
+    }
+    console.log();
 
-  const swapTxSig = await program.methods
-    .executeSwap(outputAmount, minOutputAmount)
-    .accounts({
-      authority: authority.publicKey,
-      shieldConfig: shieldConfigPda,
-      swapReceipt: swapReceiptPda,
-    })
-    .signers([authority])
-    .rpc();
-  console.log(`  Execute swap tx: ${swapTxSig.slice(0, 20)}...`);
+    const receipt = await program.account.swapReceipt.fetch(swapReceiptPda);
+    const statusObj = receipt.status as any;
+    if (statusObj.pending !== undefined || statusObj.Pending !== undefined) {
+      throw new Error(
+        "Timed out waiting for keeper. Is `npx tsx scripts/keeper.ts` running?"
+      );
+    }
+
+    swapTxSig = "(executed by keeper)";
+  } else {
+    step(6, "Execute swap (simulated keeper marks swap as completed)");
+
+    // Simulate Jupiter having deposited swap result: mint 990 wSOL to escrow output
+    // 1000 USDC -> ~990 wSOL (simulated rate, before protocol fee)
+    const simulatedOutputAmount = new BN(990_000_000_000); // 990 wSOL (9 decimals)
+    console.log("  Simulating Jupiter swap result: minting 990 wSOL to escrow...");
+    await mintTo(
+      connection, authority, wsolMint, escrowWsolAta.address, authority, BigInt(simulatedOutputAmount.toString()),
+      [], undefined, TOKEN_2022_PROGRAM_ID
+    );
+    console.log(`  Minted ${formatWsol(simulatedOutputAmount.toNumber())} to escrow wSOL account.`);
+
+    // Call executeSwap as authority (keeper)
+    const outputAmount = simulatedOutputAmount;
+    const minOutputAmount = new BN(980_000_000_000); // slippage tolerance
+
+    console.log(`  Output Amount:     ${formatWsol(outputAmount.toNumber())}`);
+    console.log(`  Min Output Amount: ${formatWsol(minOutputAmount.toNumber())}`);
+
+    swapTxSig = await program.methods
+      .executeSwap(outputAmount, minOutputAmount)
+      .accounts({
+        authority: authority.publicKey,
+        shieldConfig: shieldConfigPda,
+        swapReceipt: swapReceiptPda,
+      })
+      .signers([authority])
+      .rpc();
+    console.log(`  Execute swap tx: ${swapTxSig.slice(0, 20)}...`);
+  }
 
   // Fetch receipt to show fee calculations
   const receiptAfterSwap = await program.account.swapReceipt.fetch(swapReceiptPda);
@@ -512,11 +570,12 @@ async function main() {
   console.log(`    Withdraw Tx:   https://explorer.solana.com/tx/${withdrawTxSig}?cluster=devnet`);
 
   console.log();
-  console.log("  NOTE: In production, Step 6 is handled by a keeper service that");
-  console.log("  calls the Jupiter API to perform the actual DEX swap, then records");
-  console.log("  the output amount on-chain via execute_swap. The escrow PDA is");
-  console.log("  KYC-whitelisted, enabling compliant traders to access non-KYC");
-  console.log("  liquidity pools through the whitelisted intermediary.");
+  console.log("  NOTE: In production, Step 6 is handled by the keeper service");
+  console.log("  (scripts/keeper.ts) which polls for pending receipts, quotes via");
+  console.log("  Jupiter, simulates the swap on devnet, and calls execute_swap.");
+  console.log("  Run with --use-keeper to test this integration:");
+  console.log("    Terminal 1: npx tsx scripts/keeper.ts --interval 5000");
+  console.log("    Terminal 2: npx tsx scripts/demo-devnet.ts --use-keeper");
   console.log();
 }
 
