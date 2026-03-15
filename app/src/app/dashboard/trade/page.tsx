@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
+import { DEMO_MODE, DEMO_BALANCE } from '../../lib/demo';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -23,7 +24,8 @@ const mockMarkets = [
 ];
 
 export default function TradePage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected: walletConnected } = useWallet();
+  const connected = DEMO_MODE || walletConnected;
   const [activeTab, setActiveTab] = useState<'swap' | 'markets' | 'positions'>('swap');
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
@@ -31,12 +33,16 @@ export default function TradePage() {
   const [swapping, setSwapping] = useState(false);
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (DEMO_MODE) {
+      setBalance(DEMO_BALANCE);
+      return;
+    }
+    if (walletConnected && publicKey) {
       fetchBalance();
     } else {
       setBalance(null);
     }
-  }, [connected, publicKey]);
+  }, [walletConnected, publicKey]);
 
   const fetchBalance = async () => {
     if (!publicKey) return;
@@ -70,7 +76,7 @@ export default function TradePage() {
   }, [fromAmount]);
 
   const handleSwap = async () => {
-    if (!connected || !publicKey) {
+    if (!connected || (!DEMO_MODE && !publicKey)) {
       alert('ウォレットを接続してください');
       return;
     }
@@ -89,11 +95,20 @@ export default function TradePage() {
 
     setSwapping(true);
     try {
+      if (DEMO_MODE) {
+        // Simulate swap in demo mode
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        alert(`${formatStablecoin(amount)} STABLECOIN -> ${toAmount} USDC のスワップが完了しました (デモ)`);
+        setFromAmount('');
+        setToAmount('');
+        setSwapping(false);
+        return;
+      }
       const response = await fetch('/api/v1/swap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          walletAddress: publicKey.toBase58(),
+          walletAddress: publicKey!.toBase58(),
           fromToken: 'STABLECOIN',
           toToken: 'USDC',
           fromAmount: Math.floor(amount).toString(),
@@ -104,7 +119,7 @@ export default function TradePage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`${formatStablecoin(amount)} STABLECOIN → ${toAmount} USDC のスワップが完了しました`);
+        alert(`${formatStablecoin(amount)} STABLECOIN -> ${toAmount} USDC のスワップが完了しました`);
         setFromAmount('');
         setToAmount('');
         fetchBalance();

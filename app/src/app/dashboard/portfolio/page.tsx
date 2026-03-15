@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { DEMO_MODE, DEMO_BALANCE, DEMO_TRANSACTIONS } from '../../lib/demo';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -35,7 +36,8 @@ interface Asset {
 }
 
 export default function PortfolioPage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected: walletConnected } = useWallet();
+  const connected = DEMO_MODE || walletConnected;
   const [activeTab, setActiveTab] = useState<'assets' | 'history'>('assets');
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -43,14 +45,19 @@ export default function PortfolioPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (DEMO_MODE) {
+      setBalance(DEMO_BALANCE);
+      setTransactions(DEMO_TRANSACTIONS);
+      return;
+    }
+    if (walletConnected && publicKey) {
       fetchBalance();
       fetchTransactions();
     } else {
       setBalance(null);
       setTransactions([]);
     }
-  }, [connected, publicKey]);
+  }, [walletConnected, publicKey]);
 
   const fetchBalance = async () => {
     if (!publicKey) return;

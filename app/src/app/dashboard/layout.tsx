@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { DEMO_MODE, DEMO_WALLET_ADDRESS } from '../lib/demo';
 
 const sidebarItems = [
   { href: '/dashboard', label: 'ダッシュボード', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -67,10 +68,10 @@ export default function DashboardLayout({
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                未接続
+                {DEMO_MODE ? `${DEMO_WALLET_ADDRESS.slice(0, 4)}...${DEMO_WALLET_ADDRESS.slice(-4)}` : '未接続'}
               </p>
               <p className="text-xs text-gray-500">
-                ウォレットを接続
+                {DEMO_MODE ? 'デモモード' : 'ウォレットを接続'}
               </p>
             </div>
           </div>

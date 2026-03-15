@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
+import { DEMO_MODE, DEMO_KYC } from '../../lib/demo';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -19,19 +20,24 @@ interface KycData {
 }
 
 export default function CompliancePage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected: walletConnected } = useWallet();
+  const connected = DEMO_MODE || walletConnected;
   const [kyc, setKyc] = useState<KycData | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<'basic' | 'standard' | 'enhanced' | 'institutional'>('standard');
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (DEMO_MODE) {
+      setKyc(DEMO_KYC);
+      return;
+    }
+    if (walletConnected && publicKey) {
       fetchKycStatus();
     } else {
       setKyc(null);
     }
-  }, [connected, publicKey]);
+  }, [walletConnected, publicKey]);
 
   const fetchKycStatus = async () => {
     if (!publicKey) return;

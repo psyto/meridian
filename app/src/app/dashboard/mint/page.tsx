@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
+import { DEMO_MODE, DEMO_WALLET_ADDRESS, DEMO_BALANCE, DEMO_MINT_REQUESTS } from '../../lib/demo';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -19,7 +20,9 @@ interface MintRequest {
 }
 
 export default function MintPage() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected: walletConnected } = useWallet();
+  const connected = DEMO_MODE || walletConnected;
+  const displayAddress = DEMO_MODE ? DEMO_WALLET_ADDRESS : publicKey?.toBase58();
   const [activeTab, setActiveTab] = useState<'mint' | 'burn'>('mint');
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
@@ -30,11 +33,16 @@ export default function MintPage() {
   const [stablecoinBalance, setStablecoinBalance] = useState<string>('0');
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (DEMO_MODE) {
+      setStablecoinBalance(DEMO_BALANCE.stablecoinBalance);
+      setRequests(DEMO_MINT_REQUESTS);
+      return;
+    }
+    if (walletConnected && publicKey) {
       fetchRequests();
       fetchBalance();
     }
-  }, [connected, publicKey]);
+  }, [walletConnected, publicKey]);
 
   const fetchBalance = async () => {
     if (!publicKey) return;
@@ -65,7 +73,7 @@ export default function MintPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!connected || !publicKey) {
+    if (!connected || (!DEMO_MODE && !publicKey)) {
       alert('ウォレットを接続してください');
       return;
     }
@@ -94,7 +102,7 @@ export default function MintPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount,
-          recipient: publicKey.toBase58(),
+          recipient: DEMO_MODE ? DEMO_WALLET_ADDRESS : publicKey!.toBase58(),
           reference: activeTab === 'mint' ? reference : `BURN-${Date.now()}`,
           jurisdiction: 'JP',
           type: activeTab,
@@ -272,7 +280,7 @@ export default function MintPage() {
                 <label className="label">受取アドレス</label>
                 <input
                   type="text"
-                  value={publicKey?.toBase58() || '未接続'}
+                  value={displayAddress || '未接続'}
                   disabled
                   className="input bg-gray-50 dark:bg-gray-700 text-gray-500 font-mono text-sm"
                 />

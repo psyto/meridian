@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import dynamic from 'next/dynamic';
+import { DEMO_MODE, DEMO_WALLET_ADDRESS, DEMO_BALANCE, DEMO_TRANSACTIONS } from '../lib/demo';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -27,20 +28,27 @@ interface Transaction {
 }
 
 export default function Dashboard() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected: walletConnected } = useWallet();
+  const connected = DEMO_MODE || walletConnected;
+  const displayAddress = DEMO_MODE ? DEMO_WALLET_ADDRESS : publicKey?.toBase58();
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (connected && publicKey) {
+    if (DEMO_MODE) {
+      setBalance(DEMO_BALANCE);
+      setTransactions(DEMO_TRANSACTIONS);
+      return;
+    }
+    if (walletConnected && publicKey) {
       fetchBalance();
       fetchTransactions();
     } else {
       setBalance(null);
       setTransactions([]);
     }
-  }, [connected, publicKey]);
+  }, [walletConnected, publicKey]);
 
   const fetchBalance = async () => {
     if (!publicKey) return;
@@ -179,9 +187,9 @@ export default function Dashboard() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500">ウォレット接続状況</p>
-            {connected && publicKey ? (
+            {connected && displayAddress ? (
               <p className="text-lg font-medium text-gray-900 dark:text-white font-mono">
-                {shortenAddress(publicKey.toBase58())}
+                {shortenAddress(displayAddress)}
               </p>
             ) : (
               <p className="text-lg font-medium text-gray-900 dark:text-white">
