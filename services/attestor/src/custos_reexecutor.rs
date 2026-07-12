@@ -48,9 +48,10 @@ impl ReExecutor for CustosReExecutor {
         // When wired: warp the LiteSVM clock to `_pin_slot` before simulating so state is
         // deterministic (custos Gate D stale-state confound), then read the escrow output delta.
         anyhow::bail!(
-            "custos wiring pending: custos-engine must expose the post-state Outcome \
-             (add loader::simulate_b64 -> (ScanReport, Outcome)) and honor pin_slot via \
-             warp_to_slot; see custos_reexecutor.rs / task 002"
+            "custos wiring pending: custos-engine now exposes loader::simulate_b64 -> \
+             (ScanReport, Outcome) (merged), but CustosReExecutor is not yet wired to call it \
+             (clone state -> replay in LiteSVM -> read escrow output delta, honoring pin_slot via \
+             warp_to_slot). Task 002 Part 2. Use MOCK_REEXEC_OUTPUT for a local demo of the sign path."
         )
     }
 }

@@ -141,6 +141,19 @@ pub fn attest(p: &SwapProposal, reexec: &dyn ReExecutor, signer: &SigningKey) ->
     }
 }
 
+/// A fixed-output `ReExecutor` for **local demos/tests only** (NOT production): it pretends the
+/// replay succeeded and produced `output`, so the attest/sign path can be exercised end-to-end
+/// without a live engine or network. The CLI enables it via `MOCK_REEXEC_OUTPUT`.
+pub struct FixedReExecutor {
+    pub success: bool,
+    pub output: u64,
+}
+impl ReExecutor for FixedReExecutor {
+    fn replay_output_delta(&self, _tx: &str, _ata: &str, _pin_slot: u64) -> anyhow::Result<(bool, u64)> {
+        Ok((self.success, self.output))
+    }
+}
+
 pub fn hex32(s: &str) -> anyhow::Result<[u8; 32]> {
     let v = hex::decode(s.trim_start_matches("0x"))?;
     v.as_slice()

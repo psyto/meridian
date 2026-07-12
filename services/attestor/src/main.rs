@@ -9,7 +9,9 @@
 use std::io::Read;
 
 use ed25519_dalek::SigningKey;
-use meridian_attestor::{attest, custos_reexecutor::CustosReExecutor, hex32, SwapProposal};
+use meridian_attestor::{
+    attest, custos_reexecutor::CustosReExecutor, hex32, FixedReExecutor, ReExecutor, SwapProposal,
+};
 
 fn main() -> anyhow::Result<()> {
     let mut input = String::new();
@@ -29,11 +31,22 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    let rpc = std::env::var("CUSTOS_RPC")
-        .unwrap_or_else(|_| "https://api.mainnet-beta.solana.com".into());
-    let reexec = CustosReExecutor::new(rpc);
+    // Local demo/test: MOCK_REEXEC_OUTPUT=<u64> pretends the replay produced that output, so the
+    // attest/sign path runs end-to-end without a live engine or network. Otherwise use the real
+    // (currently scaffolded) custos re-executor.
+    let reexec: Box<dyn ReExecutor> = match std::env::var("MOCK_REEXEC_OUTPUT") {
+        Ok(v) => {
+            eprintln!("WARN: MOCK_REEXEC_OUTPUT set — using a MOCK re-executor (no real re-execution)");
+            Box::new(FixedReExecutor { success: true, output: v.parse()? })
+        }
+        Err(_) => {
+            let rpc = std::env::var("CUSTOS_RPC")
+                .unwrap_or_else(|_| "https://api.mainnet-beta.solana.com".into());
+            Box::new(CustosReExecutor::new(rpc))
+        }
+    };
 
-    let verdict = attest(&proposal, &reexec, &signer);
+    let verdict = attest(&proposal, reexec.as_ref(), &signer);
     println!("{}", serde_json::to_string_pretty(&verdict)?);
     Ok(())
 }
