@@ -172,7 +172,8 @@ The revival replaces blind trust in the keeper with an **independent re-executio
 - **Off-chain** (`services/attestor`, crate `meridian-attestor`) — *scaffolded, live wiring pending.*
   The attest **decision** (replay succeeded · re-exec output ≥ reported · net (post-fee) ≥ trader
   minimum) and **ed25519 signing** over `trader | nonce | output_mint | proposed_output | fee_bps |
-  execution_slot | sha256(tx)` are implemented and unit-tested (against a mock re-executor). Wiring
+  sha256(tx)` are implemented and unit-tested. (`execution_slot` is carried in the proposal but not
+  yet signed — no re-executor pins to it yet, so binding it would be a false claim.) Wiring
   the re-executor to [custos-engine](https://github.com/psyto/custos)'s `simulate_b64` — clone
   mainnet state → replay the exact tx in LiteSVM → read the escrow output delta — is the remaining
   step; `CustosReExecutor` currently returns `wiring pending` until it lands. custos-engine (the same
@@ -187,7 +188,7 @@ cargo test            # 6 unit tests: decision logic + ed25519 sign/verify
 
 # Exercise the sign path end-to-end with a mock re-executor (demo/test only):
 #   re-exec output >= reported  -> SIGN (a real ed25519 attestation bound to
-#   trader | nonce | output_mint | proposed_output | fee_bps | execution_slot | sha256(tx))
+#   trader | nonce | output_mint | proposed_output | fee_bps | sha256(tx))
 MOCK_REEXEC_OUTPUT=2000000 cargo run -- proposal.json   # -> {"verdict":"sign", ...}
 
 #   keeper overstates (re-exec output < reported) -> REJECT

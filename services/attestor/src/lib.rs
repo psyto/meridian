@@ -36,8 +36,9 @@ pub struct SwapProposal {
     pub fee_bps: u16,
     /// Trader's minimum — enforced here on the NET amount, mirroring on-chain task 001.
     pub min_output_amount: u64,
-    /// Mainnet slot the attestor pins the re-execution to (resolves the stale-state false
-    /// accept/reject confound custos flags in its Gate D note). Bound into the signed message.
+    /// Mainnet slot the attestor should pin the re-execution to (resolves the stale-state
+    /// false accept/reject confound). Carried in the API for when pinning lands, but **not yet
+    /// signed** — no current re-executor honors it, so binding it would be a false claim (Codex 005).
     pub execution_slot: u64,
 }
 
@@ -78,24 +79,27 @@ pub trait ReExecutor {
 /// **EXACT LAYOUT IS A CODEX CONVERGENCE POINT** — it must byte-for-byte equal the on-chain
 /// detached-attestation verify (slice 1b). Layout (all LE):
 /// `trader(32) | nonce(8) | output_mint(32) | proposed_output_amount(8) | fee_bps(2) |
-/// execution_slot(8) | sha256(tx_b64)(32)`.
+/// sha256(tx_b64)(32)`.
 ///
 /// - `nonce`+`trader` prevent reuse across the trader's swaps.
 /// - `sha256(tx_b64)` binds the attestation to the **exact replayed swap** — a detached attestation
 ///   cannot be reused against a different off-chain execution claiming the same output (Codex 002 P1).
-/// - `fee_bps` + `execution_slot` bind the fee assumption and the pinned state.
+/// - `fee_bps` binds the fee assumption.
+/// - **`execution_slot` is deliberately NOT signed** (Codex 005 P1): no current re-executor actually
+///   pins to it (`CustosReExecutor` clones current state), so signing a "bound to slot X" claim that
+///   isn't enforced would be a false statement. It returns to the signed layout once the re-executor
+///   honors the pin AND reports the *actual* slot it ran against.
 pub fn bind_message(p: &SwapProposal) -> anyhow::Result<Vec<u8>> {
     use sha2::{Digest, Sha256};
     let trader = hex32(&p.trader)?;
     let mint = hex32(&p.output_mint)?;
     let tx_hash = Sha256::digest(p.tx_b64.as_bytes());
-    let mut m = Vec::with_capacity(32 + 8 + 32 + 8 + 2 + 8 + 32);
+    let mut m = Vec::with_capacity(32 + 8 + 32 + 8 + 2 + 32);
     m.extend_from_slice(&trader);
     m.extend_from_slice(&p.nonce.to_le_bytes());
     m.extend_from_slice(&mint);
     m.extend_from_slice(&p.proposed_output_amount.to_le_bytes());
     m.extend_from_slice(&p.fee_bps.to_le_bytes());
-    m.extend_from_slice(&p.execution_slot.to_le_bytes());
     m.extend_from_slice(&tx_hash);
     Ok(m)
 }
@@ -204,7 +208,7 @@ mod tests {
         let v = attest(&proposal(2_000_000, 1_000_000), &MockReExecutor { success: true, delta: 2_000_000, err: false }, &signer());
         match v {
             AttestVerdict::Sign { message_hex, signature_hex, attestor_pubkey_hex } => {
-                assert_eq!(message_hex.len(), (32 + 8 + 32 + 8 + 2 + 8 + 32) * 2);
+                assert_eq!(message_hex.len(), (32 + 8 + 32 + 8 + 2 + 32) * 2);
                 assert_eq!(signature_hex.len(), 128);
                 assert_eq!(attestor_pubkey_hex.len(), 64);
             }

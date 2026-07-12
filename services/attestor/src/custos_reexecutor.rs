@@ -13,8 +13,10 @@
 //! - **Runs against LIVE state / needs network:** `simulate_b64` fetches mainnet accounts over RPC
 //!   (`CUSTOS_RPC` / mainnet-beta). It cannot run in a network-isolated environment.
 //! - **`pin_slot` not yet honored:** `simulate_b64` clones state at the CURRENT slot; true historical
-//!   pinning to `pin_slot` needs archival state fetch (custos Gate D stale-state confound). `pin_slot`
-//!   is still bound into the attestation, but the re-execution reflects current state for now.
+//!   pinning to `pin_slot` needs archival state fetch (custos Gate D stale-state confound). Because it
+//!   is not enforced, `execution_slot` is deliberately **not** signed into the attestation yet (see
+//!   `bind_message`, Codex 005) — it returns to the signed payload once the re-executor pins AND
+//!   reports the actual slot.
 //! - **Panic safety:** `simulate_b64` `expect()`s on malformed tx / RPC shape; wrapped in
 //!   `catch_unwind` so a bad keeper input becomes an `Err` (→ `Reject`), not a crash.
 
