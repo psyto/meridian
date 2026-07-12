@@ -30,8 +30,15 @@ pub struct SwapProposal {
     pub nonce: u64,
     /// Gross output the keeper reports. We attest iff `reexec_output >= proposed_output_amount`.
     pub proposed_output_amount: u64,
-    /// Trader's minimum (the NET check is enforced on-chain in task 001; carried for context).
+    /// Protocol fee (bps) the escrow deducts — MUST equal `ShieldConfig.fee_bps` at settle time.
+    /// Needed so the attestor enforces the trader minimum on the NET (post-fee) amount, matching
+    /// on-chain task 001 (`net_output >= min_output_amount`).
+    pub fee_bps: u16,
+    /// Trader's minimum — enforced here on the NET amount, mirroring on-chain task 001.
     pub min_output_amount: u64,
+    /// Mainnet slot the attestor pins the re-execution to (resolves the stale-state false
+    /// accept/reject confound custos flags in its Gate D note). Bound into the signed message.
+    pub execution_slot: u64,
 }
 
 /// The attestor's decision. `Sign` carries the exact signed bytes + signature + pubkey so the
@@ -54,35 +61,56 @@ pub enum AttestVerdict {
 pub trait ReExecutor {
     /// `Ok((success, reexec_output_delta))` — did the replayed tx succeed, and how much did the
     /// escrow output ATA gain — or `Err` if the tx cannot be deterministically replayed.
-    fn replay_output_delta(&self, tx_b64: &str, escrow_output_ata: &str) -> anyhow::Result<(bool, u64)>;
+    ///
+    /// `pin_slot` is the mainnet slot the re-execution MUST pin cloned state to (custos
+    /// `warp_to_slot`), so the attestation reflects a deterministic, agreed state — not "whatever
+    /// the RPC serves now". Bound into the signed message by `bind_message`.
+    fn replay_output_delta(
+        &self,
+        tx_b64: &str,
+        escrow_output_ata: &str,
+        pin_slot: u64,
+    ) -> anyhow::Result<(bool, u64)>;
 }
 
 /// The bound message an attestation signs.
 ///
 /// **EXACT LAYOUT IS A CODEX CONVERGENCE POINT** — it must byte-for-byte equal the on-chain
-/// detached-attestation verify (slice 1b). First proposal: `trader(32) | nonce(8 LE) |
-/// output_mint(32) | proposed_output_amount(8 LE)`. Binding `nonce` + `trader` prevents attestation
-/// reuse across swaps.
+/// detached-attestation verify (slice 1b). Layout (all LE):
+/// `trader(32) | nonce(8) | output_mint(32) | proposed_output_amount(8) | fee_bps(2) |
+/// execution_slot(8) | sha256(tx_b64)(32)`.
+///
+/// - `nonce`+`trader` prevent reuse across the trader's swaps.
+/// - `sha256(tx_b64)` binds the attestation to the **exact replayed swap** — a detached attestation
+///   cannot be reused against a different off-chain execution claiming the same output (Codex 002 P1).
+/// - `fee_bps` + `execution_slot` bind the fee assumption and the pinned state.
 pub fn bind_message(p: &SwapProposal) -> anyhow::Result<Vec<u8>> {
+    use sha2::{Digest, Sha256};
     let trader = hex32(&p.trader)?;
     let mint = hex32(&p.output_mint)?;
-    let mut m = Vec::with_capacity(32 + 8 + 32 + 8);
+    let tx_hash = Sha256::digest(p.tx_b64.as_bytes());
+    let mut m = Vec::with_capacity(32 + 8 + 32 + 8 + 2 + 8 + 32);
     m.extend_from_slice(&trader);
     m.extend_from_slice(&p.nonce.to_le_bytes());
     m.extend_from_slice(&mint);
     m.extend_from_slice(&p.proposed_output_amount.to_le_bytes());
+    m.extend_from_slice(&p.fee_bps.to_le_bytes());
+    m.extend_from_slice(&p.execution_slot.to_le_bytes());
+    m.extend_from_slice(&tx_hash);
     Ok(m)
 }
 
 /// Re-execute the proposal and, iff it checks out, sign the bound message.
 ///
 /// Attest rules (all must hold): replay succeeds · `reexec_output >= proposed_output_amount`
-/// (keeper did not overstate) · `proposed_output_amount >= min_output_amount`.
+/// (keeper did not overstate the gross) · the **NET** amount (post-fee, matching on-chain task 001)
+/// `>= min_output_amount`. Signs a message bound to the exact replayed tx + pinned slot.
 pub fn attest(p: &SwapProposal, reexec: &dyn ReExecutor, signer: &SigningKey) -> AttestVerdict {
-    let (success, reexec_output) = match reexec.replay_output_delta(&p.tx_b64, &p.escrow_output_ata) {
-        Ok(v) => v,
-        Err(e) => return AttestVerdict::Reject { reason: format!("replay failed: {e}") },
-    };
+    let (success, reexec_output) =
+        match reexec.replay_output_delta(&p.tx_b64, &p.escrow_output_ata, p.execution_slot) {
+            Ok(v) => v,
+            Err(e) => return AttestVerdict::Reject { reason: format!("replay failed: {e}") },
+        };
     if !success {
         return AttestVerdict::Reject { reason: "re-executed swap did not succeed".into() };
     }
@@ -91,8 +119,15 @@ pub fn attest(p: &SwapProposal, reexec: &dyn ReExecutor, signer: &SigningKey) ->
             reason: format!("re-exec output {reexec_output} < reported {}", p.proposed_output_amount),
         };
     }
-    if p.proposed_output_amount < p.min_output_amount {
-        return AttestVerdict::Reject { reason: "reported output below trader minimum".into() };
+    // NET slippage, mirroring on-chain task 001: the escrow deducts `fee_bps` from the reported
+    // gross, and the trader minimum applies to what they actually withdraw (net). Signing a proposal
+    // whose net falls below the minimum would attest a swap `execute_swap` must reject.
+    let fee = ((p.proposed_output_amount as u128 * p.fee_bps as u128) / 10_000) as u64;
+    let net_output = p.proposed_output_amount.saturating_sub(fee);
+    if net_output < p.min_output_amount {
+        return AttestVerdict::Reject {
+            reason: format!("net output {net_output} (after {}bps fee) below trader minimum {}", p.fee_bps, p.min_output_amount),
+        };
     }
     let msg = match bind_message(p) {
         Ok(m) => m,
@@ -123,7 +158,7 @@ mod tests {
         err: bool,
     }
     impl ReExecutor for MockReExecutor {
-        fn replay_output_delta(&self, _tx: &str, _ata: &str) -> anyhow::Result<(bool, u64)> {
+        fn replay_output_delta(&self, _tx: &str, _ata: &str, _pin_slot: u64) -> anyhow::Result<(bool, u64)> {
             if self.err {
                 anyhow::bail!("mock replay error");
             }
@@ -131,7 +166,7 @@ mod tests {
         }
     }
 
-    fn proposal(proposed: u64, min: u64) -> SwapProposal {
+    fn proposal_fee(proposed: u64, min: u64, fee_bps: u16) -> SwapProposal {
         SwapProposal {
             tx_b64: "AA==".into(),
             escrow_output_ata: hex::encode([1u8; 32]),
@@ -139,8 +174,13 @@ mod tests {
             trader: hex::encode([3u8; 32]),
             nonce: 7,
             proposed_output_amount: proposed,
+            fee_bps,
             min_output_amount: min,
+            execution_slot: 123_456,
         }
+    }
+    fn proposal(proposed: u64, min: u64) -> SwapProposal {
+        proposal_fee(proposed, min, 0)
     }
     fn signer() -> SigningKey {
         SigningKey::from_bytes(&[9u8; 32])
@@ -151,12 +191,24 @@ mod tests {
         let v = attest(&proposal(2_000_000, 1_000_000), &MockReExecutor { success: true, delta: 2_000_000, err: false }, &signer());
         match v {
             AttestVerdict::Sign { message_hex, signature_hex, attestor_pubkey_hex } => {
-                assert_eq!(message_hex.len(), (32 + 8 + 32 + 8) * 2);
+                assert_eq!(message_hex.len(), (32 + 8 + 32 + 8 + 2 + 8 + 32) * 2);
                 assert_eq!(signature_hex.len(), 128);
                 assert_eq!(attestor_pubkey_hex.len(), 64);
             }
             AttestVerdict::Reject { reason } => panic!("expected Sign, got Reject: {reason}"),
         }
+    }
+
+    #[test]
+    fn rejects_when_net_below_min_after_fee() {
+        // gross 1_000_000 clears min 1_000_000, but a 25bps fee -> net 997_500 < min: on-chain
+        // (task 001) would reject, so the attestor must not sign.
+        let v = attest(
+            &proposal_fee(1_000_000, 1_000_000, 25),
+            &MockReExecutor { success: true, delta: 1_000_000, err: false },
+            &signer(),
+        );
+        assert!(matches!(v, AttestVerdict::Reject { .. }), "net-below-min must be rejected");
     }
 
     #[test]

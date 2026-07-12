@@ -39,10 +39,18 @@ impl CustosReExecutor {
 }
 
 impl ReExecutor for CustosReExecutor {
-    fn replay_output_delta(&self, _tx_b64: &str, _escrow_output_ata: &str) -> anyhow::Result<(bool, u64)> {
+    fn replay_output_delta(
+        &self,
+        _tx_b64: &str,
+        _escrow_output_ata: &str,
+        _pin_slot: u64,
+    ) -> anyhow::Result<(bool, u64)> {
+        // When wired: warp the LiteSVM clock to `_pin_slot` before simulating so state is
+        // deterministic (custos Gate D stale-state confound), then read the escrow output delta.
         anyhow::bail!(
             "custos wiring pending: custos-engine must expose the post-state Outcome \
-             (add loader::simulate_b64 -> (ScanReport, Outcome)); see custos_reexecutor.rs / task 002"
+             (add loader::simulate_b64 -> (ScanReport, Outcome)) and honor pin_slot via \
+             warp_to_slot; see custos_reexecutor.rs / task 002"
         )
     }
 }
