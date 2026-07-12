@@ -1,17 +1,12 @@
 //! Production `ReExecutor` backed by custos-engine (`github.com/psyto/custos`, `engine/`).
 //!
-//! ## Wiring status — FRAME-THIN FINDING (task 002)
+//! ## Wiring status — task 002 Part 2 (meridian-side wiring pending)
 //!
-//! custos-engine's public entry `loader::scan_b64(tx_b64, user, rpc) -> ScanReport` clones the
-//! touched mainnet accounts, dumps invoked programs, simulates in LiteSVM, and returns a **safety
-//! verdict** (`ScanReport`). But `ScanReport` does **not** carry token balances — the escrow's
-//! output-token *delta* we need lives on the internal `Outcome { pre, post: BTreeMap<Pubkey,
-//! Option<AccountSnapshot>> }`, which `scan_b64` builds but does not return.
-//!
-//! **Required custos-engine change (small, isolated):** expose the Outcome, e.g.
-//! `pub fn simulate_b64(tx_b64, user, rpc) -> (ScanReport, Outcome)` (or a helper
-//! `output_delta(&Outcome, escrow_output_ata) -> u64`). The loader already computes it internally;
-//! this is a return-signature refactor, not new logic. Then this impl becomes:
+//! The custos-engine seam now EXISTS: `loader::simulate_b64(tx_b64, user, rpc) -> (ScanReport,
+//! Outcome)` is merged (custos), exposing the raw `Outcome { pre, post: BTreeMap<Pubkey,
+//! Option<AccountSnapshot>> }` alongside the safety `ScanReport`. The remaining work is to wire THIS
+//! impl to call it: clone state → replay in LiteSVM → read the escrow output-token delta from
+//! `outcome.pre`/`outcome.post`, honoring `pin_slot`. Sketch:
 //!
 //! ```ignore
 //! let (report, outcome) = custos_engine::loader::simulate_b64(tx_b64, Some(user), &self.rpc);

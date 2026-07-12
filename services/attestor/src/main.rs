@@ -2,9 +2,13 @@
 //! the custos-engine re-executor, and prints an `AttestVerdict` JSON.
 //!
 //! Signing key from `ATTESTOR_KEY_HEX` (32-byte hex); falls back to a fixed DEV key (NON-PRODUCTION).
-//! Until the custos wiring lands (see `custos_reexecutor.rs`), the re-executor returns an explicit
-//! error and the verdict is `Reject{reason: "replay failed: custos wiring pending ..."}` — the binary
-//! runs and reports the gap rather than panicking.
+//!
+//! Re-executor selection:
+//! - default: `CustosReExecutor` (real). Its live wiring is still pending (see `custos_reexecutor.rs`),
+//!   so today it returns an explicit error and the verdict is `Reject{reason: "... wiring pending"}`
+//!   — the binary runs and reports the gap rather than panicking.
+//! - `MOCK_REEXEC_OUTPUT=<u64>`: `FixedReExecutor` (demo/test only) — pretends the replay produced
+//!   that output, so the attest/sign path runs end-to-end locally without a live engine or network.
 
 use std::io::Read;
 
