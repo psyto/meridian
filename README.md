@@ -179,6 +179,27 @@ The revival replaces blind trust in the keeper with an **independent re-executio
   re-execution engine behind OpsRail's reliability layer) already exposes the needed `simulate_b64`
   entry point.
 
+**Verify locally** (`services/attestor`, offline — no network or on-chain deploy needed):
+
+```bash
+cd services/attestor
+cargo test            # 6 unit tests: decision logic + ed25519 sign/verify
+
+# Exercise the sign path end-to-end with a mock re-executor (demo/test only):
+#   re-exec output >= reported  -> SIGN (a real ed25519 attestation bound to
+#   trader | nonce | output_mint | proposed_output | fee_bps | execution_slot | sha256(tx))
+MOCK_REEXEC_OUTPUT=2000000 cargo run -- proposal.json   # -> {"verdict":"sign", ...}
+
+#   keeper overstates (re-exec output < reported) -> REJECT
+MOCK_REEXEC_OUTPUT=1500000 cargo run -- proposal.json   # -> {"verdict":"reject","reason":"re-exec output 1500000 < reported 2000000"}
+
+# Default (no MOCK_REEXEC_OUTPUT) uses the real CustosReExecutor, which honestly returns
+# "wiring pending" until the live custos wiring (Part 2) lands.
+```
+
+`proposal.json` is a `SwapProposal` (`tx_b64`, hex `escrow_output_ata` / `output_mint` / `trader`,
+`nonce`, `proposed_output_amount`, `fee_bps`, `min_output_amount`, `execution_slot`).
+
 ### zk-verifier
 
 On-chain ZK compliance proof framework (placeholder verification, production Noir integration planned). Stores verification keys and creates attestations for wallets that prove KYC/AML compliance without revealing private data. **Current on-chain verification is placeholder only -- see Security Status.**
