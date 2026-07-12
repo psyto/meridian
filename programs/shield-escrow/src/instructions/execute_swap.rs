@@ -51,7 +51,6 @@ pub fn handler(
     min_output_amount: u64,
 ) -> Result<()> {
     require!(output_amount > 0, ShieldError::InvalidSwapAmount);
-    require!(output_amount >= min_output_amount, ShieldError::InsufficientOutput);
 
     let clock = Clock::get()?;
     let config = &mut ctx.accounts.shield_config;
@@ -60,6 +59,12 @@ pub fn handler(
     // Calculate and deduct protocol fee
     let fee_amount = config.calculate_fee(output_amount);
     let net_output = output_amount.saturating_sub(fee_amount);
+
+    // Slippage protection is enforced on the NET amount the trader actually withdraws
+    // (post-fee), not the gross swap output. Checking the gross `output_amount` would let
+    // the protocol fee push the trader's received amount below their stated minimum. (Codex
+    // review 001, P0.)
+    require!(net_output >= min_output_amount, ShieldError::InsufficientOutput);
 
     // Update receipt
     receipt.output_amount = net_output;
