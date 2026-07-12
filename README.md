@@ -12,7 +12,7 @@ Meridian provides institutional-grade infrastructure for:
 - **RWA Tokenization**: Real-world asset registration, custody verification, and dividends
 - **Compliance**: Built-in KYC/AML via Token-2022 transfer hooks, powered by the Fabrknt compliance stack (@fabrknt/accredit-core for on-chain KYC, @fabrknt/complr-sdk for off-chain sanctions/PEP screening)
 - **ZK Privacy**: ZK compliance proof framework (placeholder verification, production Noir integration planned) for private compliance verification, with on-chain attestation via the zk-verifier program
-- **Hybrid Liquidity**: Shield escrow protocol for accessing full Jupiter DEX liquidity while maintaining compliance
+- **Hybrid Liquidity**: Shield escrow protocol for accessing full Jupiter DEX liquidity while maintaining compliance — with **independent re-execution attestation** of the swap output (the keeper is no longer a sole trusted operator; see [Re-execution attestation](#re-execution-attestation-swap-output-verification))
 
 ## Security Status
 
@@ -22,7 +22,9 @@ Meridian provides institutional-grade infrastructure for:
 |-----------|--------|-------|
 | ZK proof verification (on-chain) | **Placeholder** | `verify_proof_inputs` only checks bytes are non-zero. Any non-zero 64-byte input is accepted as a valid "proof". This is not cryptographically secure. |
 | ZK proof generation (SDK) | **Placeholder / Production** | `PlaceholderBackend` uses SHA-256 (testing only). `NoirBackend` delegates to `nargo`/`bb` for real proofs, but on-chain verification does not yet validate them. |
-| Keeper MEV protection | **Partial** | TWAP enforcement and stale swap detection are implemented in the keeper service. However, the keeper is a trusted operator -- it can execute swaps at any price. |
+| Swap output verification | **Functional (attested)** | `execute_swap` now requires an **independent re-execution attestor** to co-sign (constrained to `ShieldConfig.attestor_pubkey`). The attestor replays the keeper's exact swap in LiteSVM against cloned mainnet state (via custos-engine) and only co-signs when the re-executed output matches the reported amount. The keeper can no longer alone report an arbitrary output. |
+| Trader slippage (net) | **Functional** | `execute_swap` enforces the trader minimum on the **net** (post-fee) amount the trader actually withdraws, not the gross swap output. |
+| Keeper MEV protection | **Partial** | TWAP enforcement and stale swap detection in the keeper service reduce the deposit→swap manipulation window. On-chain oracle validation is still future work. |
 | Transfer hook KYC/AML | **Functional** | On-chain enforcement via Token-2022 transfer hooks. |
 
 **Before mainnet deployment:**
@@ -142,20 +144,38 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 
 **Flow:**
 1. Trader deposits tokens into escrow (transfer hook enforces compliance)
-2. Keeper executes DEX swap via Jupiter-routed pools
-3. Trader withdraws output tokens (transfer hook enforces compliance)
+2. Keeper executes the DEX swap via Jupiter-routed pools and proposes the output amount
+3. **An independent re-execution attestor replays the exact swap in LiteSVM against cloned mainnet state (custos-engine) and co-signs `execute_swap` only if the re-executed output matches** — the keeper cannot settle a fabricated output alone
+4. Trader withdraws output tokens (transfer hook enforces compliance)
 
 **Keeper Requirements:**
+- `execute_swap` now requires **two signers**: the keeper (authority, who proposes the output) **and** the independent attestor (`ShieldConfig.attestor_pubkey`, who has re-executed and vouches for it).
 - The keeper **must enforce TWAP** to prevent MEV extraction between deposit and swap execution. Use `--twap-window` (default: 60s) and `--twap-max-deviation` (default: 2%) flags.
 - The keeper **must monitor for stale swaps** -- receipts Pending longer than `--max-pending-minutes` (default: 10 min) should be flagged and investigated.
-- **Slippage responsibility lies with the keeper operator.** The keeper sets both `output_amount` and `min_output_amount` in `execute_swap`. Operators should set `--max-slippage` appropriately (default: 5%).
-- See the **Security Considerations** section for detailed keeper trust model and MEV risks.
+- The trader minimum is enforced **on-chain on the net (post-fee) output**; the keeper still proposes `output_amount` / `min_output_amount`, but a fabricated `output_amount` fails the attestor co-sign.
+- See the **Security Considerations** section for the updated two-party trust model.
 
-**Instructions:** `initialize`, `deposit`, `execute_swap`, `withdraw`, `refund`, `update_config`
+**Instructions:** `initialize` (now takes `attestor_pubkey`), `deposit`, `execute_swap` (now requires the attestor co-signer), `withdraw`, `refund`, `update_config`
 
 **Accounts:**
-- `ShieldConfig` (PDA: `["shield_config"]`) — authority, fee settings, volume stats, active flag
-- `SwapReceipt` (PDA: `["swap_receipt", trader, nonce]`) — per-swap state tracking (Pending/Completed/Refunded)
+- `ShieldConfig` (PDA: `["shield_config"]`) — authority, **attestor_pubkey**, fee settings, volume stats, active flag
+- `SwapReceipt` (PDA: `["receipt", trader, nonce]`) — per-swap state tracking (Pending/Completed/Refunded)
+
+### Re-execution attestation (swap output verification)
+
+The revival replaces blind trust in the keeper with an **independent re-execution attestation**
+(see [`REVIVAL.md`](./REVIVAL.md)):
+
+- **On-chain** (`shield-escrow`): `execute_swap` requires the pinned attestor to co-sign. Slice 1b
+  will accept a *detached* ed25519 attestation (keeper submits the attestor's signature; the program
+  verifies it) instead of a live co-signer.
+- **Off-chain** (`services/attestor`, crate `meridian-attestor`): given the keeper's proposed swap, it
+  re-executes the exact tx in LiteSVM against cloned mainnet state via
+  [custos-engine](https://github.com/psyto/custos) (`simulate_b64` → post-state output delta), and
+  attests (ed25519 signs a message bound to `trader | nonce | output_mint | proposed_output | fee_bps
+  | execution_slot | sha256(tx)`) **only when** the re-executed output ≥ the reported output and the
+  net (post-fee) amount ≥ the trader minimum. This is the same re-execution engine that powers
+  OpsRail's reliability layer.
 
 ### zk-verifier
 
@@ -481,7 +501,12 @@ A working end-to-end demo of the Shield Escrow protocol is available on Solana d
 4. Keeper executes a simulated Jupiter swap (990 wSOL output)
 5. Trader withdraws 987.03 wSOL (after 2.97 wSOL fee)
 
-In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API, performs the actual DEX swap, then records the output amount on-chain.
+In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API and
+performs the actual DEX swap, **plus an independent attestor** (`services/attestor`) that re-executes
+the same swap in LiteSVM and co-signs `execute_swap`. Since the revival, `execute_swap` requires the
+attestor signer — the demo script and the shield-escrow tests set an `attestor_pubkey` at
+`initialize` and co-sign with it. (Demo script wiring to a live attestor is a follow-up; see
+`REVIVAL.md`.)
 
 **Bug fix:** The SDK PDA seed was corrected from `swap_receipt` to `receipt` to match the on-chain program.
 
@@ -545,7 +570,7 @@ yarn dev
 | Derivatives | Perpetuals, funding rates, variance swaps |
 | Oracle | TWAP, volatility index, funding feeds |
 | RWA Registry | Asset registration, ownership proofs, dividends |
-| Shield Escrow | Compliant hybrid liquidity, escrow-based Jupiter routing, fee collection |
+| Shield Escrow | Compliant hybrid liquidity, escrow-based Jupiter routing, fee collection, independent re-execution attestor co-sign |
 | ZK Verifier | ZK compliance proof framework (placeholder verification), compliance attestations, kill switch |
 | ZK Circuits | Noir compliance proof circuit with Pedersen commitments |
 | Encryption | NaCl box encryption via @fabrknt/veil-crypto |
@@ -624,24 +649,34 @@ The on-chain `zk-verifier` program currently uses **placeholder proof verificati
 
 **Mitigation:** The `PlaceholderBackend` emits runtime warnings. The `NoirBackend` is implemented for real proof generation/verification off-chain. On-chain Noir verification requires a BPF-compatible verifier (see ZK Roadmap above).
 
-### Keeper Trust Model
+### Keeper Trust Model — two-party (keeper + independent attestor)
 
-The Shield Escrow keeper is a **trusted operator**. It has the authority to execute swaps and determine the output amount recorded on-chain. This creates several trust assumptions:
+The keeper proposes the swap output, but **can no longer settle it alone.** `execute_swap` requires
+an **independent re-execution attestor** (`ShieldConfig.attestor_pubkey`) to co-sign. The attestor
+replays the keeper's exact swap in LiteSVM against cloned mainnet state (custos-engine) and co-signs
+only when the re-executed output matches the reported amount. Trust assumptions after the revival:
 
-1. **Price integrity:** The keeper reports the swap output amount. A malicious keeper could report a lower amount and pocket the difference. The on-chain `execute_swap` instruction checks `output_amount >= min_output_amount`, but `min_output_amount` is also set by the keeper.
-2. **Execution timing:** A delay between deposit and swap creates a window for price manipulation. The keeper implements TWAP enforcement to mitigate this (see `--twap-window` flag).
-3. **Liveness:** If the keeper goes offline, pending swaps are stuck. The `refund` instruction allows the authority to return funds.
+1. **Price integrity:** ✅ *materially improved.* A keeper reporting a fabricated `output_amount`
+   fails the attestor co-sign, because the attestor's independent re-execution would not reproduce it.
+   The trader minimum is also enforced on the **net** (post-fee) amount on-chain.
+2. **Execution timing:** A delay between deposit and swap still creates a manipulation window; the
+   keeper's TWAP enforcement mitigates it (see `--twap-window`), and the attestor pins the
+   re-execution state (`execution_slot`, bound into the attestation).
+3. **Liveness:** If the keeper *or attestor* goes offline, pending swaps are stuck; `refund` returns
+   funds. (Attestor redundancy/rotation is future work.)
+4. **Attestor honesty:** the attestor is the new trust anchor. Its re-execution is deterministic and
+   its attestation is signed/auditable; a dishonest attestor is a distinct, narrower assumption than
+   a fully-trusted keeper, and detached attestations (slice 1b) make each verifiable on-chain.
 
 **Mitigations implemented:**
-- TWAP enforcement: the keeper checks the current Jupiter quote price against a time-weighted average of recent quotes. If the price deviates more than a configurable threshold (default 2%), execution is delayed.
-- Stale swap detection: swaps pending longer than a configurable window (default 10 minutes) are flagged as warnings.
-- Slippage guard: configurable maximum slippage (default 5%) rejects swaps with excessive price impact.
+- **Independent re-execution attestation** (see [Re-execution attestation](#re-execution-attestation-swap-output-verification)).
+- Net (post-fee) slippage enforced on-chain in `execute_swap`.
+- TWAP enforcement, stale-swap detection, and a keeper slippage guard (as before).
 
 **Mitigations needed for production:**
-- On-chain oracle price validation in the `execute_swap` instruction
-- On-chain maximum execution time window (reject swaps older than N minutes)
-- Multi-keeper redundancy with on-chain keeper rotation
-- Transparent keeper operation logs for auditability
+- Detached ed25519 attestation verified on-chain (slice 1b) so the attestor need not be a live signer
+- True historical-slot state pinning in re-execution (archival RPC) — see `services/attestor`
+- Attestor redundancy / rotation; on-chain oracle price validation; execution-time-window cap
 
 ### MEV Risks
 
@@ -658,11 +693,14 @@ The time lag between a trader's deposit and the keeper's swap execution creates 
 
 ### Slippage Responsibility
 
-Slippage responsibility lies with the **keeper operator**:
-- The keeper sets both `output_amount` and `min_output_amount` in `execute_swap`.
-- The trader has no on-chain mechanism to set their own slippage tolerance.
-- The keeper's `--max-slippage` flag (default 5%) is the primary slippage control.
-- For production: consider adding trader-specified slippage tolerance in the `deposit` instruction.
+- `execute_swap` enforces `net_output >= min_output_amount` **on-chain**, where `net_output` is the
+  post-fee amount the trader actually withdraws (a prior version checked the pre-fee gross, letting the
+  fee push the received amount below the stated minimum — fixed).
+- The keeper still proposes `output_amount` / `min_output_amount`, but a fabricated `output_amount`
+  fails the independent attestor co-sign (re-execution).
+- The trader still has no *own* on-chain slippage input; for production, consider a
+  trader-specified minimum in `deposit`. The keeper's `--max-slippage` flag (default 5%) remains a
+  keeper-side control.
 
 ## License
 
