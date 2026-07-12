@@ -1,0 +1,25 @@
+[package]
+name = "meridian-attestor"
+version = "0.1.0"
+edition = "2021"
+description = "Off-chain custos-engine attestor for Meridian shield-escrow (REVIVAL.md 1c / task 002)"
+
+# Standalone workspace: isolate from the meridian Anchor workspace and its
+# solana-program pin, so the custos-engine (litesvm) dep tree can be added later
+# without conflicting lockfiles. Mirrors probatio's per-crate isolation pattern.
+[workspace]
+
+[dependencies]
+ed25519-dalek = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+hex = "0.4"
+
+[[bin]]
+name = "meridian-attestor"
+path = "src/main.rs"
+
+[lib]
+name = "meridian_attestor"
+path = "src/lib.rs"

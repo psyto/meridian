@@ -1,7 +1,22 @@
 # Task 002 — Off-chain custos-engine attestor service (REVIVAL.md 1c)
 
 **Owner:** CC (frame-thin exploration + scaffold) · security-critical convergence → Codex (frame-thick)
-**Depends on:** Task 001 (on-chain co-sign) merged. **Branch:** `claude/custos-attestor-service` (new)
+**Depends on:** Task 001 (on-chain co-sign) merged. **Branch:** `claude/custos-attestor-service`
+
+## Status (CC frame-thin scaffold — done, 5 unit tests green)
+`services/attestor/` (standalone crate `meridian-attestor`, isolated workspace): `SwapProposal` →
+`attest()` decision logic (replay ok · `reexec_output >= reported` · `reported >= min`) → ed25519
+`Sign{message,signature,pubkey}` / `Reject`. `ReExecutor` seam + `MockReExecutor` (tests) +
+`CustosReExecutor` (real, stubbed). Bin reads proposal JSON → prints verdict.
+
+**Frame-thin FINDING (blocks the live wiring):** custos-engine `loader::scan_b64` returns a
+`ScanReport` (safety verdict) but NOT token balances. The escrow output *delta* lives on the internal
+`Outcome{pre,post}`. → **custos-engine needs a small return-signature change**: expose the Outcome
+(`simulate_b64 -> (ScanReport, Outcome)`). Documented in `services/attestor/src/custos_reexecutor.rs`.
+
+**Handoffs:** (a) the custos-engine Outcome-exposure change (CC or Codex, in the custos repo);
+(b) → Codex frame-thick: the exact `bind_message` byte layout (must match on-chain slice 1b verify),
+nonce/replay binding, and stale-state slot pinning.
 
 ## Goal
 Make the on-chain co-sign (Task 001) *mean* something: build the off-chain service that actually
