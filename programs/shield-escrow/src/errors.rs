@@ -22,4 +22,7 @@ pub enum ShieldError {
 
     #[msg("Swap output is below the minimum required")]
     InsufficientOutput,
+
+    #[msg("Invalid attestor: the re-execution attestor did not co-sign, or the key is unset")]
+    InvalidAttestor,
 }

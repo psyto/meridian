@@ -33,8 +33,10 @@ pub fn handler(
     kyc_registry: Pubkey,
     fee_bps: u16,
     fee_recipient: Pubkey,
+    attestor_pubkey: Pubkey,
 ) -> Result<()> {
     require!(fee_bps <= ShieldConfig::MAX_FEE_BPS, ShieldError::FeeTooHigh);
+    require!(attestor_pubkey != Pubkey::default(), ShieldError::InvalidAttestor);
 
     let clock = Clock::get()?;
     let config = &mut ctx.accounts.shield_config;
@@ -43,6 +45,7 @@ pub fn handler(
     config.escrow_authority = ctx.accounts.escrow_authority.key();
     config.transfer_hook_program = transfer_hook_program;
     config.kyc_registry = kyc_registry;
+    config.attestor_pubkey = attestor_pubkey;
     config.total_swaps = 0;
     config.total_volume = 0;
     config.fee_bps = fee_bps;
@@ -56,6 +59,7 @@ pub fn handler(
         authority: config.authority,
         transfer_hook_program,
         kyc_registry,
+        attestor_pubkey,
     });
 
     Ok(())
@@ -66,4 +70,5 @@ pub struct ShieldInitialized {
     pub authority: Pubkey,
     pub transfer_hook_program: Pubkey,
     pub kyc_registry: Pubkey,
+    pub attestor_pubkey: Pubkey,
 }

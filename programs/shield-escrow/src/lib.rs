@@ -33,8 +33,9 @@ pub mod shield_escrow {
         kyc_registry: Pubkey,
         fee_bps: u16,
         fee_recipient: Pubkey,
+        attestor_pubkey: Pubkey,
     ) -> Result<()> {
-        instructions::initialize::handler(ctx, transfer_hook_program, kyc_registry, fee_bps, fee_recipient)
+        instructions::initialize::handler(ctx, transfer_hook_program, kyc_registry, fee_bps, fee_recipient, attestor_pubkey)
     }
 
     /// Deposit input tokens into the escrow. Creates a SwapReceipt in Pending status.

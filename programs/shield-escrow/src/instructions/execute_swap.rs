@@ -5,10 +5,24 @@ use crate::state::{ShieldConfig, SwapReceipt, SwapStatus};
 
 #[derive(Accounts)]
 pub struct ExecuteSwap<'info> {
+    /// The keeper/relayer that performed the off-chain Jupiter swap and proposes
+    /// the resulting `output_amount`.
     #[account(
         constraint = authority.key() == shield_config.authority @ ShieldError::Unauthorized,
     )]
     pub authority: Signer<'info>,
+
+    /// Independent re-execution attestor (the custos-engine operator). It replays
+    /// the proposed Jupiter swap in LiteSVM against cloned mainnet state and only
+    /// co-signs this instruction when the re-executed output matches the reported
+    /// `output_amount`. Co-signature is REQUIRED — this replaces blind trust in
+    /// the keeper (the defect: "keeper posts results, no on-chain verification")
+    /// with a two-party model where an independent party proves the swap.
+    /// (Detached ed25519 attestation is the production refinement — see REVIVAL.md.)
+    #[account(
+        constraint = attestor.key() == shield_config.attestor_pubkey @ ShieldError::InvalidAttestor,
+    )]
+    pub attestor: Signer<'info>,
 
     #[account(
         mut,
@@ -65,6 +79,7 @@ pub fn handler(
         output_amount: net_output,
         fee_amount,
         nonce: receipt.nonce,
+        attestor: ctx.accounts.attestor.key(),
     });
 
     Ok(())
@@ -79,4 +94,6 @@ pub struct SwapExecutedEvent {
     pub output_amount: u64,
     pub fee_amount: u64,
     pub nonce: u64,
+    /// The independent attestor that co-signed (proved) this swap's output.
+    pub attestor: Pubkey,
 }

@@ -19,6 +19,14 @@ pub struct ShieldConfig {
     /// KYC registry the escrow is whitelisted in
     pub kyc_registry: Pubkey,
 
+    /// Pinned attestor key (the custos-engine operator that re-executes the
+    /// off-chain Jupiter swap in LiteSVM against cloned mainnet state and vouches
+    /// for the reported `output_amount`). `execute_swap` requires this key to
+    /// co-sign — replacing blind trust in the keeper with an independent
+    /// re-execution attestation. Set at `initialize`; key rotation is a
+    /// documented follow-up (see REVIVAL.md).
+    pub attestor_pubkey: Pubkey,
+
     /// Total number of swaps executed through the escrow
     pub total_swaps: u64,
 
