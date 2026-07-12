@@ -22,7 +22,7 @@ Meridian provides institutional-grade infrastructure for:
 |-----------|--------|-------|
 | ZK proof verification (on-chain) | **Placeholder** | `verify_proof_inputs` only checks bytes are non-zero. Any non-zero 64-byte input is accepted as a valid "proof". This is not cryptographically secure. |
 | ZK proof generation (SDK) | **Placeholder / Production** | `PlaceholderBackend` uses SHA-256 (testing only). `NoirBackend` delegates to `nargo`/`bb` for real proofs, but on-chain verification does not yet validate them. |
-| Swap output verification | **Functional (attested)** | `execute_swap` now requires an **independent re-execution attestor** to co-sign (constrained to `ShieldConfig.attestor_pubkey`). The attestor replays the keeper's exact swap in LiteSVM against cloned mainnet state (via custos-engine) and only co-signs when the re-executed output matches the reported amount. The keeper can no longer alone report an arbitrary output. |
+| Swap output verification | **On-chain enforced; attestor re-exec scaffolded** | `execute_swap` requires an **independent attestor** (`ShieldConfig.attestor_pubkey`) to co-sign — enforced on-chain, so the keeper cannot settle a swap alone. The off-chain attestor's decision logic + ed25519 signing are implemented and unit-tested (`services/attestor`); wiring it to custos-engine for *live* re-execution of the swap is pending (`CustosReExecutor` returns `wiring pending`). |
 | Trader slippage (net) | **Functional** | `execute_swap` enforces the trader minimum on the **net** (post-fee) amount the trader actually withdraws, not the gross swap output. |
 | Keeper MEV protection | **Partial** | TWAP enforcement and stale swap detection in the keeper service reduce the deposit→swap manipulation window. On-chain oracle validation is still future work. |
 | Transfer hook KYC/AML | **Functional** | On-chain enforcement via Token-2022 transfer hooks. |
@@ -145,7 +145,7 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 **Flow:**
 1. Trader deposits tokens into escrow (transfer hook enforces compliance)
 2. Keeper executes the DEX swap via Jupiter-routed pools and proposes the output amount
-3. **An independent re-execution attestor replays the exact swap in LiteSVM against cloned mainnet state (custos-engine) and co-signs `execute_swap` only if the re-executed output matches** — the keeper cannot settle a fabricated output alone
+3. **`execute_swap` requires an independent attestor to co-sign** (on-chain, enforced) — the keeper cannot settle alone. The attestor's role is to replay the exact swap in LiteSVM against cloned mainnet state (custos-engine) and co-sign only when the re-executed output matches; this re-execution backing is *scaffolded, wiring pending* (see [Re-execution attestation](#re-execution-attestation-swap-output-verification))
 4. Trader withdraws output tokens (transfer hook enforces compliance)
 
 **Keeper Requirements:**
@@ -169,13 +169,15 @@ The revival replaces blind trust in the keeper with an **independent re-executio
 - **On-chain** (`shield-escrow`): `execute_swap` requires the pinned attestor to co-sign. Slice 1b
   will accept a *detached* ed25519 attestation (keeper submits the attestor's signature; the program
   verifies it) instead of a live co-signer.
-- **Off-chain** (`services/attestor`, crate `meridian-attestor`): given the keeper's proposed swap, it
-  re-executes the exact tx in LiteSVM against cloned mainnet state via
-  [custos-engine](https://github.com/psyto/custos) (`simulate_b64` → post-state output delta), and
-  attests (ed25519 signs a message bound to `trader | nonce | output_mint | proposed_output | fee_bps
-  | execution_slot | sha256(tx)`) **only when** the re-executed output ≥ the reported output and the
-  net (post-fee) amount ≥ the trader minimum. This is the same re-execution engine that powers
-  OpsRail's reliability layer.
+- **Off-chain** (`services/attestor`, crate `meridian-attestor`) — *scaffolded, live wiring pending.*
+  The attest **decision** (replay succeeded · re-exec output ≥ reported · net (post-fee) ≥ trader
+  minimum) and **ed25519 signing** over `trader | nonce | output_mint | proposed_output | fee_bps |
+  execution_slot | sha256(tx)` are implemented and unit-tested (against a mock re-executor). Wiring
+  the re-executor to [custos-engine](https://github.com/psyto/custos)'s `simulate_b64` — clone
+  mainnet state → replay the exact tx in LiteSVM → read the escrow output delta — is the remaining
+  step; `CustosReExecutor` currently returns `wiring pending` until it lands. custos-engine (the same
+  re-execution engine behind OpsRail's reliability layer) already exposes the needed `simulate_b64`
+  entry point.
 
 ### zk-verifier
 
@@ -502,11 +504,12 @@ A working end-to-end demo of the Shield Escrow protocol is available on Solana d
 5. Trader withdraws 987.03 wSOL (after 2.97 wSOL fee)
 
 In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API and
-performs the actual DEX swap, **plus an independent attestor** (`services/attestor`) that re-executes
-the same swap in LiteSVM and co-signs `execute_swap`. Since the revival, `execute_swap` requires the
-attestor signer — the demo script and the shield-escrow tests set an `attestor_pubkey` at
-`initialize` and co-sign with it. (Demo script wiring to a live attestor is a follow-up; see
-`REVIVAL.md`.)
+performs the actual DEX swap, **plus an independent attestor** that co-signs `execute_swap`.
+On-chain this is already enforced: since the revival, `execute_swap` requires the attestor signer, so
+`initialize` sets an `attestor_pubkey` and the shield-escrow tests co-sign with it. The off-chain
+attestor (`services/attestor`) has its decision logic + ed25519 signing implemented and tested, but
+its live custos re-execution is **scaffolded (wiring pending)** — so today the demo/tests co-sign with
+a test attestor keypair rather than a re-execution-backed one. See `REVIVAL.md`.
 
 **Bug fix:** The SDK PDA seed was corrected from `swap_receipt` to `receipt` to match the on-chain program.
 
