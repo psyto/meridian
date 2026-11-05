@@ -28,4 +28,7 @@ pub enum ShieldError {
 
     #[msg("Escrow input account is empty")]
     NothingToSweep,
+
+    #[msg("Swap output has not been withdrawn by the trader yet")]
+    SwapNotWithdrawn,
 }

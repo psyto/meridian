@@ -5,8 +5,10 @@ use crate::errors::ShieldError;
 use crate::state::{ShieldConfig, SwapReceipt, SwapStatus};
 use crate::token_transfer::transfer_checked_with_hook;
 
-/// After a swap has completed, the input tokens left in the receipt's escrow
-/// input account go to the authority (the keeper that delivered the output).
+/// After the trader has withdrawn the swap output, the input tokens left in
+/// the receipt's escrow input account go to the authority (the keeper that
+/// delivered the output). Completed alone is not enough: execute_swap does
+/// not check that the output was actually delivered, and refund needs Pending.
 #[derive(Accounts)]
 pub struct SweepInput<'info> {
     #[account(
@@ -56,8 +58,7 @@ pub struct SweepInput<'info> {
             &swap_receipt.nonce.to_le_bytes(),
         ],
         bump = swap_receipt.bump,
-        constraint = (swap_receipt.status == SwapStatus::Completed
-            || swap_receipt.status == SwapStatus::Withdrawn) @ ShieldError::SwapNotCompleted,
+        constraint = swap_receipt.status == SwapStatus::Withdrawn @ ShieldError::SwapNotWithdrawn,
     )]
     pub swap_receipt: Account<'info, SwapReceipt>,
 

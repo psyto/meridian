@@ -155,7 +155,7 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 - The trader minimum is enforced **on-chain on the net (post-fee) output**; the keeper still proposes `output_amount` / `min_output_amount`, but a fabricated `output_amount` fails the attestor co-sign.
 - See the **Security Considerations** section for the updated two-party trust model.
 
-**Instructions:** `initialize` (now takes `attestor_pubkey`), `deposit`, `execute_swap` (now requires the attestor co-signer), `withdraw`, `refund`, `sweep_input` (authority takes the input left in a completed receipt's escrow input account), `update_config`
+**Instructions:** `initialize` (now takes `attestor_pubkey`), `deposit`, `execute_swap` (now requires the attestor co-signer), `withdraw`, `refund`, `sweep_input` (after the trader has withdrawn, the authority takes the input left in the receipt's escrow input account), `update_config`
 
 `deposit`, `withdraw`, `refund` and `sweep_input` move tokens with a Token-2022 `transfer_checked` CPI that forwards the instruction's remaining accounts to the mint's transfer hook. For hooked mints, pass the hook's extra accounts (hook program, extra-account-metas PDA and what it resolves to) as remaining accounts; `scripts/transfer-hook-accounts.ts` resolves them (see `scripts/demo-devnet.ts`).
 

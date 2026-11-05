@@ -320,7 +320,66 @@ describe('shield-escrow', () => {
       expect(receipt.feeAmount.toNumber()).to.equal(5_000);
     });
 
-    it('sweep_input: only the authority can take the completed receipt\'s escrow input', async () => {
+    it('sweep_input is rejected while the receipt is only Completed', async () => {
+      const authorityInput = await getOrCreateAssociatedTokenAccount(
+        provider.connection, payer, inputMint, authority.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+      );
+      try {
+        await program.methods
+          .sweepInput()
+          .accounts({
+            authority: authority.publicKey,
+            shieldConfig: shieldConfigPda,
+            escrowAuthority: escrowAuthorityPda,
+            inputMint,
+            escrowInputToken: escrowInputAta,
+            authorityInputToken: authorityInput.address,
+            swapReceipt: swapReceiptPda,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        expect.fail('Should have thrown SwapNotWithdrawn');
+      } catch (err: any) {
+        expect(err.toString()).to.match(/SwapNotWithdrawn|6009/i);
+      }
+    });
+
+    it('trader withdraws the delivered output', async () => {
+      // Keeper delivers the gross output (net + fee) to the receipt's escrow output PDA
+      await mintTo(
+        provider.connection, payer, outputMint, escrowOutputAta, payer, outputAmount.toNumber(), [], undefined, TOKEN_2022_PROGRAM_ID
+      );
+      const traderOutput = await getOrCreateAssociatedTokenAccount(
+        provider.connection, payer, outputMint, trader.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+      );
+      const config = await program.account.shieldConfig.fetch(shieldConfigPda);
+      const feeRecipientOutput = await getOrCreateAssociatedTokenAccount(
+        provider.connection, payer, outputMint, config.feeRecipient, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+      );
+
+      await program.methods
+        .withdraw()
+        .accounts({
+          trader: trader.publicKey,
+          shieldConfig: shieldConfigPda,
+          escrowAuthority: escrowAuthorityPda,
+          outputMint,
+          escrowOutputToken: escrowOutputAta,
+          traderOutputToken: traderOutput.address,
+          feeRecipientToken: feeRecipientOutput.address,
+          swapReceipt: swapReceiptPda,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([trader])
+        .rpc();
+
+      const got = await getAccount(provider.connection, traderOutput.address, undefined, TOKEN_2022_PROGRAM_ID);
+      expect(Number(got.amount)).to.equal(1_995_000);
+      const receipt = await program.account.swapReceipt.fetch(swapReceiptPda);
+      expect(receipt.status).to.have.property('withdrawn');
+    });
+
+    it('sweep_input: after withdraw, only the authority can take the escrow input', async () => {
       const traderAsDest = await getOrCreateAssociatedTokenAccount(
         provider.connection, payer, inputMint, trader.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
       );

@@ -74,8 +74,9 @@ pub mod shield_escrow {
         instructions::refund::handler(ctx)
     }
 
-    /// Move the input tokens left in a completed receipt's escrow input account
-    /// to the authority (the keeper that delivered the output). Authority only.
+    /// Move the input tokens left in a receipt's escrow input account to the
+    /// authority (the keeper that delivered the output) once the trader has
+    /// withdrawn the output (status Withdrawn). Authority only.
     /// Remaining accounts: transfer-hook extra accounts for the input mint (if any).
     pub fn sweep_input<'info>(ctx: Context<'_, '_, '_, 'info, SweepInput<'info>>) -> Result<()> {
         instructions::sweep_input::handler(ctx)

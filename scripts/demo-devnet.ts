@@ -588,7 +588,7 @@ async function main() {
   console.log(`  Fee Recipient wSOL: ${formatWsol(feeRecipientAfter.amount)} (fee collected)`);
   console.log(`  Escrow wSOL:        ${formatWsol(escrowWsolAfter.amount)} (should be 0)`);
 
-  // The swap is settled: the input left in the escrow input account goes to
+  // The trader has withdrawn (sweep_input requires Withdrawn): the input left in the escrow input account goes to
   // the keeper (authority) that delivered the output.
   console.log();
   console.log("  Keeper (authority) sweeps the escrow USDC input...");
