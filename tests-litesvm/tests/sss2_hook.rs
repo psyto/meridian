@@ -19,13 +19,24 @@ use spl_associated_token_account_interface::{
     address::get_associated_token_address_with_program_id,
     instruction::create_associated_token_account,
 };
-use spl_token_2022_interface::ID as TOKEN_2022;
+use spl_token_2022_interface::{
+    extension::{
+        permanent_delegate::PermanentDelegate, BaseStateWithExtensions, ExtensionType,
+        StateWithExtensions,
+    },
+    state::Mint,
+    ID as TOKEN_2022,
+};
 
 const STABLECOIN: Pubkey = Pubkey::from_str_const("HdaUf9PL9ncd1AgXbA13P9ss6mLtCVdGZfroZB4q6CwP");
 const HOOK: Pubkey = Pubkey::from_str_const("5DLH2UrDD5bJFadn1gV1rof6sJ7MzJbVNnUfVMtGJgSL");
 const SYSTEM: Pubkey = Pubkey::from_str_const("11111111111111111111111111111111");
 const UPGRADEABLE_LOADER: Pubkey =
     Pubkey::from_str_const("BPFLoaderUpgradeab1e11111111111111111111111");
+
+// meridian MeridianError codes.
+const ERR_UNAUTHORIZED: u32 = 6000;
+const ERR_PERMANENT_DELEGATE_NOT_ENABLED: u32 = 6019;
 
 // Accredit TransferHookError codes.
 const HOOK_SENDER_BLACKLISTED: u32 = 6010;
@@ -204,6 +215,14 @@ impl Env {
 /// hook's upgrade authority (the mint authority is the mint_config PDA),
 /// meta list set up, treasury wallet whitelisted.
 fn setup() -> Env {
+    setup_with(PRESET_SSS2)
+}
+
+const PRESET_SSS1: u8 = 0;
+const PRESET_SSS2: u8 = 1;
+
+/// Same as `setup`, with the given StablecoinPreset.
+fn setup_with(preset: u8) -> Env {
     let mut svm = LiteSVM::new();
     let dir = env!("CARGO_MANIFEST_DIR");
     svm.add_program_from_file(STABLECOIN, format!("{dir}/../target/deploy/meridian_stablecoin.so"))
@@ -248,7 +267,7 @@ fn setup() -> Env {
 
     // meridian initialize (SSS-2)
     let mut data = anchor_disc("initialize").to_vec();
-    data.push(1); // StablecoinPreset::Sss2
+    data.push(preset);
     borsh_string(&mut data, "Test JPY");
     borsh_string(&mut data, "TJPY");
     borsh_string(&mut data, "https://example.invalid");
@@ -386,6 +405,44 @@ fn seize_by_someone_else_fails() {
     let mallory = Keypair::new();
     env.svm.airdrop(&mallory.pubkey(), 1_000_000_000).unwrap();
     let ix = env.seize_ix(&mallory.pubkey(), &holder, 1);
-    assert!(env.send(&[ix], &[&mallory]).is_err());
+    assert_code(env.send(&[ix], &[&mallory]), ERR_UNAUTHORIZED);
+    assert_eq!(env.balance(&holder), 5_000);
+}
+
+/// Extension types on the mint, and its PermanentDelegate if any.
+fn mint_extensions(env: &Env) -> (Vec<ExtensionType>, Option<Pubkey>) {
+    let acc = env.svm.get_account(&env.mint).unwrap();
+    let state = StateWithExtensions::<Mint>::unpack(&acc.data).unwrap();
+    let types = state.get_extension_types().unwrap();
+    let delegate = state
+        .get_extension::<PermanentDelegate>()
+        .ok()
+        .and_then(|d| Option::<Pubkey>::from(d.delegate));
+    (types, delegate)
+}
+
+#[test]
+fn sss2_mint_has_mint_config_as_permanent_delegate() {
+    let env = setup_with(PRESET_SSS2);
+    let (types, delegate) = mint_extensions(&env);
+    assert!(types.contains(&ExtensionType::TransferHook));
+    assert_eq!(delegate, Some(env.mint_config));
+}
+
+#[test]
+fn sss1_mint_has_no_permanent_delegate_and_cannot_seize() {
+    let mut env = setup_with(PRESET_SSS1);
+    let (types, delegate) = mint_extensions(&env);
+    assert!(types.contains(&ExtensionType::TransferHook));
+    assert!(!types.contains(&ExtensionType::PermanentDelegate));
+    assert_eq!(delegate, None);
+
+    let holder = Pubkey::new_unique();
+    let ix = env.whitelist_ix(&holder);
+    env.send(&[ix], &[]).unwrap();
+    env.new_holder(&holder, 5_000);
+    let payer = env.payer.pubkey();
+    let ix = env.seize_ix(&payer, &holder, 1);
+    assert_code(env.send(&[ix], &[]), ERR_PERMANENT_DELEGATE_NOT_ENABLED);
     assert_eq!(env.balance(&holder), 5_000);
 }

@@ -127,9 +127,11 @@
         {
           "name": "mint",
           "docs": [
-            "Token-2022 mint with extensions configured based on preset.",
+            "Token-2022 mint, created in the handler with extensions per preset.",
             "SSS-1: mint_authority + freeze_authority + metadata",
-            "SSS-2: SSS-1 + transfer_hook + permanent_delegate"
+            "SSS-2: SSS-1 + transfer_hook + permanent_delegate",
+            "The PermanentDelegate extension (mint_config) is only added when the",
+            "preset enables it (SSS-2, or Custom with enable_permanent_delegate)."
           ],
           "writable": true,
           "signer": true
@@ -559,7 +561,10 @@
       "name": "seize",
       "docs": [
         "Seize tokens from a frozen account via permanent delegate (SSS-2 only)",
-        "Fails gracefully if permanent delegate was not enabled during initialization."
+        "Fails gracefully if permanent delegate was not enabled during initialization.",
+        "The remaining accounts carry the transfer hook's accounts: the",
+        "resolved extra accounts, the hook program and its ExtraAccountMeta",
+        "list."
       ],
       "discriminator": [
         129,
@@ -728,7 +733,10 @@
     {
       "name": "transfer",
       "docs": [
-        "Transfer stablecoin with compliance check via transfer hook"
+        "Transfer stablecoin with compliance check via transfer hook",
+        "The transfer hook's extra accounts (registry, whitelist and blacklist",
+        "entries, as resolved from the mint's ExtraAccountMeta list) go in the",
+        "remaining accounts."
       ],
       "discriminator": [
         163,
