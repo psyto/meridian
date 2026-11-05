@@ -135,6 +135,8 @@ Six Anchor workspace programs deployed on Solana, plus two independently deploye
 
 Meridian reads Accredit KYC entries per mint: the registry is `["kyc_registry", mint]` and the entries are `["whitelist", registry, wallet]` / `["blacklist", registry, wallet]` under the Accredit program. **Deploy order: Accredit first**, then create the registry for each mint (`meridian kyc init-registry --mint <m> [--admin <a>]`; the SSS-2 mint's authority is the `mint_config` PDA, so this is signed by the Accredit transfer-hook upgrade authority) and whitelist the wallets (including the shield-escrow authority PDA) before moving hooked tokens.
 
+**SSS-2 seize:** only SSS-2 mints (or Custom with `enable_permanent_delegate`) get the PermanentDelegate extension (`mint_config`); SSS-1 mints never do, and `seize` fails on them. Seize goes through the transfer hook: the hook skips the sender-side checks for the permanent delegate, but still checks the recipient. The treasury wallet therefore needs an active, non-blacklisted whitelist entry, and its **KYC level must be high enough for the seized amounts** (e.g. `Institutional`): the hook caps each transfer at the recipient's per-level limit (Basic: 100,000 JPY), and `daily_limit` does not lift that cap. Pass the hook's accounts as remaining accounts (`meridian stablecoin seize` resolves them).
+
 **securities-engine pools:** only the market's authority can run `initialize_pool`, and the pool's mints must be the market's. `add_liquidity` and `swap` accept only the pool authority, LP mint and vaults stored on the pool.
 
 ### Shield Escrow Devnet Deployment
