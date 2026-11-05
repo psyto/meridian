@@ -29,9 +29,11 @@ pub struct Refund<'info> {
     #[account(address = swap_receipt.input_mint)]
     pub input_mint: InterfaceAccount<'info, Mint>,
 
-    /// Escrow's input token account
+    /// This receipt's escrow input token account
     #[account(
         mut,
+        seeds = [SwapReceipt::ESCROW_INPUT_SEED, swap_receipt.key().as_ref()],
+        bump,
         token::mint = input_mint,
         token::authority = escrow_authority,
     )]

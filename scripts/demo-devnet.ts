@@ -109,6 +109,10 @@ function deriveSwapReceiptPda(trader: PublicKey, nonce: BN): [PublicKey, number]
   );
 }
 
+function deriveEscrowTokenPda(seed: "escrow_input" | "escrow_output", swapReceipt: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync([Buffer.from(seed), swapReceipt.toBuffer()], SHIELD_ESCROW_ID)[0];
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -287,16 +291,6 @@ async function main() {
   );
   console.log(`  Trader wSOL ATA: ${traderWsolAta.address.toBase58()}`);
 
-  // Escrow authority ATAs (PDA-owned, allowOwnerOffCurve)
-  const escrowUsdcAta = await getOrCreateAssociatedTokenAccount(
-    connection, authority, usdcMint, escrowAuthority, true, undefined, undefined, TOKEN_2022_PROGRAM_ID
-  );
-  console.log(`  Escrow USDC ATA: ${escrowUsdcAta.address.toBase58()}`);
-
-  const escrowWsolAta = await getOrCreateAssociatedTokenAccount(
-    connection, authority, wsolMint, escrowAuthority, true, undefined, undefined, TOKEN_2022_PROGRAM_ID
-  );
-  console.log(`  Escrow wSOL ATA: ${escrowWsolAta.address.toBase58()}`);
 
   // Fee recipient ATA (authority's wSOL account for collecting fees)
   const feeRecipientWsolAta = await getOrCreateAssociatedTokenAccount(
@@ -383,6 +377,12 @@ async function main() {
   console.log(`  Deposit Amount: ${formatUsdc(depositAmount.toNumber())}`);
   console.log(`  SwapReceipt PDA: ${swapReceiptPda.toBase58()}`);
 
+  // Per-receipt escrow token accounts (PDAs created by deposit, owned by the escrow authority)
+  const escrowUsdcAta = { address: deriveEscrowTokenPda("escrow_input", swapReceiptPda) };
+  const escrowWsolAta = { address: deriveEscrowTokenPda("escrow_output", swapReceiptPda) };
+  console.log(`  Escrow USDC (input):  ${escrowUsdcAta.address.toBase58()}`);
+  console.log(`  Escrow wSOL (output): ${escrowWsolAta.address.toBase58()}`);
+
   const depositTxSig = await program.methods
     .deposit(nonce, depositAmount)
     .accounts({
@@ -392,8 +392,9 @@ async function main() {
       inputMint: usdcMint,
       outputMint: wsolMint,
       traderInputToken: traderUsdcAta.address,
-      escrowInputToken: escrowUsdcAta.address,
       swapReceipt: swapReceiptPda,
+      escrowInputToken: escrowUsdcAta.address,
+      escrowOutputToken: escrowWsolAta.address,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     })

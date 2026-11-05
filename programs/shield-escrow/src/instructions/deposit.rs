@@ -39,14 +39,6 @@ pub struct Deposit<'info> {
     )]
     pub trader_input_token: InterfaceAccount<'info, TokenAccount>,
 
-    /// Escrow's input token account
-    #[account(
-        mut,
-        token::mint = input_mint,
-        token::authority = escrow_authority,
-    )]
-    pub escrow_input_token: InterfaceAccount<'info, TokenAccount>,
-
     #[account(
         init,
         payer = trader,
@@ -55,6 +47,31 @@ pub struct Deposit<'info> {
         bump,
     )]
     pub swap_receipt: Account<'info, SwapReceipt>,
+
+    /// This receipt's escrow input token account (PDA, owned by the escrow authority)
+    #[account(
+        init,
+        payer = trader,
+        seeds = [SwapReceipt::ESCROW_INPUT_SEED, swap_receipt.key().as_ref()],
+        bump,
+        token::mint = input_mint,
+        token::authority = escrow_authority,
+        token::token_program = token_program,
+    )]
+    pub escrow_input_token: InterfaceAccount<'info, TokenAccount>,
+
+    /// This receipt's escrow output token account (PDA, owned by the escrow authority).
+    /// The keeper delivers the swap output here.
+    #[account(
+        init,
+        payer = trader,
+        seeds = [SwapReceipt::ESCROW_OUTPUT_SEED, swap_receipt.key().as_ref()],
+        bump,
+        token::mint = output_mint,
+        token::authority = escrow_authority,
+        token::token_program = token_program,
+    )]
+    pub escrow_output_token: InterfaceAccount<'info, TokenAccount>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,

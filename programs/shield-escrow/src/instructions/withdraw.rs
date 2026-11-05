@@ -27,9 +27,11 @@ pub struct Withdraw<'info> {
     #[account(address = swap_receipt.output_mint)]
     pub output_mint: InterfaceAccount<'info, Mint>,
 
-    /// Escrow's output token account
+    /// This receipt's escrow output token account
     #[account(
         mut,
+        seeds = [SwapReceipt::ESCROW_OUTPUT_SEED, swap_receipt.key().as_ref()],
+        bump,
         token::mint = output_mint,
         token::authority = escrow_authority,
     )]

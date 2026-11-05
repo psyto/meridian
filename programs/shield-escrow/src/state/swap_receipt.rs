@@ -42,6 +42,10 @@ pub struct SwapReceipt {
 
 impl SwapReceipt {
     pub const SEED_PREFIX: &'static [u8] = b"receipt";
+    /// Per-receipt escrow token account for the input mint: [ESCROW_INPUT_SEED, receipt]
+    pub const ESCROW_INPUT_SEED: &'static [u8] = b"escrow_input";
+    /// Per-receipt escrow token account for the output mint: [ESCROW_OUTPUT_SEED, receipt]
+    pub const ESCROW_OUTPUT_SEED: &'static [u8] = b"escrow_output";
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]

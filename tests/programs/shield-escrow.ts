@@ -202,6 +202,7 @@ describe('shield-escrow', () => {
     let outputMint: PublicKey;
     let traderInputAta: PublicKey;
     let escrowInputAta: PublicKey;
+    let escrowOutputAta: PublicKey;
     let swapReceiptPda: PublicKey;
 
     before(async () => {
@@ -223,18 +224,22 @@ describe('shield-escrow', () => {
       );
       traderInputAta = traderAta.address;
 
-      // Escrow ATA is owned by the escrow authority PDA (allowOwnerOffCurve).
-      const escrowAta = await getOrCreateAssociatedTokenAccount(
-        provider.connection, payer, inputMint, escrowAuthorityPda, true, undefined, undefined, TOKEN_2022_PROGRAM_ID
-      );
-      escrowInputAta = escrowAta.address;
-
       await mintTo(
         provider.connection, payer, inputMint, traderInputAta, payer, 10_000_000, [], undefined, TOKEN_2022_PROGRAM_ID
       );
 
       [swapReceiptPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('receipt'), trader.publicKey.toBuffer(), nonce.toArrayLike(Buffer, 'le', 8)],
+        program.programId
+      );
+
+      // Per-receipt escrow token accounts (PDAs created by deposit, owned by the escrow authority).
+      [escrowInputAta] = PublicKey.findProgramAddressSync(
+        [Buffer.from('escrow_input'), swapReceiptPda.toBuffer()],
+        program.programId
+      );
+      [escrowOutputAta] = PublicKey.findProgramAddressSync(
+        [Buffer.from('escrow_output'), swapReceiptPda.toBuffer()],
         program.programId
       );
 
@@ -248,8 +253,9 @@ describe('shield-escrow', () => {
           inputMint,
           outputMint,
           traderInputToken: traderInputAta,
-          escrowInputToken: escrowInputAta,
           swapReceipt: swapReceiptPda,
+          escrowInputToken: escrowInputAta,
+          escrowOutputToken: escrowOutputAta,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
