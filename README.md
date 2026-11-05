@@ -133,6 +133,10 @@ Six Anchor workspace programs deployed on Solana, plus two independently deploye
 | `transfer-hook` | `5DLH...jVqW` | KYC whitelist, jurisdiction checks, daily limits, expiry |
 | `compliant-registry` | `66tK...gnYA` | Pool whitelist, route verification, pool lifecycle |
 
+Meridian reads Accredit KYC entries per mint: the registry is `["kyc_registry", mint]` and the entries are `["whitelist", registry, wallet]` / `["blacklist", registry, wallet]` under the Accredit program. **Deploy order: Accredit first**, then create the registry for each mint (`meridian kyc init-registry --mint <m>`) and whitelist the wallets (including the shield-escrow authority PDA) before moving hooked tokens.
+
+**securities-engine pools:** only the market's authority can run `initialize_pool`, and the pool's mints must be the market's. `add_liquidity` and `swap` accept only the pool authority, LP mint and vaults stored on the pool.
+
 ### Shield Escrow Devnet Deployment
 
 - **Program ID**: `6fQoefGQ4dRURCDBCo3p4pMWuypLoC1Kjgo6d8pYowpk`
@@ -143,10 +147,13 @@ Six Anchor workspace programs deployed on Solana, plus two independently deploye
 On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to access non-KYC liquidity pools through a whitelisted escrow PDA.
 
 **Flow:**
-1. Trader deposits tokens into escrow (transfer hook enforces compliance)
-2. Keeper executes the DEX swap via Jupiter-routed pools and proposes the output amount
+1. Trader deposits tokens into escrow (transfer hook enforces compliance). `deposit` creates two per-receipt token accounts owned by the escrow authority: `["escrow_input", swap_receipt]` (input mint) and `["escrow_output", swap_receipt]` (output mint)
+2. Keeper executes the DEX swap via Jupiter-routed pools, delivers the output to the receipt's `escrow_output` account, and proposes the output amount
 3. **`execute_swap` requires an independent attestor to co-sign** (on-chain, enforced) — the keeper cannot settle alone. The attestor's role is to replay the exact swap in LiteSVM against cloned mainnet state (custos-engine) and co-sign only when the re-executed output matches; this re-execution backing is *scaffolded, wiring pending* (see [Re-execution attestation](#re-execution-attestation-swap-output-verification))
-4. Trader withdraws output tokens (transfer hook enforces compliance)
+4. Trader withdraws output tokens from the receipt's `escrow_output` account (transfer hook enforces compliance). A receipt can be withdrawn once (`Completed` -> `Withdrawn`)
+5. The authority runs `sweep_input` to take the input left in the receipt's `escrow_input` account; it requires the receipt to be `Withdrawn`
+
+Receipt lifecycle: `Pending` -> `Completed` (`execute_swap`) -> `Withdrawn` (`withdraw`), or `Pending` -> `Refunded` (`refund`, returns the input from the receipt's `escrow_input` account). `withdraw` and `refund` require the mints recorded on the receipt.
 
 **Keeper Requirements:**
 - `execute_swap` now requires **two signers**: the keeper (authority, who proposes the output) **and** the independent attestor (`ShieldConfig.attestor_pubkey`, who has re-executed and vouches for it).
@@ -161,7 +168,10 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 
 **Accounts:**
 - `ShieldConfig` (PDA: `["shield_config"]`) — authority, **attestor_pubkey**, fee settings, volume stats, active flag
-- `SwapReceipt` (PDA: `["receipt", trader, nonce]`) — per-swap state tracking (Pending/Completed/Refunded)
+- `SwapReceipt` (PDA: `["receipt", trader, nonce]`) — per-swap state tracking (Pending/Completed/Refunded/Withdrawn); layout unchanged
+- Escrow token accounts (PDAs: `["escrow_input", swap_receipt]`, `["escrow_output", swap_receipt]`) — created by `deposit`, owned by `["escrow_authority"]`
+
+**Upgrading an existing deployment:** `deposit` now takes an `escrow_output_token` account and lists `swap_receipt` before `escrow_input_token`; `refund` / `withdraw` only use the per-receipt escrow accounts. Settle or refund receipts opened with an older build before upgrading, and update clients to the new account lists.
 
 ### Re-execution attestation (swap output verification)
 
@@ -250,7 +260,11 @@ const config = await sdk.getShieldConfig();
 
 // Query swap receipt
 const receipt = await sdk.getSwapReceipt(traderPubkey, nonce);
-// receipt.status — SwapStatus.Pending | Completed | Refunded
+// receipt.status — SwapStatus.Pending | Completed | Refunded (on-chain also Withdrawn)
+
+// Per-receipt escrow token accounts
+const [escrowInput] = sdk.deriveEscrowInputPda(receiptPda);
+const [escrowOutput] = sdk.deriveEscrowOutputPda(receiptPda);
 
 // Build instructions
 const depositIx = sdk.createDepositInstruction(trader, {
@@ -261,6 +275,10 @@ const depositIx = sdk.createDepositInstruction(trader, {
 });
 const withdrawIx = sdk.createWithdrawInstruction(trader, { nonce: 0 });
 ```
+
+> The `ShieldEscrowSdk` instruction builders do not yet include the attestor argument of `initialize`, the attestor co-signer of `execute_swap`, the per-receipt escrow accounts, `sweep_input` or transfer-hook remaining accounts. Until they do, build shield-escrow transactions with the Anchor IDL as `scripts/demo-devnet.ts` and `scripts/keeper.ts` do.
+
+The core client's `deriveWhitelistEntryPda(mint, wallet)` derives the Accredit registry from the mint first.
 
 ### ZK Verifier SDK
 
@@ -460,10 +478,20 @@ meridian zk toggle --activate                 # Activate/deactivate verifier
 ```bash
 meridian mint <amount>                        # Mint stablecoin
 meridian burn <amount>                        # Burn stablecoin
+meridian kyc init-registry --mint <m>                # Create the KYC registry for a mint
+meridian kyc whitelist-add --mint <m> --wallet <w> ...  # Whitelist a wallet in the mint's registry
+meridian kyc whitelist-remove --mint <m> --wallet <w>
+meridian kyc blacklist-add --mint <m> --wallet <w> --reason <r>
+meridian kyc blacklist-remove --mint <m> --wallet <w>
 meridian kyc show-whitelist --mint <m> --wallet <w>  # Show a KYC whitelist entry
-meridian kyc show-registry                    # Show KYC registry
+meridian kyc show-blacklist --mint <m> --wallet <w>  # Show a KYC blacklist entry
+meridian kyc show-registry --mint <m>         # Show KYC registry
 meridian config show                          # Show CLI configuration
 ```
+
+All `kyc` commands derive entries as `["whitelist"|"blacklist", registry, wallet]` from the mint's registry.
+
+`meridian shield init` does not yet take the attestor key; initialize the shield config with `scripts/demo-devnet.ts` (or the Anchor IDL) so `attestor_pubkey` is set.
 
 Global flags: `--rpc <url>`, `--wallet <path>`, `--shield-escrow-program <pubkey>`, `--zk-verifier-program <pubkey>`, `--json`
 
@@ -485,7 +513,7 @@ Meridian consumes the Fabrknt compliance and infrastructure packages as versione
 | Package | Version | Used By | Purpose |
 |---------|---------|---------|---------|
 | `@fabrknt/accredit-core` | `^1.0.0` | `@meridian/sdk` | On-chain KYC verification (whitelist entry, KYC level, jurisdiction, expiry) |
-| `@fabrknt/accredit-sdk` | `^1.0.0` | `@meridian/sdk` | Accredit client utilities and account deserialization |
+| `@fabrknt/accredit-sdk` | `^2.0.0` | `@meridian/sdk` | Accredit client utilities and account deserialization (2.x derives entries with the registry in the seeds; not yet published to npm) |
 | `@fabrknt/complr-sdk` | `^1.0.0` | `@meridian/sdk` | Off-chain sanctions/PEP screening (`screenWallet`, `checkTransferCompliance`) |
 | `@fabrknt/stratum-core` | `^1.0.0` | `@meridian/sdk` | OrderMatcher, MerkleTree for ownership proofs, Bitfield for settlement tracking |
 | `@fabrknt/veil-crypto` | `^1.0.0` | `@meridian/encryption` | NaCl box encryption (Curve25519-XSalsa20-Poly1305) |
@@ -493,7 +521,7 @@ Meridian consumes the Fabrknt compliance and infrastructure packages as versione
 Install via:
 
 ```bash
-yarn add @fabrknt/accredit-core@^1.0.0 @fabrknt/accredit-sdk@^1.0.0 @fabrknt/complr-sdk@^1.0.0 @fabrknt/stratum-core@^1.0.0 @fabrknt/veil-crypto@^1.0.0
+yarn add @fabrknt/accredit-core@^1.0.0 @fabrknt/accredit-sdk@^2.0.0 @fabrknt/complr-sdk@^1.0.0 @fabrknt/stratum-core@^1.0.0 @fabrknt/veil-crypto@^1.0.0
 ```
 
 ### Rust (git)
@@ -523,9 +551,16 @@ A working end-to-end demo of the Shield Escrow protocol is available on Solana d
 
 1. Creates USDC and wSOL Token-2022 mints on devnet
 2. Initializes the shield config with a 0.3% fee
-3. Trader deposits 1,000 USDC into the escrow
-4. Keeper executes a simulated Jupiter swap (990 wSOL output)
+   with `attestor_pubkey` from `.demo-keypairs/attestor.json` (generated on first run; if the config
+   already exists with a different attestor, the script stops)
+3. Trader deposits 1,000 USDC into the escrow (hook extra accounts resolved by
+   `scripts/transfer-hook-accounts.ts`)
+4. Keeper executes a simulated Jupiter swap (990 wSOL output), co-signed by the attestor
 5. Trader withdraws 987.03 wSOL (after 2.97 wSOL fee)
+6. The keeper (authority) sweeps the USDC input from the receipt's escrow input account
+
+`scripts/keeper.ts` loads the attestor from `MERIDIAN_ATTESTOR_KEYPAIR` (or the demo keypair) and
+warns if it does not match `ShieldConfig.attestor_pubkey`.
 
 In production, Step 4 (execute swap) is handled by a keeper service that calls the Jupiter API and
 performs the actual DEX swap, **plus an independent attestor** that co-signs `execute_swap`.

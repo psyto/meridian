@@ -143,7 +143,7 @@ MeridianはFabrkntのコンプライアンス・インフラパッケージを�
 | パッケージ | バージョン | 用途 |
 |-----------|-----------|------|
 | `@fabrknt/accredit-core` | `^1.0.0` | オンチェーンKYC検証 |
-| `@fabrknt/accredit-sdk` | `^1.0.0` | Accreditクライアントユーティリティ |
+| `@fabrknt/accredit-sdk` | `^2.0.0` | Accreditクライアントユーティリティ（2.x は registry を含むシードでエントリを導出。npm 未公開） |
 | `@fabrknt/complr-sdk` | `^1.0.0` | オフチェーン制裁/PEPスクリーニング |
 | `@fabrknt/stratum-core` | `^1.0.0` | OrderMatcher、MerkleTree、Bitfield |
 | `@fabrknt/veil-crypto` | `^1.0.0` | NaClボックス暗号化 |
@@ -177,12 +177,15 @@ Token-2022拡張機能を備えたコアステーブルコイン：
 - 日次制限の強制
 - 有効期限管理
 
+Meridian は Accredit の KYC エントリをミントごとに読みます。registry は `["kyc_registry", mint]`、エントリは `["whitelist", registry, wallet]` / `["blacklist", registry, wallet]` です。**デプロイ順: Accredit が先**。ミントごとに registry を作成し（`meridian kyc init-registry --mint <m>`）、フック付きトークンを動かす前にウォレット（shield-escrow の escrow authority PDA を含む）をホワイトリストに登録してください。CLI の `kyc show-whitelist` / `show-blacklist` / `show-registry` は `--mint` が必須です。
+
 ### securities-engine
 24時間365日取引インフラ：
 - スポット取引用AMMプール
 - ファンディング付きパーペチュアル先物
 - バリアンススワップ、ファンディングレートスワップ
 - 指値注文用オーダーブック
+- `initialize_pool` はマーケットの authority のみ実行可。`add_liquidity` / `swap` はプールに記録された authority・LP ミント・vault だけを受け付けます
 
 ### oracle
 価格フィードインフラ：
@@ -224,9 +227,12 @@ Shield Escrowプロトコルのエンドツーエンドデモがソラナdevnet�
 
 1. devnet上にUSDCとwSOLのToken-2022ミントを作成
 2. Shield configを初期化（手数料0.3%、**attestor_pubkey を設定**）
-3. トレーダーが1,000 USDCをエスクローに預入
+3. トレーダーが1,000 USDCをエスクローに預入（受領書ごとのトークン口座 `["escrow_input", receipt]` / `["escrow_output", receipt]` を作成。フックの追加口座は `scripts/transfer-hook-accounts.ts` で解決）
 4. キーパーがJupiterスワップを実行し出力額を提案（990 wSOL）。**`execute_swap` は独立 attestor の co-sign を必須化**（キーパー単独では出力を確定できない。demo/テストでは attestor 鍵で co-sign）
-5. トレーダーが987.03 wSOLを引き出し（2.97 wSOL手数料控除後、最低額はネット額でオンチェーン検証）
+5. トレーダーが987.03 wSOLを引き出し（2.97 wSOL手数料控除後、最低額はネット額でオンチェーン検証）。引き出しは受領書ごとに 1 回（`Completed` → `Withdrawn`）
+6. キーパー（authority）が `sweep_input` でエスクローに残った USDC の入力を回収（受領書が `Withdrawn` のときのみ）
+
+attestor 鍵は `.demo-keypairs/attestor.json`（初回に生成）。`scripts/keeper.ts` は `MERIDIAN_ATTESTOR_KEYPAIR` またはこのデモ鍵を使います。
 
 **復活（revival）による変更:** キーパー単独信頼 → キーパー＋独立 attestor の二者モデル。オンチェーン `execute_swap` は attestor 署名を必須化（実装済）。off-chain の attestor（`services/attestor`）は**判断ロジック＋ed25519 署名を実装・テスト済／custos による実再実行の配線は未了（scaffold）**。詳細は [`REVIVAL.md`](./REVIVAL.md)。本番では detached ed25519 attestation のオンチェーン検証（slice 1b）が続く。
 
