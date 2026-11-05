@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::ShieldError;
 use crate::state::{ShieldConfig, SwapReceipt, SwapStatus};
+use crate::token_transfer::transfer_checked_with_hook;
 
 #[derive(Accounts)]
 pub struct Refund<'info> {
@@ -62,7 +62,7 @@ pub struct Refund<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn handler(ctx: Context<Refund>) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Refund<'info>>) -> Result<()> {
     let receipt = &mut ctx.accounts.swap_receipt;
     let refund_amount = receipt.input_amount;
     let nonce = receipt.nonce;
@@ -76,19 +76,16 @@ pub fn handler(ctx: Context<Refund>) -> Result<()> {
     let signer_seeds = &[authority_seeds];
 
     // Transfer input tokens back from escrow to trader via Token2022 transfer_checked
-    token_2022::transfer_checked(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            token_2022::TransferChecked {
-                from: ctx.accounts.escrow_input_token.to_account_info(),
-                mint: ctx.accounts.input_mint.to_account_info(),
-                to: ctx.accounts.trader_input_token.to_account_info(),
-                authority: ctx.accounts.escrow_authority.to_account_info(),
-            },
-            signer_seeds,
-        ),
+    transfer_checked_with_hook(
+        &ctx.accounts.token_program.to_account_info(),
+        &ctx.accounts.escrow_input_token.to_account_info(),
+        &ctx.accounts.input_mint.to_account_info(),
+        &ctx.accounts.trader_input_token.to_account_info(),
+        &ctx.accounts.escrow_authority.to_account_info(),
+        ctx.remaining_accounts,
         refund_amount,
         ctx.accounts.input_mint.decimals,
+        signer_seeds,
     )?;
 
     // Mark receipt as refunded

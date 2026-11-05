@@ -44,6 +44,7 @@ import {
 } from "@solana/spl-token";
 import * as fs from "fs";
 import * as path from "path";
+import { mergeAccountMetas, resolveTransferHookAccounts } from "./transfer-hook-accounts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -396,6 +397,20 @@ async function main() {
   console.log(`  Escrow USDC (input):  ${escrowUsdcAta.address.toBase58()}`);
   console.log(`  Escrow wSOL (output): ${escrowWsolAta.address.toBase58()}`);
 
+  // Transfer-hook extra accounts for the CPI transfer trader -> escrow input
+  // (empty for mints without a hook). The escrow input account is created by
+  // deposit itself, so it is resolved as a pending account owned by the escrow authority.
+  const depositHookAccounts = await resolveTransferHookAccounts(
+    connection,
+    traderUsdcAta.address,
+    usdcMint,
+    escrowUsdcAta.address,
+    trader.publicKey,
+    BigInt(depositAmount.toString()),
+    6,
+    [{ address: escrowUsdcAta.address, mint: usdcMint, owner: escrowAuthority }]
+  );
+
   const depositTxSig = await program.methods
     .deposit(nonce, depositAmount)
     .accounts({
@@ -411,6 +426,7 @@ async function main() {
       tokenProgram: TOKEN_2022_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     })
+    .remainingAccounts(depositHookAccounts)
     .signers([trader])
     .rpc();
   console.log(`  Deposit tx: ${depositTxSig.slice(0, 20)}...`);
@@ -519,6 +535,29 @@ async function main() {
   console.log(`  Fee Recipient wSOL: ${formatWsol(feeRecipientBefore.amount)}`);
   console.log();
 
+  // Transfer-hook extra accounts for both CPI transfers out of the escrow
+  // output account (to the trader and to the fee recipient)
+  const withdrawHookAccounts = mergeAccountMetas(
+    await resolveTransferHookAccounts(
+      connection,
+      escrowWsolAta.address,
+      wsolMint,
+      traderWsolAta.address,
+      escrowAuthority,
+      BigInt(receiptAfterSwap.outputAmount.toString()),
+      9
+    ),
+    await resolveTransferHookAccounts(
+      connection,
+      escrowWsolAta.address,
+      wsolMint,
+      feeRecipientWsolAta.address,
+      escrowAuthority,
+      BigInt(receiptAfterSwap.feeAmount.toString()),
+      9
+    )
+  );
+
   const withdrawTxSig = await program.methods
     .withdraw()
     .accounts({
@@ -532,6 +571,7 @@ async function main() {
       swapReceipt: swapReceiptPda,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
+    .remainingAccounts(withdrawHookAccounts)
     .signers([trader])
     .rpc();
   console.log(`  Withdraw tx: ${withdrawTxSig.slice(0, 20)}...`);

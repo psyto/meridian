@@ -17,6 +17,7 @@ use anchor_lang::prelude::*;
 pub mod errors;
 pub mod instructions;
 pub mod state;
+pub mod token_transfer;
 
 use instructions::*;
 
@@ -40,7 +41,12 @@ pub mod shield_escrow {
 
     /// Deposit input tokens into the escrow. Creates a SwapReceipt in Pending status.
     /// Uses Token2022 transfer_checked so the transfer hook enforces compliance.
-    pub fn deposit(ctx: Context<Deposit>, nonce: u64, amount: u64) -> Result<()> {
+    /// Remaining accounts: transfer-hook extra accounts for the input mint (if any).
+    pub fn deposit<'info>(
+        ctx: Context<'_, '_, '_, 'info, Deposit<'info>>,
+        nonce: u64,
+        amount: u64,
+    ) -> Result<()> {
         instructions::deposit::handler(ctx, nonce, amount)
     }
 
@@ -56,12 +62,15 @@ pub mod shield_escrow {
 
     /// Withdraw output tokens from the escrow after swap completion.
     /// Uses Token2022 transfer_checked so the transfer hook enforces compliance.
-    pub fn withdraw(ctx: Context<Withdraw>) -> Result<()> {
+    /// Remaining accounts: transfer-hook extra accounts for the output mint
+    /// (covering both the trader and the fee-recipient transfer), if any.
+    pub fn withdraw<'info>(ctx: Context<'_, '_, '_, 'info, Withdraw<'info>>) -> Result<()> {
         instructions::withdraw::handler(ctx)
     }
 
     /// Refund input tokens if the swap fails. Only callable by the authority.
-    pub fn refund(ctx: Context<Refund>) -> Result<()> {
+    /// Remaining accounts: transfer-hook extra accounts for the input mint (if any).
+    pub fn refund<'info>(ctx: Context<'_, '_, '_, 'info, Refund<'info>>) -> Result<()> {
         instructions::refund::handler(ctx)
     }
 

@@ -157,6 +157,8 @@ On-chain component of the hybrid liquidity protocol. Enables KYC'd traders to ac
 
 **Instructions:** `initialize` (now takes `attestor_pubkey`), `deposit`, `execute_swap` (now requires the attestor co-signer), `withdraw`, `refund`, `update_config`
 
+`deposit`, `withdraw` and `refund` move tokens with a Token-2022 `transfer_checked` CPI that forwards the instruction's remaining accounts to the mint's transfer hook. For hooked mints, pass the hook's extra accounts (hook program, extra-account-metas PDA and what it resolves to) as remaining accounts; `scripts/transfer-hook-accounts.ts` resolves them (see `scripts/demo-devnet.ts`).
+
 **Accounts:**
 - `ShieldConfig` (PDA: `["shield_config"]`) — authority, **attestor_pubkey**, fee settings, volume stats, active flag
 - `SwapReceipt` (PDA: `["receipt", trader, nonce]`) — per-swap state tracking (Pending/Completed/Refunded)

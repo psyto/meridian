@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::ShieldError;
 use crate::state::{ShieldConfig, SwapReceipt, SwapStatus};
+use crate::token_transfer::transfer_checked_with_hook;
 
 #[derive(Accounts)]
 #[instruction(nonce: u64)]
@@ -77,23 +77,25 @@ pub struct Deposit<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Deposit>, nonce: u64, amount: u64) -> Result<()> {
+pub fn handler<'info>(
+    ctx: Context<'_, '_, '_, 'info, Deposit<'info>>,
+    nonce: u64,
+    amount: u64,
+) -> Result<()> {
     let clock = Clock::get()?;
 
     // Transfer tokens from trader to escrow via Token2022 transfer_checked
     // The transfer hook enforces compliance (KYC check) automatically
-    token_2022::transfer_checked(
-        CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            token_2022::TransferChecked {
-                from: ctx.accounts.trader_input_token.to_account_info(),
-                mint: ctx.accounts.input_mint.to_account_info(),
-                to: ctx.accounts.escrow_input_token.to_account_info(),
-                authority: ctx.accounts.trader.to_account_info(),
-            },
-        ),
+    transfer_checked_with_hook(
+        &ctx.accounts.token_program.to_account_info(),
+        &ctx.accounts.trader_input_token.to_account_info(),
+        &ctx.accounts.input_mint.to_account_info(),
+        &ctx.accounts.escrow_input_token.to_account_info(),
+        &ctx.accounts.trader.to_account_info(),
+        ctx.remaining_accounts,
         amount,
         ctx.accounts.input_mint.decimals,
+        &[],
     )?;
 
     // Initialize the swap receipt

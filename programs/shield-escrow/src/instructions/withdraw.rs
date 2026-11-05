@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::ShieldError;
 use crate::state::{ShieldConfig, SwapReceipt, SwapStatus};
+use crate::token_transfer::transfer_checked_with_hook;
 
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
@@ -69,7 +69,7 @@ pub struct Withdraw<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
+pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Withdraw<'info>>) -> Result<()> {
     let receipt = &mut ctx.accounts.swap_receipt;
     let output_amount = receipt.output_amount;
     let fee_amount = receipt.fee_amount;
@@ -82,36 +82,30 @@ pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
     let signer_seeds = &[authority_seeds];
 
     // Transfer output tokens from escrow to trader via Token2022 transfer_checked
-    token_2022::transfer_checked(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            token_2022::TransferChecked {
-                from: ctx.accounts.escrow_output_token.to_account_info(),
-                mint: ctx.accounts.output_mint.to_account_info(),
-                to: ctx.accounts.trader_output_token.to_account_info(),
-                authority: ctx.accounts.escrow_authority.to_account_info(),
-            },
-            signer_seeds,
-        ),
+    transfer_checked_with_hook(
+        &ctx.accounts.token_program.to_account_info(),
+        &ctx.accounts.escrow_output_token.to_account_info(),
+        &ctx.accounts.output_mint.to_account_info(),
+        &ctx.accounts.trader_output_token.to_account_info(),
+        &ctx.accounts.escrow_authority.to_account_info(),
+        ctx.remaining_accounts,
         output_amount,
         ctx.accounts.output_mint.decimals,
+        signer_seeds,
     )?;
 
     // Transfer fee to fee recipient
     if fee_amount > 0 {
-        token_2022::transfer_checked(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                token_2022::TransferChecked {
-                    from: ctx.accounts.escrow_output_token.to_account_info(),
-                    mint: ctx.accounts.output_mint.to_account_info(),
-                    to: ctx.accounts.fee_recipient_token.to_account_info(),
-                    authority: ctx.accounts.escrow_authority.to_account_info(),
-                },
-                signer_seeds,
-            ),
+        transfer_checked_with_hook(
+            &ctx.accounts.token_program.to_account_info(),
+            &ctx.accounts.escrow_output_token.to_account_info(),
+            &ctx.accounts.output_mint.to_account_info(),
+            &ctx.accounts.fee_recipient_token.to_account_info(),
+            &ctx.accounts.escrow_authority.to_account_info(),
+            ctx.remaining_accounts,
             fee_amount,
             ctx.accounts.output_mint.decimals,
+            signer_seeds,
         )?;
     }
 
