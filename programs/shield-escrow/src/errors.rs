@@ -25,4 +25,7 @@ pub enum ShieldError {
 
     #[msg("Invalid attestor: the re-execution attestor did not co-sign, or the key is unset")]
     InvalidAttestor,
+
+    #[msg("Escrow input account is empty")]
+    NothingToSweep,
 }

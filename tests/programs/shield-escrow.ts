@@ -4,6 +4,7 @@ import { PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
 import {
   TOKEN_2022_PROGRAM_ID,
   createMint,
+  getAccount,
   getOrCreateAssociatedTokenAccount,
   mintTo,
 } from '@solana/spl-token';
@@ -317,6 +318,53 @@ describe('shield-escrow', () => {
       // gross 2_000_000 - fee (25bps = 5_000) = net 1_995_000, which is >= minOutput
       expect(receipt.outputAmount.toNumber()).to.equal(1_995_000);
       expect(receipt.feeAmount.toNumber()).to.equal(5_000);
+    });
+
+    it('sweep_input: only the authority can take the completed receipt\'s escrow input', async () => {
+      const traderAsDest = await getOrCreateAssociatedTokenAccount(
+        provider.connection, payer, inputMint, trader.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+      );
+      try {
+        await program.methods
+          .sweepInput()
+          .accounts({
+            authority: trader.publicKey,
+            shieldConfig: shieldConfigPda,
+            escrowAuthority: escrowAuthorityPda,
+            inputMint,
+            escrowInputToken: escrowInputAta,
+            authorityInputToken: traderAsDest.address,
+            swapReceipt: swapReceiptPda,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([trader])
+          .rpc();
+        expect.fail('Should have thrown Unauthorized');
+      } catch (err: any) {
+        expect(err.toString()).to.match(/Unauthorized|constraint|6004/i);
+      }
+
+      const authorityInput = await getOrCreateAssociatedTokenAccount(
+        provider.connection, payer, inputMint, authority.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+      );
+      await program.methods
+        .sweepInput()
+        .accounts({
+          authority: authority.publicKey,
+          shieldConfig: shieldConfigPda,
+          escrowAuthority: escrowAuthorityPda,
+          inputMint,
+          escrowInputToken: escrowInputAta,
+          authorityInputToken: authorityInput.address,
+          swapReceipt: swapReceiptPda,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+
+      const swept = await getAccount(provider.connection, authorityInput.address, undefined, TOKEN_2022_PROGRAM_ID);
+      expect(Number(swept.amount)).to.equal(depositAmount.toNumber());
+      const left = await getAccount(provider.connection, escrowInputAta, undefined, TOKEN_2022_PROGRAM_ID);
+      expect(Number(left.amount)).to.equal(0);
     });
   });
 });

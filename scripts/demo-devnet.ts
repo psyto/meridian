@@ -10,7 +10,8 @@
  *   4. Initialize Shield Config
  *   5. Deposit USDC into escrow
  *   6. Execute swap (simulated keeper)
- *   7. Withdraw output tokens
+ *   7. Withdraw output tokens, then the keeper (authority) sweeps the input
+ *      left in the escrow input account
  *   8. Print summary and Explorer links
  *
  * Run with: npx ts-node scripts/demo-devnet.ts
@@ -587,6 +588,43 @@ async function main() {
   console.log(`  Fee Recipient wSOL: ${formatWsol(feeRecipientAfter.amount)} (fee collected)`);
   console.log(`  Escrow wSOL:        ${formatWsol(escrowWsolAfter.amount)} (should be 0)`);
 
+  // The swap is settled: the input left in the escrow input account goes to
+  // the keeper (authority) that delivered the output.
+  console.log();
+  console.log("  Keeper (authority) sweeps the escrow USDC input...");
+  const authorityUsdcAta = await getOrCreateAssociatedTokenAccount(
+    connection, authority, usdcMint, authority.publicKey, false, undefined, undefined, TOKEN_2022_PROGRAM_ID
+  );
+  const escrowUsdcBeforeSweep = await getAccount(connection, escrowUsdcAta.address, undefined, TOKEN_2022_PROGRAM_ID);
+  const sweepHookAccounts = await resolveTransferHookAccounts(
+    connection,
+    escrowUsdcAta.address,
+    usdcMint,
+    authorityUsdcAta.address,
+    escrowAuthority,
+    escrowUsdcBeforeSweep.amount,
+    6
+  );
+  const sweepTxSig = await program.methods
+    .sweepInput()
+    .accounts({
+      authority: authority.publicKey,
+      shieldConfig: shieldConfigPda,
+      escrowAuthority: escrowAuthority,
+      inputMint: usdcMint,
+      escrowInputToken: escrowUsdcAta.address,
+      authorityInputToken: authorityUsdcAta.address,
+      swapReceipt: swapReceiptPda,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+    })
+    .remainingAccounts(sweepHookAccounts)
+    .signers([authority])
+    .rpc();
+  console.log(`  Sweep tx: ${sweepTxSig.slice(0, 20)}...`);
+  const escrowUsdcAfterSweep = await getAccount(connection, escrowUsdcAta.address, undefined, TOKEN_2022_PROGRAM_ID);
+  console.log(`  Swept:       ${formatUsdc(escrowUsdcBeforeSweep.amount)}`);
+  console.log(`  Escrow USDC: ${formatUsdc(escrowUsdcAfterSweep.amount)} (should be 0)`);
+
   // -------------------------------------------------------------------------
   // 8. Summary
   // -------------------------------------------------------------------------
@@ -623,6 +661,7 @@ async function main() {
   console.log(`    Deposit Tx:    https://explorer.solana.com/tx/${depositTxSig}?cluster=devnet`);
   console.log(`    Swap Tx:       https://explorer.solana.com/tx/${swapTxSig}?cluster=devnet`);
   console.log(`    Withdraw Tx:   https://explorer.solana.com/tx/${withdrawTxSig}?cluster=devnet`);
+  console.log(`    Sweep Tx:      https://explorer.solana.com/tx/${sweepTxSig}?cluster=devnet`);
 
   console.log();
   console.log("  NOTE: In production, Step 6 is handled by the keeper service");
