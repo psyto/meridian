@@ -52,4 +52,6 @@ pub enum SwapStatus {
     Completed,
     /// Swap failed, input tokens refunded
     Refunded,
+    /// Output tokens withdrawn by the trader
+    Withdrawn,
 }

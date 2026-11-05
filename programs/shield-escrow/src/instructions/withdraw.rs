@@ -23,7 +23,8 @@ pub struct Withdraw<'info> {
     )]
     pub escrow_authority: UncheckedAccount<'info>,
 
-    /// Output token mint (Token2022)
+    /// Output token mint (Token2022), must be the receipt's output mint
+    #[account(address = swap_receipt.output_mint)]
     pub output_mint: InterfaceAccount<'info, Mint>,
 
     /// Escrow's output token account
@@ -67,7 +68,7 @@ pub struct Withdraw<'info> {
 }
 
 pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
-    let receipt = &ctx.accounts.swap_receipt;
+    let receipt = &mut ctx.accounts.swap_receipt;
     let output_amount = receipt.output_amount;
     let fee_amount = receipt.fee_amount;
     let nonce = receipt.nonce;
@@ -111,6 +112,9 @@ pub fn handler(ctx: Context<Withdraw>) -> Result<()> {
             ctx.accounts.output_mint.decimals,
         )?;
     }
+
+    // Mark receipt as withdrawn so it cannot be withdrawn again
+    receipt.status = SwapStatus::Withdrawn;
 
     emit!(TokensWithdrawn {
         trader: ctx.accounts.trader.key(),

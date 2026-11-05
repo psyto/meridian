@@ -25,7 +25,8 @@ pub struct Refund<'info> {
     )]
     pub escrow_authority: UncheckedAccount<'info>,
 
-    /// Input token mint (Token2022)
+    /// Input token mint (Token2022), must be the receipt's input mint
+    #[account(address = swap_receipt.input_mint)]
     pub input_mint: InterfaceAccount<'info, Mint>,
 
     /// Escrow's input token account
