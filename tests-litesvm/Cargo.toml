@@ -1,0 +1,28 @@
+# Standalone workspace: litesvm and the solana 3.x/4.x crates it uses do not
+# resolve together with the programs' anchor-lang 0.32 graph, so this crate
+# has its own lockfile and does not depend on the program crates. It loads
+# target/deploy/meridian_stablecoin.so (run `cargo build-sbf` first) and the
+# Accredit transfer-hook program from $ACCREDIT_TRANSFER_HOOK_SO (default:
+# ../../accredit/target/deploy/transfer_hook.so).
+[workspace]
+
+[package]
+name = "meridian-litesvm-tests"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[dev-dependencies]
+litesvm = "0.17"
+sha2 = "0.10"
+solana-account = "4.3"
+solana-instruction = "3.5"
+solana-keypair = "3.1.2"
+solana-message = "4.2.4"
+solana-pubkey = "3"
+solana-signer = "3.0.1"
+solana-system-interface = { version = "3.2.0", features = ["bincode"] }
+solana-transaction = "4.1.5"
+spl-associated-token-account-interface = "2.0.0"
+spl-token-2022-interface = "3.1.2"
