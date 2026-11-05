@@ -169,6 +169,9 @@ async function main() {
 
   const trader = loadOrGenerate("trader");
   const keeper = loadOrGenerate("keeper");
+  // Re-execution attestor that must co-sign execute_swap. For the demo it is a
+  // local keypair; scripts/keeper.ts loads the same file.
+  const attestor = loadOrGenerate("attestor");
   const usdcMintKp = loadOrGenerate("usdc-mint");
   const wsolMintKp = loadOrGenerate("wsol-mint");
 
@@ -330,6 +333,15 @@ async function main() {
       console.log("  Shield Config already initialized, skipping...");
     }
   } catch {}
+  if (configExists) {
+    const existing = await program.account.shieldConfig.fetch(shieldConfigPda);
+    if (!existing.attestorPubkey.equals(attestor.publicKey)) {
+      throw new Error(
+        `Shield Config attestor ${existing.attestorPubkey.toBase58()} does not match ` +
+          `.demo-keypairs/attestor.json (${attestor.publicKey.toBase58()}); execute_swap would fail.`
+      );
+    }
+  }
 
   let initTxSig = "";
   if (!configExists) {
@@ -338,9 +350,10 @@ async function main() {
     console.log(`    KYC Registry:          ${kycRegistry.toBase58()}`);
     console.log(`    Fee BPS:               ${feeBps} (${feeBps / 100}%)`);
     console.log(`    Fee Recipient:         ${feeRecipient.toBase58().slice(0, 12)}...`);
+    console.log(`    Attestor:              ${attestor.publicKey.toBase58().slice(0, 12)}...`);
 
     initTxSig = await program.methods
-      .initialize(transferHookProgram, kycRegistry, feeBps, feeRecipient)
+      .initialize(transferHookProgram, kycRegistry, feeBps, feeRecipient, attestor.publicKey)
       .accounts({
         authority: authority.publicKey,
         shieldConfig: shieldConfigPda,
@@ -465,7 +478,7 @@ async function main() {
     );
     console.log(`  Minted ${formatWsol(simulatedOutputAmount.toNumber())} to escrow wSOL account.`);
 
-    // Call executeSwap as authority (keeper)
+    // Call executeSwap as authority (keeper), co-signed by the attestor
     const outputAmount = simulatedOutputAmount;
     const minOutputAmount = new BN(980_000_000_000); // slippage tolerance
 
@@ -476,10 +489,11 @@ async function main() {
       .executeSwap(outputAmount, minOutputAmount)
       .accounts({
         authority: authority.publicKey,
+        attestor: attestor.publicKey,
         shieldConfig: shieldConfigPda,
         swapReceipt: swapReceiptPda,
       })
-      .signers([authority])
+      .signers([authority, attestor])
       .rpc();
     console.log(`  Execute swap tx: ${swapTxSig.slice(0, 20)}...`);
   }

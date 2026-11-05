@@ -676,6 +676,7 @@ async function findPendingReceipts(
 async function executeSwapOnChain(
   program: Program,
   authority: Keypair,
+  attestor: Keypair,
   receipt: PendingReceipt,
   outputAmount: BN,
   minOutputAmount: BN
@@ -686,10 +687,11 @@ async function executeSwapOnChain(
     .executeSwap(outputAmount, minOutputAmount)
     .accounts({
       authority: authority.publicKey,
+      attestor: attestor.publicKey,
       shieldConfig: shieldConfigPda,
       swapReceipt: receipt.pubkey,
     })
-    .signers([authority])
+    .signers([authority, attestor])
     .rpc();
 
   return txSig;
@@ -703,6 +705,7 @@ async function processReceipt(
   connection: Connection,
   program: Program,
   authority: Keypair,
+  attestor: Keypair,
   receipt: PendingReceipt,
   config: KeeperConfig,
   stats: KeeperStats,
@@ -861,6 +864,7 @@ async function processReceipt(
     const txSig = await executeSwapOnChain(
       program,
       authority,
+      attestor,
       receipt,
       outputAmount,
       minOutputAmount
@@ -945,6 +949,20 @@ async function runKeeper(): Promise<void> {
     );
   }
 
+  // Load the re-execution attestor that co-signs execute_swap
+  // (MERIDIAN_ATTESTOR_KEYPAIR, else the demo keypair written by demo-devnet.ts)
+  const attestorPath =
+    process.env.MERIDIAN_ATTESTOR_KEYPAIR || path.join(keypairDir, "attestor.json");
+  if (!fs.existsSync(attestorPath)) {
+    throw new Error(
+      `No attestor keypair at ${attestorPath}. Run the demo script first or set MERIDIAN_ATTESTOR_KEYPAIR.`
+    );
+  }
+  const attestor = Keypair.fromSecretKey(
+    Uint8Array.from(JSON.parse(fs.readFileSync(attestorPath, "utf-8")))
+  );
+  console.log(`  Attestor: ${attestor.publicKey.toBase58().slice(0, 16)}...`);
+
   // Check balance
   const balance = await connection.getBalance(authority.publicKey);
   console.log(
@@ -981,6 +999,12 @@ async function runKeeper(): Promise<void> {
       );
     } else {
       console.log("  Authority matches on-chain shield config.");
+    }
+    if (!configAccount.attestorPubkey.equals(attestor.publicKey)) {
+      console.log(
+        `  [WARN] Loaded attestor (${attestor.publicKey.toBase58().slice(0, 12)}...) ` +
+          `does not match on-chain attestor (${configAccount.attestorPubkey.toBase58().slice(0, 12)}...); execute_swap will fail.`
+      );
     }
 
     if (!configAccount.isActive) {
@@ -1040,6 +1064,7 @@ async function runKeeper(): Promise<void> {
               connection,
               program,
               authority,
+              attestor,
               receipt,
               config,
               stats,
