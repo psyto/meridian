@@ -455,7 +455,9 @@ pub struct InitializePool<'info> {
     )]
     pub quote_vault: Account<'info, TokenAccount>,
 
+    #[account(address = market.security_mint)]
     pub security_mint: Account<'info, Mint>,
+    #[account(address = market.quote_mint)]
     pub quote_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
@@ -474,15 +476,16 @@ pub struct AddLiquidity<'info> {
     pub pool: Account<'info, Pool>,
 
     /// CHECK: Pool authority PDA
+    #[account(address = pool.authority)]
     pub pool_authority: UncheckedAccount<'info>,
 
-    #[account(mut)]
+    #[account(mut, address = pool.lp_mint)]
     pub lp_mint: Account<'info, Mint>,
 
-    #[account(mut)]
+    #[account(mut, address = pool.security_vault)]
     pub security_vault: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(mut, address = pool.quote_vault)]
     pub quote_vault: Account<'info, TokenAccount>,
 
     #[account(mut)]
@@ -509,12 +512,13 @@ pub struct Swap<'info> {
     pub pool: Account<'info, Pool>,
 
     /// CHECK: Pool authority PDA
+    #[account(address = pool.authority)]
     pub pool_authority: UncheckedAccount<'info>,
 
-    #[account(mut)]
+    #[account(mut, address = pool.security_vault)]
     pub security_vault: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(mut, address = pool.quote_vault)]
     pub quote_vault: Account<'info, TokenAccount>,
 
     #[account(mut)]
