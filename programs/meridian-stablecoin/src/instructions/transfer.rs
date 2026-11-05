@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022::{self, TransferChecked, Token2022};
+use anchor_spl::token_2022::{spl_token_2022, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 
 use crate::state::*;
@@ -52,7 +52,10 @@ pub struct TransferParams {
     pub memo: Option<[u8; 32]>,
 }
 
-pub fn handler(ctx: Context<TransferStablecoin>, params: TransferParams) -> Result<()> {
+pub fn handler<'info>(
+    ctx: Context<'_, '_, '_, 'info, TransferStablecoin<'info>>,
+    params: TransferParams,
+) -> Result<()> {
     let clock = Clock::get()?;
 
     require!(
@@ -65,19 +68,26 @@ pub fn handler(ctx: Context<TransferStablecoin>, params: TransferParams) -> Resu
     // 1. Sender KYC status
     // 2. Recipient KYC status
     // 3. Transaction limits (if any)
-    let cpi_accounts = TransferChecked {
-        from: ctx.accounts.sender_token_account.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
-        to: ctx.accounts.recipient_token_account.to_account_info(),
-        authority: ctx.accounts.sender.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        cpi_accounts,
-    );
+    // Token-2022 resolves the hook's ExtraAccountMeta list and looks the
+    // accounts up among these: the meta list, the hook program and the
+    // resolved accounts passed as remaining accounts.
+    let mut hook_accounts = vec![
+        ctx.accounts.extra_account_meta_list.to_account_info(),
+        ctx.accounts.transfer_hook_program.to_account_info(),
+    ];
+    hook_accounts.extend(ctx.remaining_accounts.iter().cloned());
 
-    // Decimals = 2 for stablecoin
-    token_2022::transfer_checked(cpi_ctx, params.amount, 2)?;
+    spl_token_2022::onchain::invoke_transfer_checked(
+        ctx.accounts.token_program.key,
+        ctx.accounts.sender_token_account.to_account_info(),
+        ctx.accounts.mint.to_account_info(),
+        ctx.accounts.recipient_token_account.to_account_info(),
+        ctx.accounts.sender.to_account_info(),
+        &hook_accounts,
+        params.amount,
+        ctx.accounts.mint.decimals,
+        &[],
+    )?;
 
     emit!(StablecoinTransferred {
         mint: ctx.accounts.mint.key(),

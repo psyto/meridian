@@ -43,7 +43,13 @@ pub mod meridian_stablecoin {
     }
 
     /// Transfer stablecoin with compliance check via transfer hook
-    pub fn transfer(ctx: Context<TransferStablecoin>, params: TransferParams) -> Result<()> {
+    /// The transfer hook's extra accounts (registry, whitelist and blacklist
+    /// entries, as resolved from the mint's ExtraAccountMeta list) go in the
+    /// remaining accounts.
+    pub fn transfer<'info>(
+        ctx: Context<'_, '_, '_, 'info, TransferStablecoin<'info>>,
+        params: TransferParams,
+    ) -> Result<()> {
         instructions::transfer::handler(ctx, params)
     }
 
@@ -97,7 +103,13 @@ pub mod meridian_stablecoin {
 
     /// Seize tokens from a frozen account via permanent delegate (SSS-2 only)
     /// Fails gracefully if permanent delegate was not enabled during initialization.
-    pub fn seize(ctx: Context<Seize>, params: SeizeParams) -> Result<()> {
+    /// The remaining accounts carry the transfer hook's accounts: the
+    /// resolved extra accounts, the hook program and its ExtraAccountMeta
+    /// list.
+    pub fn seize<'info>(
+        ctx: Context<'_, '_, '_, 'info, Seize<'info>>,
+        params: SeizeParams,
+    ) -> Result<()> {
         instructions::seize::seize_handler(ctx, params)
     }
 

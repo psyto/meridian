@@ -1,6 +1,11 @@
 import { Command } from "commander";
-import { PublicKey } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import {
+  TOKEN_2022_PROGRAM_ID,
+  addExtraAccountMetasForExecute,
+  getMint,
+  getTransferHook,
+} from "@solana/spl-token";
 import { getGlobalFlags } from "../../cli.js";
 import { loadConfig } from "../../config.js";
 import { createContext } from "../../context.js";
@@ -45,6 +50,32 @@ export function registerSeize(parent: Command): void {
         reason: parseOptionalHexBytes(opts.reason, 32),
       };
 
+      // The seize CPI goes through the mint's transfer hook, so pass the
+      // hook's accounts (resolved extra accounts, hook program, meta list).
+      const hookAccounts = new TransactionInstruction({
+        programId: TOKEN_2022_PROGRAM_ID,
+        keys: [],
+      });
+      const mintInfo = await getMint(
+        ctx.connection,
+        mint,
+        undefined,
+        TOKEN_2022_PROGRAM_ID
+      );
+      const hook = getTransferHook(mintInfo);
+      if (hook) {
+        await addExtraAccountMetasForExecute(
+          ctx.connection,
+          hookAccounts,
+          hook.programId,
+          source,
+          mint,
+          treasury,
+          mintConfigPda,
+          BigInt(params.amount.toString())
+        );
+      }
+
       const builder = ctx.stablecoinProgram.methods
         .seize(params)
         .accounts({
@@ -54,7 +85,8 @@ export function registerSeize(parent: Command): void {
           source,
           treasury,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
-        });
+        })
+        .remainingAccounts(hookAccounts.keys);
 
       if (flags.simulate) {
         const result = await builder.simulate();

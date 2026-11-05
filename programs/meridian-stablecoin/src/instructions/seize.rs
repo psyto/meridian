@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022::{self, TransferChecked, Token2022};
+use anchor_spl::token_2022::{spl_token_2022, Token2022};
 use anchor_spl::token_interface::{Mint, TokenAccount};
 
 use crate::errors::MeridianError;
@@ -50,7 +50,10 @@ pub struct SeizeParams {
     pub reason: [u8; 32],
 }
 
-pub fn seize_handler(ctx: Context<Seize>, params: SeizeParams) -> Result<()> {
+pub fn seize_handler<'info>(
+    ctx: Context<'_, '_, '_, 'info, Seize<'info>>,
+    params: SeizeParams,
+) -> Result<()> {
     let clock = Clock::get()?;
     let mint_config = &ctx.accounts.mint_config;
 
@@ -76,18 +79,19 @@ pub fn seize_handler(ctx: Context<Seize>, params: SeizeParams) -> Result<()> {
     ];
     let signer_seeds = &[&seeds[..]];
 
-    let cpi_accounts = TransferChecked {
-        from: ctx.accounts.source.to_account_info(),
-        mint: ctx.accounts.mint.to_account_info(),
-        to: ctx.accounts.treasury.to_account_info(),
-        authority: ctx.accounts.mint_config.to_account_info(),
-    };
-    let cpi_ctx = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        cpi_accounts,
+    // The remaining accounts carry the transfer hook's accounts (resolved
+    // extra accounts, hook program, ExtraAccountMeta list).
+    spl_token_2022::onchain::invoke_transfer_checked(
+        ctx.accounts.token_program.key,
+        ctx.accounts.source.to_account_info(),
+        ctx.accounts.mint.to_account_info(),
+        ctx.accounts.treasury.to_account_info(),
+        ctx.accounts.mint_config.to_account_info(),
+        ctx.remaining_accounts,
+        seize_amount,
+        ctx.accounts.mint.decimals,
         signer_seeds,
-    );
-    token_2022::transfer_checked(cpi_ctx, seize_amount, mint_config.decimals)?;
+    )?;
 
     emit!(TokensSeized {
         mint: ctx.accounts.mint.key(),
