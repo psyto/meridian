@@ -59,6 +59,9 @@ pub enum SecuritiesError {
 
     #[msg("Math overflow")]
     MathOverflow,
+
+    #[msg("Signer is not the market authority")]
+    Unauthorized,
 }
 
 #[program]
@@ -416,6 +419,7 @@ pub struct InitializePool<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
+    #[account(has_one = authority @ SecuritiesError::Unauthorized)]
     pub market: Account<'info, Market>,
 
     #[account(
