@@ -14,7 +14,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
     "@fabrknt/accredit-core": "^1.0.0",
-    "@fabrknt/accredit-sdk": "^1.0.0",
+    "@fabrknt/accredit-sdk": "^2.0.0",
     "@fabrknt/complr-sdk": "^1.0.0",
     "@fabrknt/stratum-core": "^1.0.0",
     "@solana/spl-token": "^0.4.12",

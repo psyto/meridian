@@ -10,6 +10,7 @@ export function registerShowBlacklist(parent: Command): void {
   parent
     .command("show-blacklist")
     .description("Display a BlacklistEntry account")
+    .requiredOption("--mint <pubkey>", "Token mint address")
     .requiredOption("--wallet <pubkey>", "Wallet address to look up")
     .action(async (opts, cmd) => {
       const flags = getGlobalFlags(cmd);
@@ -17,9 +18,15 @@ export function registerShowBlacklist(parent: Command): void {
       const ctx = createContext(config);
 
       const wallet = parsePublicKey(opts.wallet);
+      const mint = parsePublicKey(opts.mint);
+
+      const [registryPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("kyc_registry"), mint.toBuffer()],
+        ctx.transferHookProgram.programId
+      );
 
       const [blacklistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("blacklist"), wallet.toBuffer()],
+        [Buffer.from("blacklist"), registryPda.toBuffer(), wallet.toBuffer()],
         ctx.transferHookProgram.programId
       );
 

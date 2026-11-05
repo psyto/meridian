@@ -10,6 +10,7 @@ export function registerShowWhitelist(parent: Command): void {
   parent
     .command("show-whitelist")
     .description("Display a WhitelistEntry account")
+    .requiredOption("--mint <pubkey>", "Token mint address")
     .requiredOption("--wallet <pubkey>", "Wallet address to look up")
     .action(async (opts, cmd) => {
       const flags = getGlobalFlags(cmd);
@@ -17,9 +18,15 @@ export function registerShowWhitelist(parent: Command): void {
       const ctx = createContext(config);
 
       const wallet = parsePublicKey(opts.wallet);
+      const mint = parsePublicKey(opts.mint);
+
+      const [registryPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("kyc_registry"), mint.toBuffer()],
+        ctx.transferHookProgram.programId
+      );
 
       const [whitelistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("whitelist"), wallet.toBuffer()],
+        [Buffer.from("whitelist"), registryPda.toBuffer(), wallet.toBuffer()],
         ctx.transferHookProgram.programId
       );
 

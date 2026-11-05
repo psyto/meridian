@@ -78,6 +78,10 @@
                 ]
               },
               {
+                "kind": "account",
+                "path": "registry"
+              },
+              {
                 "kind": "arg",
                 "path": "params.wallet"
               }
@@ -171,6 +175,10 @@
                 ]
               },
               {
+                "kind": "account",
+                "path": "registry"
+              },
+              {
                 "kind": "arg",
                 "path": "params.wallet"
               }
@@ -260,6 +268,11 @@
         },
         {
           "name": "sender_whitelist",
+          "docs": [
+            "Whitelist entry of the source token account's owner wallet",
+            "(writable: execute records the daily volume)"
+          ],
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -278,13 +291,20 @@
               },
               {
                 "kind": "account",
-                "path": "source"
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "source.owner"
               }
             ]
           }
         },
         {
           "name": "recipient_whitelist",
+          "docs": [
+            "Whitelist entry of the destination token account's owner wallet"
+          ],
           "pda": {
             "seeds": [
               {
@@ -303,7 +323,11 @@
               },
               {
                 "kind": "account",
-                "path": "destination"
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "destination.owner"
               }
             ]
           }
@@ -311,10 +335,8 @@
         {
           "name": "sender_blacklist",
           "docs": [
-            "Sender blacklist entry (optional — only exists if wallet was blacklisted)",
-            "For SSS-1 tokens this PDA won't exist and will be None."
+            "wallet was blacklisted; read by `blacklisted_in`."
           ],
-          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -333,17 +355,17 @@
               },
               {
                 "kind": "account",
-                "path": "source"
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "source.owner"
               }
             ]
           }
         },
         {
           "name": "recipient_blacklist",
-          "docs": [
-            "Recipient blacklist entry (optional — only exists if wallet was blacklisted)"
-          ],
-          "optional": true,
           "pda": {
             "seeds": [
               {
@@ -362,7 +384,11 @@
               },
               {
                 "kind": "account",
-                "path": "destination"
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "destination.owner"
               }
             ]
           }
@@ -556,6 +582,189 @@
       "args": []
     },
     {
+      "name": "reinstate_blacklist",
+      "docs": [
+        "Re-activate a removed blacklist entry (the PDA is kept on removal)."
+      ],
+      "discriminator": [
+        30,
+        165,
+        193,
+        182,
+        3,
+        38,
+        163,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "blacklist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "blacklist_entry.wallet",
+                "account": "BlacklistEntry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "reinstate_whitelist",
+      "docs": [
+        "Re-activate a removed whitelist entry with fresh KYC parameters.",
+        "The entry PDA is kept on removal, so this is the way back in."
+      ],
+      "discriminator": [
+        35,
+        89,
+        202,
+        13,
+        105,
+        4,
+        32,
+        232
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry.mint",
+                "account": "KycRegistry"
+              }
+            ]
+          }
+        },
+        {
+          "name": "whitelist_entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  119,
+                  104,
+                  105,
+                  116,
+                  101,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "registry"
+              },
+              {
+                "kind": "account",
+                "path": "whitelist_entry.wallet",
+                "account": "WhitelistEntry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "ReinstateWhitelistParams"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "remove_from_blacklist",
       "docs": [
         "Remove wallet from blacklist"
@@ -623,6 +832,10 @@
                   115,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "registry"
               },
               {
                 "kind": "account",
@@ -706,6 +919,10 @@
               },
               {
                 "kind": "account",
+                "path": "registry"
+              },
+              {
+                "kind": "account",
                 "path": "whitelist_entry.wallet",
                 "account": "WhitelistEntry"
               }
@@ -761,6 +978,97 @@
                 "kind": "account",
                 "path": "registry.mint",
                 "account": "KycRegistry"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_extra_account_meta_list",
+      "docs": [
+        "Rewrite the extra account metas of an existing mint to the current",
+        "list (e.g. after the entry PDA seeds changed). Registry authority only."
+      ],
+      "discriminator": [
+        44,
+        125,
+        141,
+        226,
+        97,
+        179,
+        166,
+        96
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "extra_account_meta_list",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
               }
             ]
           }
@@ -835,6 +1143,10 @@
                   115,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "registry"
               },
               {
                 "kind": "account",
@@ -1175,6 +1487,21 @@
       "code": 6014,
       "name": "Overflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidExtraAccountMetaList",
+      "msg": "Extra account meta list has an unexpected size"
+    },
+    {
+      "code": 6016,
+      "name": "EntryAlreadyActive",
+      "msg": "Whitelist entry is already active"
+    },
+    {
+      "code": 6017,
+      "name": "ReasonTooLong",
+      "msg": "Blacklist reason is too long"
     }
   ],
   "types": [
@@ -1558,6 +1885,47 @@
           },
           {
             "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReinstateWhitelistParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "jurisdiction",
+            "type": {
+              "defined": {
+                "name": "Jurisdiction"
+              }
+            }
+          },
+          {
+            "name": "kyc_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "daily_limit",
+            "type": "u64"
+          },
+          {
+            "name": "expiry_timestamp",
             "type": "i64"
           }
         ]

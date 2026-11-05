@@ -122,17 +122,28 @@ describe('MeridianClient', () => {
   describe('deriveWhitelistEntryPda', () => {
     it('returns a deterministic PDA', () => {
       const client = makeClient();
+      const mint = PublicKey.unique();
       const wallet = PublicKey.unique();
-      const [pda1] = client.deriveWhitelistEntryPda(wallet);
-      const [pda2] = client.deriveWhitelistEntryPda(wallet);
+      const [pda1] = client.deriveWhitelistEntryPda(mint, wallet);
+      const [pda2] = client.deriveWhitelistEntryPda(mint, wallet);
 
       expect(pda1.equals(pda2)).toBe(true);
     });
 
     it('produces different PDAs for different wallets', () => {
       const client = makeClient();
-      const [pda1] = client.deriveWhitelistEntryPda(PublicKey.unique());
-      const [pda2] = client.deriveWhitelistEntryPda(PublicKey.unique());
+      const mint = PublicKey.unique();
+      const [pda1] = client.deriveWhitelistEntryPda(mint, PublicKey.unique());
+      const [pda2] = client.deriveWhitelistEntryPda(mint, PublicKey.unique());
+
+      expect(pda1.equals(pda2)).toBe(false);
+    });
+
+    it('produces different PDAs for the same wallet under different mints', () => {
+      const client = makeClient();
+      const wallet = PublicKey.unique();
+      const [pda1] = client.deriveWhitelistEntryPda(PublicKey.unique(), wallet);
+      const [pda2] = client.deriveWhitelistEntryPda(PublicKey.unique(), wallet);
 
       expect(pda1.equals(pda2)).toBe(false);
     });

@@ -92,8 +92,10 @@ export class MeridianClient {
     return findKycRegistryPda(mint, this.programIds.transferHook);
   }
 
-  deriveWhitelistEntryPda(wallet: PublicKey): [PublicKey, number] {
-    return findWhitelistEntryPda(wallet, this.programIds.transferHook);
+  /** Whitelist entry of `wallet` in the KYC registry of `mint` */
+  deriveWhitelistEntryPda(mint: PublicKey, wallet: PublicKey): [PublicKey, number] {
+    const [registry] = this.deriveKycRegistryPda(mint);
+    return findWhitelistEntryPda(registry, wallet, this.programIds.transferHook);
   }
 
   // Securities PDAs (Meridian-specific)

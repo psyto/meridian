@@ -133,7 +133,7 @@ describe('SSS Preset Integration Tests', () => {
 
       // Whitelist
       const [whitelistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), targetWallet.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), targetWallet.publicKey.toBuffer()],
         hookProgram.programId
       );
 
@@ -160,7 +160,7 @@ describe('SSS Preset Integration Tests', () => {
 
       // Blacklist the same wallet
       const [blacklistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), targetWallet.publicKey.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), targetWallet.publicKey.toBuffer()],
         hookProgram.programId
       );
 
@@ -191,7 +191,7 @@ describe('SSS Preset Integration Tests', () => {
 
       // Blacklist
       const [blacklistPda2] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), targetWallet2.publicKey.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), targetWallet2.publicKey.toBuffer()],
         hookProgram.programId
       );
 
@@ -263,13 +263,14 @@ describe('SSS Preset Integration Tests', () => {
 
     it('Blacklist and whitelist PDAs are independent for the same wallet', () => {
       const wallet = Keypair.generate().publicKey;
+      const registry = Keypair.generate().publicKey;
 
       const [whitelistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), wallet.toBuffer()],
+        [Buffer.from('whitelist'), registry.toBuffer(), wallet.toBuffer()],
         hookProgram.programId
       );
       const [blacklistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), wallet.toBuffer()],
+        [Buffer.from('blacklist'), registry.toBuffer(), wallet.toBuffer()],
         hookProgram.programId
       );
 

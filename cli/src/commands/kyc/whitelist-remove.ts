@@ -29,7 +29,7 @@ export function registerWhitelistRemove(parent: Command): void {
       );
 
       const [whitelistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("whitelist"), wallet.toBuffer()],
+        [Buffer.from("whitelist"), registryPda.toBuffer(), wallet.toBuffer()],
         ctx.transferHookProgram.programId
       );
 

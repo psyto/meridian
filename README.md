@@ -460,7 +460,7 @@ meridian zk toggle --activate                 # Activate/deactivate verifier
 ```bash
 meridian mint <amount>                        # Mint stablecoin
 meridian burn <amount>                        # Burn stablecoin
-meridian kyc show-whitelist                   # Show KYC whitelist
+meridian kyc show-whitelist --mint <m> --wallet <w>  # Show a KYC whitelist entry
 meridian kyc show-registry                    # Show KYC registry
 meridian config show                          # Show CLI configuration
 ```

@@ -60,7 +60,7 @@ describe('transfer-hook', () => {
 
     before(async () => {
       [whitelistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), verifiedWallet.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), verifiedWallet.publicKey.toBuffer()],
         program.programId
       );
     });
@@ -95,7 +95,7 @@ describe('transfer-hook', () => {
     it('should handle adding a wallet with USA jurisdiction', async () => {
       const usWallet = Keypair.generate();
       const [usPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), usWallet.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), usWallet.publicKey.toBuffer()],
         program.programId
       );
 
@@ -131,7 +131,7 @@ describe('transfer-hook', () => {
     it('should remove a wallet from the whitelist', async () => {
       const tempWallet = Keypair.generate();
       const [tempPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), tempWallet.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), tempWallet.publicKey.toBuffer()],
         program.programId
       );
 
@@ -174,11 +174,11 @@ describe('transfer-hook', () => {
       const recipient = Keypair.generate();
 
       const [senderPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), sender.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), sender.publicKey.toBuffer()],
         program.programId
       );
       const [recipientPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), recipient.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), recipient.publicKey.toBuffer()],
         program.programId
       );
 
@@ -231,7 +231,7 @@ describe('transfer-hook', () => {
     it('should enforce daily transaction limits', async () => {
       const limitedWallet = Keypair.generate();
       const [limitedPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('whitelist'), limitedWallet.publicKey.toBuffer()],
+        [Buffer.from('whitelist'), registryPda.toBuffer(), limitedWallet.publicKey.toBuffer()],
         program.programId
       );
 
@@ -270,7 +270,7 @@ describe('transfer-hook', () => {
 
     before(async () => {
       [blacklistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), sanctionedWallet.publicKey.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), sanctionedWallet.publicKey.toBuffer()],
         program.programId
       );
     });
@@ -300,7 +300,7 @@ describe('transfer-hook', () => {
 
     it('should reject adding duplicate blacklist entry', async () => {
       const [samePda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), sanctionedWallet.publicKey.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), sanctionedWallet.publicKey.toBuffer()],
         program.programId
       );
 
@@ -327,7 +327,7 @@ describe('transfer-hook', () => {
       const fakeAuthority = Keypair.generate();
       const targetWallet = Keypair.generate();
       const [targetPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), targetWallet.publicKey.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), targetWallet.publicKey.toBuffer()],
         program.programId
       );
 
@@ -386,11 +386,11 @@ describe('transfer-hook', () => {
       const wallet = Keypair.generate().publicKey;
 
       const [pda1] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), wallet.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), wallet.toBuffer()],
         program.programId
       );
       const [pda2] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), wallet.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), wallet.toBuffer()],
         program.programId
       );
 
@@ -402,11 +402,11 @@ describe('transfer-hook', () => {
       const wallet2 = Keypair.generate().publicKey;
 
       const [pda1] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), wallet1.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), wallet1.toBuffer()],
         program.programId
       );
       const [pda2] = PublicKey.findProgramAddressSync(
-        [Buffer.from('blacklist'), wallet2.toBuffer()],
+        [Buffer.from('blacklist'), registryPda.toBuffer(), wallet2.toBuffer()],
         program.programId
       );
 

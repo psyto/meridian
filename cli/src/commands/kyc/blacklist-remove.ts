@@ -29,7 +29,7 @@ export function registerBlacklistRemove(parent: Command): void {
       );
 
       const [blacklistPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("blacklist"), wallet.toBuffer()],
+        [Buffer.from("blacklist"), registryPda.toBuffer(), wallet.toBuffer()],
         ctx.transferHookProgram.programId
       );
 
