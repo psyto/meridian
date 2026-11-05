@@ -38,11 +38,13 @@ describe('transfer-hook', () => {
   describe('initialize_registry', () => {
     it('should initialize KYC registry', async () => {
       const tx = await program.methods
-        .initializeRegistry()
+        .initializeRegistry(authority.publicKey)
         .accounts({
           authority: authority.publicKey,
           registry: registryPda,
           mint: mintKeypair.publicKey,
+          // The signer is the mint authority, so ProgramData is not needed.
+          programData: null,
           systemProgram: SystemProgram.programId,
         })
         .rpc();

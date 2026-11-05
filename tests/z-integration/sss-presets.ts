@@ -118,11 +118,13 @@ describe('SSS Preset Integration Tests', () => {
 
       // Initialize registry
       await hookProgram.methods
-        .initializeRegistry()
+        .initializeRegistry(authority.publicKey)
         .accounts({
           authority: authority.publicKey,
           registry: registryPda,
           mint: mintKeypair2.publicKey,
+          // The signer is the mint authority, so ProgramData is not needed.
+          programData: null,
           systemProgram: SystemProgram.programId,
         })
         .rpc();

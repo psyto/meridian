@@ -133,7 +133,7 @@ Six Anchor workspace programs deployed on Solana, plus two independently deploye
 | `transfer-hook` | `5DLH...jVqW` | KYC whitelist, jurisdiction checks, daily limits, expiry |
 | `compliant-registry` | `66tK...gnYA` | Pool whitelist, route verification, pool lifecycle |
 
-Meridian reads Accredit KYC entries per mint: the registry is `["kyc_registry", mint]` and the entries are `["whitelist", registry, wallet]` / `["blacklist", registry, wallet]` under the Accredit program. **Deploy order: Accredit first**, then create the registry for each mint (`meridian kyc init-registry --mint <m>`) and whitelist the wallets (including the shield-escrow authority PDA) before moving hooked tokens.
+Meridian reads Accredit KYC entries per mint: the registry is `["kyc_registry", mint]` and the entries are `["whitelist", registry, wallet]` / `["blacklist", registry, wallet]` under the Accredit program. **Deploy order: Accredit first**, then create the registry for each mint (`meridian kyc init-registry --mint <m> [--admin <a>]`; the SSS-2 mint's authority is the `mint_config` PDA, so this is signed by the Accredit transfer-hook upgrade authority) and whitelist the wallets (including the shield-escrow authority PDA) before moving hooked tokens.
 
 **securities-engine pools:** only the market's authority can run `initialize_pool`, and the pool's mints must be the market's. `add_liquidity` and `swap` accept only the pool authority, LP mint and vaults stored on the pool.
 
@@ -478,7 +478,7 @@ meridian zk toggle --activate                 # Activate/deactivate verifier
 ```bash
 meridian mint <amount>                        # Mint stablecoin
 meridian burn <amount>                        # Burn stablecoin
-meridian kyc init-registry --mint <m>                # Create the KYC registry for a mint
+meridian kyc init-registry --mint <m> [--admin <a>]  # Create the KYC registry for a mint
 meridian kyc whitelist-add --mint <m> --wallet <w> ...  # Whitelist a wallet in the mint's registry
 meridian kyc whitelist-remove --mint <m> --wallet <w>
 meridian kyc blacklist-add --mint <m> --wallet <w> --reason <r>

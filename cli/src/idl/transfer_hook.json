@@ -210,17 +210,20 @@
         "Validation order:",
         "1. Registry active check",
         "2. Blacklist check (SSS-2) — reject if either party is blacklisted",
-        "3. Whitelist check — verify KYC status, jurisdiction, limits"
+        "3. Whitelist check — verify KYC status, jurisdiction, limits",
+        "",
+        "Uses the SPL transfer-hook `Execute` discriminator so Token-2022's",
+        "hook call is dispatched here."
       ],
       "discriminator": [
-        130,
-        221,
-        242,
-        154,
-        13,
-        193,
-        189,
-        29
+        105,
+        37,
+        101,
+        197,
+        75,
+        251,
+        102,
+        26
       ],
       "accounts": [
         {
@@ -269,8 +272,9 @@
         {
           "name": "sender_whitelist",
           "docs": [
-            "Whitelist entry of the source token account's owner wallet",
-            "(writable: execute records the daily volume)"
+            "wallet (writable: execute records the daily volume). Loaded and",
+            "checked by `load_whitelist_entry`; it may be empty for a transfer by",
+            "the permanent delegate."
           ],
           "writable": true,
           "pda": {
@@ -471,7 +475,13 @@
     {
       "name": "initialize_registry",
       "docs": [
-        "Initialize the KYC registry for a specific mint"
+        "Initialize the KYC registry for a specific mint.",
+        "",
+        "The signer must be either the mint's mint authority or this program's",
+        "upgrade authority (shown by passing its ProgramData account). The",
+        "second path covers mints whose mint authority is a PDA of another",
+        "program, or that have no mint authority. `admin` becomes the registry",
+        "authority that manages the whitelist and blacklist."
       ],
       "discriminator": [
         189,
@@ -522,11 +532,24 @@
           }
         },
         {
+          "name": "program_data",
+          "docs": [
+            "This program's ProgramData account. Only needed (and only read) when",
+            "the signer is not the mint authority."
+          ],
+          "optional": true
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "admin",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "pause_registry",
@@ -1282,6 +1305,19 @@
   ],
   "events": [
     {
+      "name": "DelegateTransferValidated",
+      "discriminator": [
+        117,
+        88,
+        85,
+        159,
+        13,
+        121,
+        138,
+        2
+      ]
+    },
+    {
       "name": "KycLevelUpdated",
       "discriminator": [
         225,
@@ -1502,6 +1538,21 @@
       "code": 6017,
       "name": "ReasonTooLong",
       "msg": "Blacklist reason is too long"
+    },
+    {
+      "code": 6018,
+      "name": "NotTransferring",
+      "msg": "Execute must be called by Token-2022 during a transfer"
+    },
+    {
+      "code": 6019,
+      "name": "HookProgramMismatch",
+      "msg": "Mint does not use this program as its transfer hook"
+    },
+    {
+      "code": 6020,
+      "name": "EntryNotActive",
+      "msg": "Whitelist entry is not active"
     }
   ],
   "types": [
@@ -1632,6 +1683,46 @@
               "Bump seed"
             ],
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DelegateTransferValidated",
+      "docs": [
+        "Emitted for a transfer signed by the mint's permanent delegate, which",
+        "skips the sender-side checks."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sender",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "delegate",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "recipient_kyc_level",
+            "type": {
+              "defined": {
+                "name": "KycLevel"
+              }
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
