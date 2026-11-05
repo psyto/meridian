@@ -44,7 +44,6 @@ import {
 import {
   TOKEN_2022_PROGRAM_ID,
   mintTo,
-  getOrCreateAssociatedTokenAccount,
 } from "@solana/spl-token";
 import * as fs from "fs";
 import * as path from "path";
@@ -372,6 +371,13 @@ function deriveShieldConfigPda(): [PublicKey, number] {
   );
 }
 
+function deriveEscrowOutputPda(swapReceipt: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow_output"), swapReceipt.toBuffer()],
+    SHIELD_ESCROW_ID
+  )[0];
+}
+
 function deriveEscrowAuthorityPda(): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("escrow_authority")],
@@ -599,17 +605,9 @@ async function simulateDevnetSwap(
 
   const outputAmount = new BN(jupiterOutputAmount.toString());
 
-  // Mint output tokens to escrow's output token account
-  const escrowOutputAta = await getOrCreateAssociatedTokenAccount(
-    connection,
-    authority,
-    receipt.outputMint,
-    escrowAuthority,
-    true, // allowOwnerOffCurve (PDA)
-    undefined,
-    undefined,
-    TOKEN_2022_PROGRAM_ID
-  );
+  // Mint output tokens to this receipt's escrow output token account
+  // (PDA [b"escrow_output", receipt], created by deposit, owned by the escrow authority)
+  const escrowOutputAta = { address: deriveEscrowOutputPda(receipt.pubkey) };
 
   console.log(`  Minting ${outputAmount.toString()} output tokens to escrow...`);
   await mintTo(

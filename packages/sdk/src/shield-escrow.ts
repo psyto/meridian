@@ -85,6 +85,23 @@ export class ShieldEscrowSdk {
     );
   }
 
+  /** Per-receipt escrow token account for the input mint: [b"escrow_input", receipt] */
+  deriveEscrowInputPda(swapReceipt: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow_input'), swapReceipt.toBuffer()],
+      this.client.programIds.shieldEscrow
+    );
+  }
+
+  /** Per-receipt escrow token account for the output mint: [b"escrow_output", receipt].
+   *  Swap output must be delivered here for withdraw to pay it out. */
+  deriveEscrowOutputPda(swapReceipt: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+      [Buffer.from('escrow_output'), swapReceipt.toBuffer()],
+      this.client.programIds.shieldEscrow
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Query methods
   // ---------------------------------------------------------------------------
