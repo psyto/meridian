@@ -21,6 +21,8 @@ pub struct Initialize<'info> {
     /// Token-2022 mint with extensions configured based on preset.
     /// SSS-1: mint_authority + freeze_authority + metadata
     /// SSS-2: SSS-1 + transfer_hook + permanent_delegate
+    /// (the PermanentDelegate extension is always set to mint_config; only
+    /// SSS-2 / Custom with enable_permanent_delegate can use it via seize)
     #[account(
         init,
         payer = authority,
@@ -29,6 +31,9 @@ pub struct Initialize<'info> {
         mint::freeze_authority = mint_config,
         extensions::transfer_hook::authority = mint_config,
         extensions::transfer_hook::program_id = transfer_hook_program,
+        // Seize transfers with mint_config as the permanent delegate; the
+        // seize instruction itself is gated by enable_permanent_delegate.
+        extensions::permanent_delegate::delegate = mint_config,
     )]
     pub mint: InterfaceAccount<'info, Mint>,
 
